@@ -2229,7 +2229,9 @@ typed into a form that reads it.
   Service Visit Date** box on each and shows the cut-out beside the photo, so
   you can check it is the right box and holds nothing else. It all happens in
   your browser — nothing is sent anywhere; the first run downloads the reader
-  (about 7 MB) from the app itself. PDFs are counted and skipped. This is the
+  (about 7 MB) from the app itself. A PDF is read from its first page; a
+  photo taken sideways or upside down is tried turned, and the result says
+  which turn found the box. This is the
   first step towards checking the Visit Date against the report; reading the
   date itself (Phase B) is not built yet.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the

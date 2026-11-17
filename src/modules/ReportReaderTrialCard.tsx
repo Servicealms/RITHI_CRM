@@ -22,12 +22,12 @@ import { formatDay } from '../lib/dates';
 // reader is served from the app itself. Phase B (sending the crop to be read)
 // needs an API key and the user's go-ahead, and is not here.
 //
-// PDFs are counted and skipped: rendering a PDF page needs a second library,
-// worth adding only if many reports turn out to be PDFs.
+// PDFs: page 1 is drawn in the browser by pdf.js (the first run found 15 of
+// the latest 20 reports were PDFs). A photo taken sideways is tried turned.
 // ===========================================================================
 
 interface Row {
-  n: number; ucn: string; visit: string; status: 'waiting' | 'reading' | 'found' | 'not found' | 'pdf' | 'failed';
+  n: number; ucn: string; visit: string; status: 'waiting' | 'reading' | 'found' | 'not found' | 'failed';
   note: string; crop: string; thumb: string; anchor: string; ms: number;
 }
 
@@ -60,13 +60,13 @@ export function ReportReaderTrialCard() {
         const got = await fetchAppDocument(id);
         if (!got.ok || !got.doc) { set(i, { status: 'failed', note: got.error ?? 'could not open the file' }); continue; }
         const mime = got.doc.mimeType || '';
-        if (/pdf/i.test(mime)) { set(i, { status: 'pdf', note: 'PDF -- skipped in Phase A' }); continue; }
-        if (!/^image\//i.test(mime)) { set(i, { status: 'failed', note: `not a photo (${mime || 'unknown type'})` }); continue; }
+        if (!/^image\//i.test(mime) && !/pdf/i.test(mime)) { set(i, { status: 'failed', note: `not a photo or PDF (${mime || 'unknown type'})` }); continue; }
         try {
           const bytes = Uint8Array.from(atob(got.doc.dataBase64), (ch) => ch.charCodeAt(0));
           const r = await cropReportBox(new Blob([bytes], { type: mime }));
           set(i, {
-            status: r.box ? 'found' : 'not found', note: r.box ? `from "${r.box.label}"` : r.why,
+            status: r.box ? 'found' : 'not found',
+            note: (r.source === 'pdf' ? 'PDF page 1 · ' : 'photo · ') + (r.box ? `from "${r.box.label}"${r.turned ? `, turned ${r.turned}°` : ''}` : r.why),
             crop: r.crop, thumb: r.thumb, anchor: r.box?.anchor ?? '', ms: r.ms,
           });
         } catch (e) {
@@ -85,7 +85,8 @@ export function ReportReaderTrialCard() {
       <p className="muted" style={{ fontSize: 12.5, marginTop: 0 }}>
         Finds the <b>Call No/UC No + Service Visit Date</b> box on the latest manual report photos and shows the cut-out,
         so you can check by eye that it is the right box and holds nothing else. Everything happens in this browser:
-        the photo is read and cropped here and <b>nothing is sent anywhere</b>. The first run downloads the reader (about 7 MB) from this app.
+        the photo (or page 1 of a PDF) is read and cropped here and <b>nothing is sent anywhere</b>. A sideways photo is tried turned.
+        The first run downloads the reader (about 7 MB) from this app; a report takes a few seconds, longer when it has to be turned.
       </p>
       <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
         <label className="field" style={{ width: 140 }}><span className="field-label">Latest reports</span>
@@ -97,7 +98,7 @@ export function ReportReaderTrialCard() {
       {rows.length > 0 && (
         <p style={{ fontSize: 13, margin: '10px 0 6px' }}>
           <b>{rows.length}</b> reports · box found <b>{tally('found')}</b> · not found <b>{tally('not found')}</b> ·
-          PDF (skipped) <b>{tally('pdf')}</b> · could not open <b>{tally('failed')}</b>
+          could not open <b>{tally('failed')}</b>
           {busy && <> · reading…</>}
         </p>
       )}
@@ -112,7 +113,7 @@ export function ReportReaderTrialCard() {
                   <td style={{ whiteSpace: 'nowrap' }}>{r.ucn}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{r.visit}</td>
                   <td style={{ minWidth: 160 }}>
-                    <b>{r.status === 'found' ? 'Box found' : r.status === 'not found' ? 'Not found' : r.status === 'pdf' ? 'PDF' : r.status === 'failed' ? 'Could not open' : r.status === 'reading' ? 'Reading…' : 'Waiting'}</b>
+                    <b>{r.status === 'found' ? 'Box found' : r.status === 'not found' ? 'Not found' : r.status === 'failed' ? 'Could not open' : r.status === 'reading' ? 'Reading…' : 'Waiting'}</b>
                     {r.note && <div className="muted" style={{ fontSize: 11.5 }}>{r.note}</div>}
                     {r.ms > 0 && <div className="muted" style={{ fontSize: 11 }}>{(r.ms / 1000).toFixed(1)} s</div>}
                   </td>
