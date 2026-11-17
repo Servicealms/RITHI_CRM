@@ -25,7 +25,9 @@ import { csvExport, fmtDate, statusBadge, timeAgo } from '../lib/format';
 import { localIsoDate, todayLocal } from '../lib/dates';
 import { loadCache, saveCache, isStale, SYNC_TTL_MS, startBackgroundSync } from '../lib/cache';
 import { useAuth } from '../lib/auth';
-import { supabaseConfigured } from '../lib/supabase';
+import { supabaseConfigured, listAllContractDetails } from '../lib/supabase';
+import { CONTRACT_DETAILS_HEADERS, contractDetailsRow } from '../lib/contractExport';
+import { COMPLETE } from '../lib/exportscope';
 import {
   configFor, listHeaders, listItems, listMachines, countMachines, saveHeader, saveItem, forceInherit,
   raiseInstallCalls, missingRequired, yearsHint, getHeader, countPendingSales,
@@ -2121,6 +2123,24 @@ export function CoverRegister({ kind }: { kind: CoverKind }) {
     if (key === 'install_pending') return installPending(r) ? 'Pending' : isCallNumber(r.inst_call) ? str(r.inst_call) : '';
     return r[key];
   };
+  // THE CONTRACT DETAILS EXPORT (the user, 2026-11-17): the old AppSheet
+  // layout, one row per machine, EVERY line the reader may see -- read whole
+  // from the database, not the screen's loaded page. contractExport.ts holds
+  // the 29 columns and the three rules the user chose.
+  const [detailsBusy, setDetailsBusy] = useState(false);
+  const exportContractDetails = async () => {
+    setDetailsBusy(true);
+    try {
+      const all = await listAllContractDetails();
+      xlsxDownload(`contract-details-${todayLocal()}.xlsx`, [{
+        name: 'Contract Details',
+        columns: CONTRACT_DETAILS_HEADERS,
+        rows: all.map((r) => { const o = contractDetailsRow(r); return Object.fromEntries(CONTRACT_DETAILS_HEADERS.map((h) => [h, xlsxCell(o[h])])); }),
+      }], COMPLETE);
+    } catch (e) {
+      alert(`Could not read the contract lines: ${e instanceof Error ? e.message : String(e)}`);
+    } finally { setDetailsBusy(false); }
+  };
   const exportCols = (cols: Column<Row>[]) =>
     cols.filter((c) => !c.key.startsWith('_')).map((c) => ({ key: c.key, header: c.header }));
   const exportCsv = (name: string, cols: Column<Row>[], data: Row[], more: boolean) => {
@@ -2168,6 +2188,12 @@ export function CoverRegister({ kind }: { kind: CoverKind }) {
                     title="Dates arrive as Excel dates">⭳ Export Excel</button>
                   <button className="btn btn-sm" onClick={() => exportCsv(`${kind}-entries`, headerColumns, rows, feeds.entries.more)}>⭳ Export CSV</button>
                 </>
+              )}
+              {kind === 'contract' && (
+                <button className="btn btn-sm" disabled={detailsBusy} onClick={() => void exportContractDetails()}
+                  title="Every contract line, one row per machine, in the Contract Details layout (UID … Added By); dates arrive as Excel dates">
+                  {detailsBusy ? 'Reading every line…' : '⭳ Contract Details (Excel)'}
+                </button>
               )}
             </Toolbar>
           }

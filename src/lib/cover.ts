@@ -74,19 +74,10 @@ export interface CoverField {
   hint?: (row: Row) => string;
 }
 
-/** A contract's status in the user's words (2026-10-02): "Active" more than
- *  30 days before the end date, "About to Expire" within 30 days of it
- *  (the end date itself included), "Contract Expired" once today is past it.
- *  THE RULE IS coverStatus -- the one the register's tiles and the SQL's
- *  cover_state() use -- so the form cannot disagree with the list; only the
- *  words are this field's. No end date is no status, never "Active". */
-export function contractStatusText(row: Row): string {
-  const s = coverStatus(row.contract_end);
-  return s === 'ACTIVE' ? 'Active'
-    : s === 'ABOUT TO EXPIRE' ? 'About to Expire'
-    : s === 'INACTIVE' ? 'Contract Expired'
-    : '';
-}
+// contractStatusText lives in coverspec.ts (no database import), so the
+// Contract Details export can be tested in node; re-exported here.
+import { contractStatusText } from './coverspec';
+export { contractStatusText };
 
 /** "= 2 years" under a period typed in months. */
 export function yearsHint(row: Row, field: string): string {

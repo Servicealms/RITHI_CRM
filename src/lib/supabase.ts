@@ -4822,6 +4822,15 @@ export async function deleteHandstockReconciliations(a: { ids?: number[]; batch?
   return n > 0 ? { ok: true, deleted: n } : { ok: false, deleted: 0, error: 'Nothing was deleted — the counts may already have gone. Refresh and look again.' };
 }
 
+// EVERY CONTRACT LINE (the Contract Details export, 2026-11-17): the whole of
+// `contract_details` the reader may see, paged past PostgREST's 1,000 cap,
+// ordered by MC Number then line, with `id` breaking ties.
+export async function listAllContractDetails(): Promise<Record<string, unknown>[]> {
+  const c = must();
+  return allRows<Record<string, unknown>>((a, b) => c.from('contract_details').select('*')
+    .order('mc_number', { ascending: true }).order('id', { ascending: true }).range(a, b));
+}
+
 // `includeEmpty` also returns the parts the engineer holds none of, or is
 // already below zero on -- the visit form offers them since 0401, because a
 // part fitted beyond the hand stock is now booked (and the Spare Coordinator
