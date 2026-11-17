@@ -2410,7 +2410,13 @@ with checks(sort_order, bundle, provides, present) as (
         and position('v_later' in coalesce(pg_get_functiondef(to_regprocedure('public.handstock_reconciliations_bi()')), '')) > 0
         and to_regprocedure('public.delete_handstock_reconciliations(bigint[],text)') is not null),
     (391, 'A count of the same line at the same moment is refused in words', 'handstock_reconciliations_bi() names the part, the engineer and the other count (this file, an earlier upload or the screen) before the unique index answers (0484). NO means a repeated line in an upload answers "duplicate key value violates unique constraint". Restore: HandStock_X.sql (0484)',
-        position('appears more than once in this file' in coalesce(pg_get_functiondef(to_regprocedure('public.handstock_reconciliations_bi()')), '')) > 0)
+        position('appears more than once in this file' in coalesce(pg_get_functiondef(to_regprocedure('public.handstock_reconciliations_bi()')), '')) > 0),
+    (392, 'Hand Stock can show the entries before a count', 'handstock_movements_history, with before_count, security_invoker, and the same arms as handstock_movements (0485). NO means "Show entries before the count" answers an error, or a new arm was added to one view and not the other. Restore: HandStock_X.sql (0485)',
+        to_regclass('public.handstock_movements_history') is not null
+        and exists (select 1 from pg_attribute where attrelid = coalesce(to_regclass('public.handstock_movements_history'), 0::regclass) and attname = 'before_count' and not attisdropped)
+        and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.handstock_movements_history')), false)
+        and (length(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements')), '')) - length(replace(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements')), ''), 'UNION ALL', '')))
+          = (length(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements_history')), '')) - length(replace(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements_history')), ''), 'UNION ALL', ''))))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

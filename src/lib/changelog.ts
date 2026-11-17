@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.250',
+    date: '2026-11-17',
+    title: 'Hand Stock: show the entries made before a count',
+    changes: [
+      'After a part is counted, Hand Stock lists only what came after the count. "Show entries before the count" — on a line\'s movement list and on the Movements tab — brings the earlier entries back, greyed and marked "before the count — not in the figure".',
+      'They do not change the stock figure or the running balance; the downloads say which rows are in the figure.',
+    ],
+  },
+  {
     version: '0.10.249',
     date: '2026-11-13',
     title: 'Hand stock count upload: a repeated line is named, not a database error',

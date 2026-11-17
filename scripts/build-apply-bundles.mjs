@@ -1302,6 +1302,9 @@ const MODULES = {
             // The same line at the same moment refused in words (0484).
             // Redefines 0483's guard, so after it.
             '0484_handstock_count_same_moment_in_words.sql',
+            // The movements before a count, on request (0485): 0468's arms
+            // without the count filter, so after it.
+            '0485_handstock_history_before_count.sql',
             // LAST: the whole balance in one request (0384). A SQL-language
             // body resolves the view at creation, so it follows every file
             // that defines handstock_balance.

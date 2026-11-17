@@ -617,7 +617,12 @@ against the call it was fitted to.
   > counted** and keeps its figure. Field work does not stop while you count, so
   > it can be done two or three engineers a day. A count is never edited; to
   > correct one, count that part again (the latest count is the one that
-  > counts), or delete it on **🗂 Counts**. The **Last counted** column shows when each line was last
+  > counts), or delete it on **🗂 Counts**. **The entries made before a count
+  > are not deleted**: they stay on Stock Out, Spare Consumption, Stock
+  > Transfer and MRN, and on Hand Stock **Show entries before the count** (on
+  > a line's movement list and on the Movements tab) brings them back, greyed
+  > and marked *before the count — not in the figure*. They move no balance,
+  > and the stock figure does not change. The **Last counted** column shows when each line was last
   > counted and the quantity. The list is **grouped by the system quantity** —
   > **More than 0**, then **0** (and **Below 0** when a part has gone below
   > zero) — and **Sort by** orders it by **Part No** or **Qty**, either way.

@@ -76,6 +76,9 @@ export interface HandstockMovement {
   // dispatch, the party the OR was raised against.
   party_name: string;
   remarks: string;
+  /** Entered before the latest physical count of the line, so inside that
+   *  count and NOT in the figure (0485). Only on the history view. */
+  before_count?: boolean;
 }
 
 export const num = (v: unknown): number => {
