@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
   const seenRows = seen.ok ? await seen.json() : [];
   if (seenRows.length) return json({ skipped: true, reading: seenRows[0] });
 
-  const rep = await rest(`reports?select=uid,ucn,visit_at&uid=eq.${encodeURIComponent(uid)}`);
+  const rep = await rest(`reports?select=uid,ucn,visit_at,manual_report&uid=eq.${encodeURIComponent(uid)}`);
   const report = rep.ok ? (await rep.json())[0] : null;
   if (!report) return json({ error: `No visit ${uid}` }, 404);
 
@@ -188,6 +188,32 @@ Deno.serve(async (req) => {
   if (noBox) {
     return await store({ report_uid: uid, ucn: report.ucn ?? '', recorded_visit_at: report.visit_at,
                          outcome: 'no_box', notes: noBox, read_by: readBy });
+  }
+
+  // ONE REPORT, ONE READING (PM Bulk Close, 2026-11-17): visits closed
+  // together share one manual report. If another visit with the same report
+  // has been read, its date is reused -- nothing is sent, nothing is paid --
+  // and compared with THIS visit's date.
+  const link = String(report.manual_report ?? '').trim();
+  if (link) {
+    const sib = await rest(`reports?select=uid,ucn&manual_report=eq.${encodeURIComponent(link)}&uid=neq.${encodeURIComponent(uid)}&limit=50`);
+    const sibs: { uid: string; ucn: string }[] = sib.ok ? await sib.json() : [];
+    if (sibs.length) {
+      const inList = sibs.map((x) => `"${String(x.uid).replace(/"/g, '')}"`).join(',');
+      const got = await rest(`visit_date_reads?select=report_uid,ucn,read_date,read_as_written,notes,model,outcome&report_uid=in.(${encodeURIComponent(inList)})&outcome=in.(match,mismatch,unreadable)&limit=1`);
+      const prior = got.ok ? (await got.json())[0] : null;
+      if (prior) {
+        const rd = prior.read_date ?? null;
+        const rec = indiaDay(report.visit_at);
+        return await store({
+          report_uid: uid, ucn: report.ucn ?? '', recorded_visit_at: report.visit_at,
+          read_date: rd, read_as_written: prior.read_as_written ?? null,
+          notes: `Same manual report as ${prior.ucn} -- read once, reused.${prior.notes ? ' ' + prior.notes : ''}`.slice(0, 500),
+          outcome: !rd ? 'unreadable' : rd === rec ? 'match' : 'mismatch',
+          model: prior.model ?? '', tried: [], cost_usd: 0, read_by: readBy,
+        });
+      }
+    }
   }
 
   // Haiku first; Sonnet only when Haiku fails.

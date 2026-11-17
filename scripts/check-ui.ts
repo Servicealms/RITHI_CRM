@@ -868,7 +868,12 @@ console.log('\n-- a visit date that could not have happened --');
   eq('the visit date picker cannot reach before the breakdown',
     /min=\{visitFromISO \|\| undefined\}/.test(rep), true);
   eq('...which is the breakdown date, else the complaint date',
-    /const visitFromISO = breakdownISO \|\| complaintISO;/.test(rep), true);
+    /const visitFromISO = bulkCalls \? \(bulkBound\?\.iso \?\? ''\) : \(breakdownISO \|\| complaintISO\);/.test(rep), true);
+  // PM BULK CLOSE (FRS-292.5): one visit date on every call, so the bound is
+  // the LATEST of the calls' own bounds, each the breakdown else the complaint.
+  eq('...and in a bulk close, the latest of the calls\' breakdown-else-complaint dates',
+    /return b \? \{ iso: b, what: 'breakdown' \} : \{ iso: k, what: 'complaint' \};/.test(rep)
+      && /sort\(\(a, b\) => b\.iso\.localeCompare\(a\.iso\)\)\[0\]/.test(rep), true);
   eq('and the rule is checked again on submit',
     /visitDateProblem\(visitDate, visitFromISO, todayISO\(\), visitFromWhat\)/.test(rep), true);
   eq('the message names the breakdown',

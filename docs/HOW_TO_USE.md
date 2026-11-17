@@ -224,6 +224,19 @@ different totals. An empty register usually means access, not emptiness.
   > later — or **Invoice Date**, which keeps the start on the PO / Warranty Sale
   > Entry. Nothing is pre-selected; the engineer must choose.
 - **Preventive (PM)** `/pm-calls` — planned maintenance.
+  - **Bulk close.** Tick two or more **open** PM calls of the **same
+    customer** (same Party name) and press **✅ Bulk close**. One Visit Entry
+    form opens for all of them: the visit date, engineer, Call Status (any),
+    the Service Report, the sign-off, the customer feedback, and the **manual
+    report uploaded once**. Saving files **a visit on each call** — separate
+    entries in the visit history, all pointing at the same manual report, each
+    noting the calls it was filed with — and each call's status follows its
+    own visit. **Spares are per call**: choose *Book the next spare against*
+    before adding each line. The visit date may not be before the latest
+    breakdown/complaint date among the calls. A selection mixing customers,
+    or holding a solved or cancelled call, is refused with the names. If one
+    call fails, the rest stay saved and Save files just what is left. Needs
+    *File a visit on a PM call*.
   - **Every Missed PM is flagged.** A Missed PM is a PM call whose **Added On**
     date is after the month it is registered for — a March PM added in
     October, the same rule the PM objective uses. It carries an amber

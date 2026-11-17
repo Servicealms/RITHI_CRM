@@ -191,6 +191,12 @@ up)_
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
   Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
   route A (GitHub) chosen.
+- v0.10.259 PM Bulk Close (the user, 2026-11-17: "bulk close PM Calls ... same
+  customer ... separate line items pointing to the same Manual report"; choices:
+  any status, spares per call, same feedback on each, same Party name). No
+  migration: CallReportDrawer bulk mode files one visit per call through
+  fileVisit; Visit Date Check reuses a reading for visits sharing a report.
+  **PENDING: the user tries it on real PM calls.**
 - v0.10.258 (the user's 5-report run: Visit Date Haiku 4/5, Sonnet 5/5; then
   "Lets do only Visit Date ... If Haiku Fails then go to Sonnet ... store the
   REsults ... Add it as a Report ... Provision for Admin ... to update the Visit

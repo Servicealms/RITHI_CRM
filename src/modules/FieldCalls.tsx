@@ -693,6 +693,28 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // the database is the guarantee.
   const allotTeam = useTeamEngineers();
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  // PM BULK CLOSE (the user, 2026-11-17: "Multi select call and click on Bulk
+  // close but in back end, it should save the visit details as separate line
+  // items pointing to the same Manual report"). PM register only, for whoever
+  // may file a PM visit; every selected call open and of ONE customer (the
+  // same Party name).
+  const mayBulkClose = config.tab === 'PM' && can(`${P}.report.visit`);
+  const [bulkClose, setBulkClose] = useState<Rec[] | null>(null);
+  const startBulkClose = (rows: Rec[]) => {
+    const party = (r: Rec) => String(r.partyName ?? r['party_name'] ?? '').trim().toLowerCase();
+    if (rows.length < 2) { setBanner({ tone: 'error', text: 'Select two or more PM calls to close together.' }); return; }
+    const closed = rows.filter((r) => r._pending || !canWorkRow(r));
+    if (closed.length) {
+      setBanner({ tone: 'error', text: `Not open, so not closed in bulk: ${closed.map((r) => String(r.ucn ?? '')).join(', ')}. Clear them from the selection.` });
+      return;
+    }
+    const parties = [...new Set(rows.map(party))];
+    if (parties.length > 1 || !parties[0]) {
+      setBanner({ tone: 'error', text: `Bulk close needs every call from the same customer — the selection has ${parties.filter(Boolean).length || 'no'} customer name${parties.length === 1 ? '' : 's'}${parties.some((p) => !p) ? ' (and a call with none)' : ''}.` });
+      return;
+    }
+    setBulkClose(rows);
+  };
   const [allotTo, setAllotTo] = useState('');
   const [allotBusy, setAllotBusy] = useState(false);
   // RE-ALLOCATION IS ITS OWN RIGHT (0126), not a corner of `calls.edit`. It was
@@ -1500,7 +1522,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
         allFields={allFieldsFor(config.tab)}
         rows={rowsWithRegion}
         getRowId={(r) => r.id}
-        selectable={mayAllot || mayRefresh}
+        selectable={mayAllot || mayRefresh || mayBulkClose}
         selected={picked}
         onSelectedChange={setPicked}
         bulkBar={(ids, clear) => {
@@ -1525,6 +1547,11 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
                   <button className="btn btn-sm" disabled={allotBusy} title="Update Warranty, Contract and Item Status as on each call's registration date"
                     onClick={() => void refreshFromMasters('product', ucns, clear)}>🛡️ Update Product Details</button>
                 </>
+              )}
+              {mayBulkClose && (
+                <button className="btn btn-primary btn-sm" disabled={allotBusy}
+                  title="One visit form for all the selected calls of one customer: a visit is saved on each, pointing at the same manual report"
+                  onClick={() => startBulkClose(rowsWithRegion.filter((r) => ids.includes(String(r.id))) as Rec[])}>✅ Bulk close</button>
               )}
               <button className="btn btn-ghost btn-sm" disabled={allotBusy} onClick={clear}>Clear</button>
             </>
@@ -1762,6 +1789,14 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           </>
         )}
       </Drawer>
+
+      <CallReportDrawer
+        call={bulkClose?.[0] ?? null}
+        bulk={bulkClose ?? undefined}
+        open={!!bulkClose}
+        onClose={() => setBulkClose(null)}
+        onSaved={(_mode, ucns) => { setPicked(new Set()); setBanner({ tone: 'ok', text: `Visit saved on each call, one manual report for all: ${ucns}.` }); }}
+      />
 
       <CallReportDrawer
         call={report}
