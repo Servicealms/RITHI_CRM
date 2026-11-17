@@ -15,6 +15,7 @@
 // Pure: works on a grey pixel array, no DOM, so `scripts/check-report-crop.ts`
 // can test it. Nothing here is sent anywhere.
 // ===========================================================================
+import { similar } from './reportCrop';
 
 export interface HLine { y: number; x0: number; x1: number }
 export interface VLine { x: number; y0: number; y1: number }
@@ -84,7 +85,13 @@ export function verticalLines(m: Uint8Array, w: number, h: number, minLen: numbe
   return mergeH(segs, gap).map((l) => ({ x: l.y, y0: l.x0, y1: l.x1 }));
 }
 
-export interface Stack { ys: number[]; box: { x: number; y: number; w: number; h: number }; upright: boolean }
+export interface Stack {
+  ys: number[]; box: { x: number; y: number; w: number; h: number }; upright: boolean;
+  /** The label column's two rules, left and right, for reading its labels. */
+  labelX: [number, number];
+  /** Every vertical rule the rows share, left to right: the cell borders. */
+  cols: number[];
+}
 
 /** THE LABEL COLUMN, FOUND BY ITS LINES ALONE. On the form the labels Engineer
  *  Name, Call Type, Status, Call No/UC No and Service Visit Date sit in one
@@ -94,7 +101,7 @@ export interface Stack { ys: number[]; box: { x: number; y: number; w: number; h
  *  spaced horizontal rules running across the gap between them, and the
  *  column stopping at the last of those. The box is its bottom two rows,
  *  from the column's left rule to where those rows' lines end on the right. */
-export function findLabelStack(hs: HLine[], vs: VLine[], w: number, h: number): Stack | null {
+export function findLabelStacks(hs: HLine[], vs: VLine[], w: number, h: number): Stack[] {
   const tol = Math.max(6, Math.round(Math.max(w, h) * 0.008));
   type Cand = { a: VLine; b: VLine; ys: number[]; ratio: number };
   const cands: Cand[] = [];
@@ -113,16 +120,23 @@ export function findLabelStack(hs: HLine[], vs: VLine[], w: number, h: number): 
     if (ratio > 2.2 || gaps[gaps.length - 1] < h * 0.012) continue;
     cands.push({ a, b, ys, ratio });
   }
-  if (!cands.length) return null;
-  // Most rows wins, then the most even rows.
+  // Most rows first, then the most even rows. A page can carry several such
+  // stacks (a PM checklist is all tables), so EVERY distinct one is returned,
+  // best first, for the caller to confirm by reading its labels.
   cands.sort((p, q) => q.ys.length - p.ys.length || p.ratio - q.ratio);
-  const best = cands[0];
+  const out: Stack[] = [];
+  const used = new Set<Cand>();
+  for (const best of cands) {
+  if (used.has(best)) continue;
   const last = best.ys[best.ys.length - 1];
   // The same rows are seen between the label column's two rules and between
   // the value column's: take the box from the LEFTMOST rule that shares them,
   // so the printed labels are in the cut-out with the values.
-  const same = cands.filter((c) => c.ys.length === best.ys.length && Math.abs(c.ys[c.ys.length - 1] - last) <= tol);
+  const same = cands.filter((c) => !used.has(c) && c.ys.length === best.ys.length && Math.abs(c.ys[c.ys.length - 1] - last) <= tol
+    && Math.abs(c.ys[0] - best.ys[0]) <= tol);
+  same.forEach((c) => used.add(c));
   const left = Math.min(...same.map((c) => c.a.x));
+  const labelRight = Math.min(...same.filter((c) => c.a.x === left).map((c) => c.b.x));
   const target = best.ys.slice(-3);
   // Follow those rows' rules rightwards from the column to where they end.
   let reach = Math.max(...same.map((c) => c.b.x));
@@ -143,7 +157,15 @@ export function findLabelStack(hs: HLine[], vs: VLine[], w: number, h: number): 
   const mid = (Math.min(...full.map((l) => l.x0)) + Math.max(...full.map((l) => l.x1))) / 2;
   const x0 = Math.max(0, left - tol), y0 = Math.max(0, target[0] - tol);
   const x1 = Math.min(w, reach + tol), y1 = Math.min(h, last + tol);
-  return { ys: best.ys, upright: (left + reach) / 2 > mid, box: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
+  out.push({ ys: best.ys, labelX: [left, labelRight], cols: [...new Set(same.flatMap((c) => [c.a.x, c.b.x]))].sort((p, q) => p - q), upright: (left + reach) / 2 > mid, box: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } });
+  if (out.length >= 6) break;
+  }
+  return out;
+}
+
+/** The best stack alone (the drawn-form checks). */
+export function findLabelStack(hs: HLine[], vs: VLine[], w: number, h: number): Stack | null {
+  return findLabelStacks(hs, vs, w, h)[0] ?? null;
 }
 
 /** HOW FAR THE PAGE IS TILTED, in degrees (positive = the right-hand end of a
@@ -187,16 +209,58 @@ export function rulesAcross(hs: HLine[], xa: number, xb: number, top: number, bo
   return out;
 }
 
-export interface LinesResult { box: { x: number; y: number; w: number; h: number } | null; upright: boolean; why: string; rows: number }
+export interface LinesBox { box: { x: number; y: number; w: number; h: number }; upright: boolean; rows: number; stack: Stack }
+export interface LinesResult { boxes: LinesBox[]; why: string }
 
-/** Mask, lines, column -- in one call, on a grey image (one byte a pixel). */
+/** Mask, lines, columns -- in one call, on a grey image (one byte a pixel).
+ *  Every stack the lines suggest, best first, within the size limits. They
+ *  are CANDIDATES: a table of even rows is common on these forms (a PM
+ *  checklist is little else), so the caller confirms one by reading its
+ *  label cells before using it (labelCells, labelsConfirm). */
 export function findBoxByLines(grey: ArrayLike<number>, w: number, h: number): LinesResult {
   const m = inkMask(grey, w, h);
   const L = Math.max(w, h);
-  const st = findLabelStack(horizontalLines(m, w, h, L * 0.05), verticalLines(m, w, h, L * 0.025), w, h);
-  if (!st) return { box: null, upright: true, rows: 0, why: 'the ruled label column (Engineer Name ... Service Visit Date) was not found' };
-  if (st.box.w > 0.7 * w || st.box.h > 0.4 * h) {
-    return { box: null, upright: st.upright, rows: st.ys.length - 1, why: `the lines gave a box too large (${Math.round(100 * st.box.w / w)}% x ${Math.round(100 * st.box.h / h)}%) -- not sent` };
+  const stacks = findLabelStacks(horizontalLines(m, w, h, L * 0.05), verticalLines(m, w, h, L * 0.025), w, h);
+  if (!stacks.length) return { boxes: [], why: 'no ruled column of even rows like the label column (Engineer Name ... Service Visit Date) was found' };
+  const boxes = stacks.filter((st) => st.box.w <= 0.7 * w && st.box.h <= 0.4 * h)
+    .map((st) => ({ box: st.box, upright: st.upright, rows: st.ys.length - 1, stack: st }));
+  return { boxes, why: boxes.length ? '' : 'the lines gave only boxes too large to be the date box -- not sent' };
+}
+
+export interface Cell { row: 'call' | 'visit'; x: number; y: number; w: number; h: number }
+
+/** The cells of the box's two rows, to read the printed labels from: one per
+ *  column the rows share, plus a column's width to the LEFT of the first
+ *  (where the label column is when its left-hand rule was too faint to
+ *  find). Inset from the rules, which spoil the reading. Read on the device
+ *  only: these are never sent. */
+export function labelCells(st: Stack): Cell[] {
+  const cols = st.cols;
+  const cw = cols.length > 1 ? cols[1] - cols[0] : st.labelX[1] - st.labelX[0];
+  const xs = [Math.max(0, cols[0] - cw), ...cols];
+  const out: Cell[] = [];
+  const n = st.ys.length;
+  for (const [row, i] of [['call', n - 3], ['visit', n - 2]] as const) {
+    const ins = Math.round((st.ys[i + 1] - st.ys[i]) * 0.15);
+    for (let k = 0; k + 1 < xs.length; k++) {
+      const x = xs[k] + ins, y = st.ys[i] + ins, cw2 = xs[k + 1] - ins - x, ch = st.ys[i + 1] - ins - y;
+      if (cw2 >= 10 && ch >= 6) out.push({ row, x, y, w: cw2, h: ch });
+    }
   }
-  return { box: st.box, upright: st.upright, rows: st.ys.length - 1, why: '' };
+  return out;
+}
+
+/** Do the cells read as the labels? "Service Visit Date" in the lower row
+ *  (similarity 0.4 or more: the blurriest sample read "Barve Vist Ons", 0.44)
+ *  or "Call No/UC No" in the upper (0.6). Checklist words seen on PM pages --
+ *  "Low in O2", "Patient disconnection", "Apnea alarm" -- score 0.25 or less. */
+export function labelsConfirm(read: { row: 'call' | 'visit'; text: string }[]): { ok: boolean; label: string } {
+  let best = { score: 0, label: '' };
+  for (const r of read) {
+    const t = r.text.replace(/\s+/g, ' ').trim();
+    if (!t) continue;
+    const sc = r.row === 'visit' ? similar(t, 'SERVICE VISIT DATE') / 0.4 : similar(t, 'CALL NO UC NO') / 0.6;
+    if (sc > best.score) best = { score: sc, label: t };
+  }
+  return { ok: best.score >= 1, label: best.label };
 }

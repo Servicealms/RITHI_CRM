@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.255',
+    date: '2026-11-17',
+    title: 'Report reader trial: no more random boxes',
+    changes: [
+      'A box found by the ruled lines is now used only when its cells actually read as the labels — "Call No/UC No" or "Service Visit Date". PM report pages are full of tables with even rows, and the trial was cutting one of those instead; now such a page comes back as not found, with the reason.',
+      'Each result shows the label as it was read, so you can see why the box was accepted.',
+    ],
+  },
+  {
     version: '0.10.254',
     date: '2026-11-17',
     title: 'Report reader trial: the box is found by the form\'s ruled lines',

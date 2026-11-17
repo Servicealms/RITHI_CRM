@@ -11,10 +11,11 @@
 // the box, so it can be checked before any reading service exists.
 // ===========================================================================
 import { findReportBox, type CropBox, type OcrLine } from './reportCrop';
-import { findBoxByLines, inkMask, estimateSkew } from './reportGrid';
+import { findBoxByLines, inkMask, estimateSkew, labelCells, labelsConfirm, type Cell } from './reportGrid';
 
 type TesseractWorker = {
   recognize: (img: HTMLCanvasElement, opts?: object, out?: object) => Promise<{ data: { blocks?: Array<{ paragraphs: Array<{ lines: Array<{ words: Array<{ text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }> }> }> }> | null } }>;
+  setParameters: (p: Record<string, string>) => Promise<unknown>;
   terminate: () => Promise<unknown>;
 };
 
@@ -121,12 +122,28 @@ export interface CropResult {
 
 async function readLines(c: HTMLCanvasElement): Promise<OcrLine[]> {
   const w = await ocrWorker();
+  await w.setParameters({ tessedit_pageseg_mode: '3' });   // a whole page
   const { data } = await w.recognize(c, {}, { blocks: true });
   const lines: OcrLine[] = [];
   for (const b of data.blocks ?? []) for (const p of b.paragraphs) for (const l of p.lines) {
     lines.push({ words: l.words.map((x) => ({ text: x.text, x0: x.bbox.x0, y0: x.bbox.y0, x1: x.bbox.x1, y1: x.bbox.y1 })) });
   }
   return lines;
+}
+
+/** Read one label cell as a single line of print: cut out, enlarged to about
+ *  90 px tall, framed in white. On the device only -- never sent. */
+async function readCell(c: HTMLCanvasElement, cell: Cell): Promise<string> {
+  const w = await ocrWorker();
+  await w.setParameters({ tessedit_pageseg_mode: '7' });   // one line
+  const k = 90 / cell.h, pad = 20;
+  const o = document.createElement('canvas');
+  o.width = Math.round(cell.w * k) + 2 * pad; o.height = 90 + 2 * pad;
+  const g = o.getContext('2d')!;
+  g.fillStyle = '#fff'; g.fillRect(0, 0, o.width, o.height);
+  g.drawImage(c, cell.x, cell.y, cell.w, cell.h, pad, pad, o.width - 2 * pad, 90);
+  const { data } = await w.recognize(o, {}, { text: true } as object) as unknown as { data: { text?: string } };
+  return (data.text ?? '').trim();
 }
 
 /** One byte a pixel (the canvas is already grey: the red channel will do). */
@@ -166,16 +183,26 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
   const done = (c: HTMLCanvasElement, box: CropBox, turned: number, method: CropResult['method'], skew: number): CropResult =>
     ({ box, why: '', crop: canvasJpeg(c, box), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew });
 
-  let linesWhy = '';
+  // A box from the lines is used only once its label cells READ as the
+  // labels (the user, 2026-11-17: "It is finding random Boxes" -- PM pages are
+  // full of tables of even rows). Unconfirmed, it is not used at all.
+  let linesWhy = '', tried = 0;
   for (const deg of [0, 180, 90, 270] as const) {
     let c = deg === 0 ? upright : rotated(upright, deg);
     let g = greyBytes(c);
     const skew = estimateSkew(inkMask(g, c.width, c.height), c.width, c.height);
     if (Math.abs(skew) >= 0.2) { c = tilted(c, -skew); g = greyBytes(c); }
     const r = findBoxByLines(g, c.width, c.height);
-    if (r.box && r.upright) return done(c, { ...r.box, anchor: 'Ruled lines', label: `the ruled label column, ${r.rows} rows` }, deg, 'lines', skew);
-    if (!linesWhy) linesWhy = r.box ? 'the ruled label column was found only upside down' : r.why;
+    if (!linesWhy && r.why) linesWhy = r.why;
+    for (const cand of r.boxes.filter((b) => b.upright)) {
+      tried++;
+      const read: { row: 'call' | 'visit'; text: string }[] = [];
+      for (const cell of labelCells(cand.stack)) read.push({ row: cell.row, text: await readCell(c, cell) });
+      const ok = labelsConfirm(read);
+      if (ok.ok) return done(c, { ...cand.box, anchor: 'Ruled lines', label: ok.label }, deg, 'lines', skew);
+    }
   }
+  if (tried) linesWhy = `the lines gave ${tried} table${tried === 1 ? '' : 's'} of even rows, but none had the Call No/UC No or Service Visit Date label`;
 
   let firstWhy = '';
   for (const deg of [0, 90, 270, 180] as const) {
