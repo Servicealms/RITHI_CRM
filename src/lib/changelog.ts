@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.257',
+    date: '2026-11-17',
+    title: 'Report reader trial: the cut-out read by Claude Haiku and Sonnet',
+    changes: [
+      'The Report reader trial has a new tick-box: "Also send each cut-out to Claude Haiku and Sonnet to read". Ticked, ONLY the cut-out (the Call No/UC No and Service Visit Date rows) is sent — never the photo — and each model\'s reading is shown beside it, marked ✓ or ✗ against the UCN and Visit Date in RITHI, with the time taken and the cost.',
+      'A summary line gives each model\'s score (UC No right, Visit Date right), its average time and the total cost, so the two can be compared on your own reports.',
+      'The models are not told what RITHI holds: each reads blind. Only someone with Admin config can send.',
+    ],
+  },
+  {
     version: '0.10.256',
     date: '2026-11-17',
     title: 'Report reader trial: PM reports cut to just the two rows',

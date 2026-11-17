@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import { SectionCard } from '../components/ui/ui';
 import { useAuth } from '../lib/auth';
-import { latestManualReports } from '../lib/supabase';
+import { latestManualReports, readReportBox, type BoxRead } from '../lib/supabase';
 import { fetchAppDocument } from '../lib/sheets';
 import { driveFileId } from '../lib/drive';
 import { cropReportBox } from '../lib/reportOcr';
-import { formatDay } from '../lib/dates';
+import { formatDay, localIsoDate } from '../lib/dates';
 
 // ===========================================================================
 // REPORT READER TRIAL -- PHASE A (the user, 2026-11-17: "Crop and send", then
@@ -18,9 +18,10 @@ import { formatDay } from '../lib/dates';
 // uses, finds the printed label on the device and shows the cut-out beside the
 // photo -- for a person to judge by eye.
 //
-// NOTHING IS SENT ANYWHERE. The photo is read and cropped in this browser; the
-// reader is served from the app itself. Phase B (sending the crop to be read)
-// needs an API key and the user's go-ahead, and is not here.
+// NOTHING IS SENT ANYWHERE unless the person ticks "Also send each cut-out":
+// the photo is read and cropped in this browser; the reader is served from the
+// app itself. Ticked (Phase B, v0.10.257 -- API key added by the user,
+// 2026-11-17), ONLY THE CUT-OUT goes to the Edge Function read-report-box.
 //
 // PDFs: page 1 is drawn in the browser by pdf.js (the first run found 15 of
 // the latest 20 reports were PDFs). A photo taken sideways is tried turned.
@@ -29,9 +30,22 @@ import { formatDay } from '../lib/dates';
 // ===========================================================================
 
 interface Row {
-  n: number; ucn: string; visit: string; status: 'waiting' | 'reading' | 'found' | 'not found' | 'failed';
+  n: number; ucn: string; visit: string; visitDay: string; status: 'waiting' | 'reading' | 'found' | 'not found' | 'failed';
   note: string; crop: string; thumb: string; anchor: string; ms: number;
+  reads?: BoxRead[]; readErr?: string; sending?: boolean;
 }
+
+// PHASE B (v0.10.257): the cut-out -- only the cut-out -- is sent to the Edge
+// Function read-report-box, which asks Claude Haiku 5.5 and Claude Sonnet 5.5
+// to read it side by side, blind. What each read is compared here with what
+// RITHI holds. US$ per million tokens, input / output (Anthropic list price).
+const PRICE: Record<BoxRead['which'], [number, number]> = { haiku: [0.10, 0.50], sonnet: [2, 10] };
+const costOf = (r: BoxRead) => (r.usage.input_tokens * PRICE[r.which][0] + r.usage.output_tokens * PRICE[r.which][1]) / 1e6;
+const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+/** The visit's day where the app runs (India), YYYY-MM-DD -- what the model's date is compared with. */
+const istDay = (iso: string) => localIsoDate(iso) ?? '';
+const ucnMatch = (r: BoxRead, ucn: string) => !!r.result?.ucns?.some((u) => norm(u) === norm(ucn));
+const dateMatch = (r: BoxRead, day: string) => !!day && r.result?.visit_date === day;
 
 export function ReportReaderTrialCard() {
   const { can } = useAuth();
@@ -39,6 +53,7 @@ export function ReportReaderTrialCard() {
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [send, setSend] = useState(false);
   const stop = useRef(false);
   if (!can('config.manage')) return null;
 
@@ -50,7 +65,7 @@ export function ReportReaderTrialCard() {
       const n = Math.max(1, Math.min(200, Math.floor(Number(count) || 20)));
       const visits = await latestManualReports(n);
       const start: Row[] = visits.map((v, i) => ({
-        n: i + 1, ucn: v.ucn, visit: v.visit_at ? formatDay(v.visit_at) : '', status: 'waiting',
+        n: i + 1, ucn: v.ucn, visit: v.visit_at ? formatDay(v.visit_at) : '', visitDay: istDay(v.visit_at), status: 'waiting',
         note: '', crop: '', thumb: '', anchor: '', ms: 0,
       }));
       setRows(start);
@@ -72,6 +87,11 @@ export function ReportReaderTrialCard() {
               + (r.box ? `${r.method === 'lines' ? `by the ruled lines, label read as "${r.box.label}"` : r.method === 'label+lines' ? `by the printed label "${r.box.label}", cut at the ruled lines around it` : `by the printed label "${r.box.label}"`}${r.turned ? `, turned ${r.turned}°` : ''}${r.skew ? `, levelled ${r.skew}°` : ''}` : r.why),
             crop: r.crop, thumb: r.thumb, anchor: r.box?.anchor ?? '', ms: r.ms,
           });
+          if (send && r.box && r.crop) {
+            set(i, { sending: true });
+            try { set(i, { reads: await readReportBox(r.crop), sending: false }); }
+            catch (e) { set(i, { readErr: e instanceof Error ? e.message : String(e), sending: false }); }
+          }
         } catch (e) {
           set(i, { status: 'failed', note: `could not read the photo: ${e instanceof Error ? e.message : String(e)}` });
         }
@@ -82,6 +102,33 @@ export function ReportReaderTrialCard() {
   };
 
   const tally = (s: Row['status']) => rows.filter((r) => r.status === s).length;
+  const allReads = rows.flatMap((r) => (r.reads ?? []).map((x) => ({ x, r })));
+  const modelTally = (w: BoxRead['which']) => {
+    const mine = allReads.filter(({ x }) => x.which === w);
+    return {
+      n: mine.length,
+      ucn: mine.filter(({ x, r }) => ucnMatch(x, r.ucn)).length,
+      date: mine.filter(({ x, r }) => dateMatch(x, r.visitDay)).length,
+      cost: mine.reduce((t, { x }) => t + costOf(x), 0),
+      ms: mine.length ? Math.round(mine.reduce((t, { x }) => t + x.ms, 0) / mine.length) : 0,
+    };
+  };
+  const readCell = (r: Row, w: BoxRead['which']) => {
+    if (r.sending) return <span className="muted">Reading…</span>;
+    if (r.readErr) return <span style={{ color: 'var(--danger, #b42318)', fontSize: 12 }}>{r.readErr}</span>;
+    const x = r.reads?.find((q) => q.which === w);
+    if (!x) return <span className="muted">—</span>;
+    if (!x.ok || !x.result) return <span style={{ color: 'var(--danger, #b42318)', fontSize: 12 }}>{x.error ?? 'no reading'}</span>;
+    const u = ucnMatch(x, r.ucn), d = dateMatch(x, r.visitDay);
+    return (
+      <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+        <div>{u ? '✓' : '✗'} {x.result.ucn_as_written ?? <i>unreadable</i>}{x.result.ucns.length > 1 && <span className="muted"> ({x.result.ucns.length} calls)</span>}</div>
+        <div>{d ? '✓' : '✗'} {x.result.visit_date_as_written ?? <i>unreadable</i>}{x.result.visit_date && <span className="muted"> → {formatDay(x.result.visit_date)}</span>}</div>
+        {x.result.notes && <div className="muted" style={{ fontSize: 11 }}>{x.result.notes}</div>}
+        <div className="muted" style={{ fontSize: 11 }}>{(x.ms / 1000).toFixed(1)} s · ${costOf(x).toFixed(4)}{x.model !== (w === 'haiku' ? 'claude-haiku-5-5' : 'claude-sonnet-5-5') ? ` · answered by ${x.model}` : ''}</div>
+      </div>
+    );
+  };
 
   return (
     <SectionCard title="Report reader trial — Phase A (crop only)">
@@ -89,7 +136,8 @@ export function ReportReaderTrialCard() {
         Finds the <b>Call No/UC No + Service Visit Date</b> box on the latest manual report photos and shows the cut-out,
         so you can check by eye that it is the right box and holds nothing else. The box is found by the form's ruled lines
         (the label column and its rows), and by the printed label only when the lines give nothing. Everything happens in this browser:
-        the photo (or page 1 of a PDF) is read and cropped here and <b>nothing is sent anywhere</b>. A sideways photo is tried turned.
+        the photo (or page 1 of a PDF) is read and cropped here and <b>nothing is sent anywhere</b> — unless you tick the box below,
+        when <b>only the cut-out</b> is sent to be read by Claude Haiku and Claude Sonnet side by side, and what each read is compared with RITHI. A sideways photo is tried turned.
         The first run downloads the reader (about 7 MB) from this app; a report takes a few seconds, longer when it has to be turned.
       </p>
       <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
@@ -97,6 +145,10 @@ export function ReportReaderTrialCard() {
           <input className="input" inputMode="numeric" value={count} disabled={busy} onChange={(e) => setCount(e.target.value.replace(/\D/g, ''))} /></label>
         <button className="btn btn-primary" disabled={busy} onClick={() => void run()}>{busy ? 'Reading…' : '▶ Run the trial'}</button>
         {busy && <button className="btn" onClick={() => { stop.current = true; }}>Stop</button>}
+        <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+          <input type="checkbox" checked={send} disabled={busy} onChange={(e) => setSend(e.target.checked)} />
+          Also send each cut-out to Claude Haiku and Sonnet to read (only the cut-out is sent)
+        </label>
       </div>
       {err && <div className="sheet-banner sheet-banner-error" style={{ marginTop: 8 }}><span>{err}</span></div>}
       {rows.length > 0 && (
@@ -107,10 +159,18 @@ export function ReportReaderTrialCard() {
           {busy && <> · reading…</>}
         </p>
       )}
+      {allReads.length > 0 && (
+        <p style={{ fontSize: 13, margin: '0 0 6px' }}>
+          {(['haiku', 'sonnet'] as const).map((w) => { const t = modelTally(w); return (
+            <span key={w} style={{ marginRight: 16 }}>
+              <b>{w === 'haiku' ? 'Haiku' : 'Sonnet'}</b>: UC No right <b>{t.ucn}/{t.n}</b> · Visit Date right <b>{t.date}/{t.n}</b> · {(t.ms / 1000).toFixed(1)} s each · ${t.cost.toFixed(4)} in all
+            </span>); })}
+        </p>
+      )}
       {rows.length > 0 && (
         <div style={{ overflowX: 'auto' }}>
           <table className="assoc-table" style={{ minWidth: 760 }}>
-            <thead><tr><th>#</th><th>UCN</th><th>Visit Date</th><th>Result</th><th>Cut-out (what would be sent)</th><th>Photo</th></tr></thead>
+            <thead><tr><th>#</th><th>UCN</th><th>Visit Date</th><th>Result</th><th>Cut-out (what would be sent)</th>{send && <><th>Read by Haiku</th><th>Read by Sonnet</th></>}<th>Photo</th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.n}>
@@ -123,6 +183,7 @@ export function ReportReaderTrialCard() {
                     {r.ms > 0 && <div className="muted" style={{ fontSize: 11 }}>{(r.ms / 1000).toFixed(1)} s</div>}
                   </td>
                   <td>{r.crop ? <img src={r.crop} alt={`Cut-out for ${r.ucn}`} style={{ maxWidth: 320, maxHeight: 160, border: '1px solid var(--border, #ccc)' }} /> : <span className="muted">—</span>}</td>
+                  {send && <><td style={{ minWidth: 170 }}>{readCell(r, 'haiku')}</td><td style={{ minWidth: 170 }}>{readCell(r, 'sonnet')}</td></>}
                   <td>{r.thumb ? <img src={r.thumb} alt={`Report photo for ${r.ucn}`} style={{ maxWidth: 180, maxHeight: 140 }} /> : <span className="muted">—</span>}</td>
                 </tr>
               ))}

@@ -181,7 +181,7 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
   const source = isPdf ? 'pdf' as const : 'photo' as const;
   const upright = isPdf ? await pdfCanvas(src) : await photoCanvas(src);
   const done = (c: HTMLCanvasElement, box: CropBox, turned: number, method: CropResult['method'], skew: number): CropResult =>
-    ({ box, why: '', crop: canvasJpeg(c, box), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew });
+    ({ box, why: '', crop: canvasJpeg(c, box, 1400), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew });
 
   // Each turn of the page is tried both ways before the next: by the ruled
   // lines, then by the printed label -- an upright page (most PDFs) is
