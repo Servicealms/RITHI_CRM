@@ -5888,6 +5888,30 @@ export async function attachReportsToVisits(
 // ---------------------------------------------------------------------------
 // THE LATEST VISITS WITH A MANUAL REPORT (report-date trial, Phase A, 2026-11-17):
 // newest entry first, the columns the trial compares against and nothing else.
+/** What one model read in a report cut-out (Phase B, Edge Function
+ *  read-report-box). Only the cut-out is sent -- never the photo. */
+export interface BoxRead {
+  which: 'haiku' | 'sonnet'; model: string; ok: boolean; error?: string; ms: number;
+  usage: { input_tokens: number; output_tokens: number };
+  result?: { legible: boolean; ucn_as_written: string | null; ucns: string[]; visit_date_as_written: string | null; visit_date: string | null; notes: string };
+}
+export async function readReportBox(jpegDataUrl: string): Promise<BoxRead[]> {
+  const { data, error } = await must().functions.invoke('read-report-box', {
+    body: { image: jpegDataUrl.replace(/^data:image\/jpeg;base64,/, '') },
+  });
+  if (error) {
+    // The function says what is wrong in its body (no key, no permission,
+    // not deployed); show that rather than "non-2xx status code".
+    let msg = error.message;
+    try {
+      const b = await (error as { context?: Response }).context?.json();
+      if (b?.error) msg = String(b.error);
+    } catch { /* keep the client's message */ }
+    throw new Error(msg);
+  }
+  return ((data as { reads?: BoxRead[] } | null)?.reads ?? []);
+}
+
 export async function latestManualReports(n: number): Promise<{ uid: string; ucn: string; visit_at: string; manual_report: string }[]> {
   const { data, error } = await must().from('reports')
     .select('uid,ucn,visit_at,manual_report')

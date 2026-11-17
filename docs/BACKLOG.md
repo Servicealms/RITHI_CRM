@@ -189,7 +189,16 @@ up)_
   is fitted to the rules around the label (`snapToRules`); each turn tried by
   lines then label. Drawn PM page: exactly the two rows, whole UC No list.
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
-  Edge Functions → Secrets as ANTHROPIC_API_KEY; function to be written.
+  Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
+  route A (GitHub) chosen.
+- v0.10.257 Phase B: `supabase/functions/read-report-box` (Haiku 5.5 +
+  Sonnet 5.5 side by side, blind, JSON schema, config.manage only, cut-out
+  only) + `.github/workflows/deploy-functions.yml` (deploys ONLY the functions
+  it names -- not daily-digest / scheduled-export, which send mail). Trial card
+  tick-box, ✓/✗ against the record, cost. **PENDING: the user adds GitHub
+  secret SUPABASE_ACCESS_TOKEN and re-runs "Deploy Edge Functions"; then runs
+  the trial with the box ticked.** Untested against the live API from here (no
+  key in this environment).
 - Phase B (crop sent to the model, results vs RITHI) needs an Anthropic API
   key + a Supabase Edge Function deploy — **the user has no API key yet.**
   PDFs need a page renderer if many reports are PDFs.

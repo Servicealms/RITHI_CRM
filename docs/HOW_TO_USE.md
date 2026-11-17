@@ -2241,9 +2241,13 @@ typed into a form that reads it.
   other tables (a PM checklist) comes back *not found* rather than with the
   wrong box. When the box is found from the printed label (as on PM
   reports), it is then cut at the ruled lines around the label: just those
-  two rows, and the whole list of UC Nos. This is the
+  two rows, and the whole list of UC Nos. Tick **Also send each cut-out to
+  Claude Haiku and Sonnet to read** to have *only the cut-out* read by both
+  models side by side: each row then shows what each read, ✓ or ✗ against
+  the UCN and Visit Date in RITHI, with time and cost, and a line at the top
+  scores the two. Only someone with *Admin config* can send. This is the
   first step towards checking the Visit Date against the report; reading the
-  date itself (Phase B) is not built yet.
+  date itself is what the tick-box trials; the real-time check on Call Reporting comes after.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the
   service is measured against. **SLA Targets**: a **name** for each SLA, its
   hours, and on/off. The Dashboard shows one tile and one list per SLA under
