@@ -217,10 +217,14 @@ export interface LinesResult { boxes: LinesBox[]; why: string }
  *  are CANDIDATES: a table of even rows is common on these forms (a PM
  *  checklist is little else), so the caller confirms one by reading its
  *  label cells before using it (labelCells, labelsConfirm). */
-export function findBoxByLines(grey: ArrayLike<number>, w: number, h: number): LinesResult {
+export function gridLines(grey: ArrayLike<number>, w: number, h: number): { hs: HLine[]; vs: VLine[] } {
   const m = inkMask(grey, w, h);
   const L = Math.max(w, h);
-  const stacks = findLabelStacks(horizontalLines(m, w, h, L * 0.05), verticalLines(m, w, h, L * 0.025), w, h);
+  return { hs: horizontalLines(m, w, h, L * 0.05), vs: verticalLines(m, w, h, L * 0.025) };
+}
+
+export function findBoxByLines(grey: ArrayLike<number>, w: number, h: number, grid = gridLines(grey, w, h)): LinesResult {
+  const stacks = findLabelStacks(grid.hs, grid.vs, w, h);
   if (!stacks.length) return { boxes: [], why: 'no ruled column of even rows like the label column (Engineer Name ... Service Visit Date) was found' };
   const boxes = stacks.filter((st) => st.box.w <= 0.7 * w && st.box.h <= 0.4 * h)
     .map((st) => ({ box: st.box, upright: st.upright, rows: st.ys.length - 1, stack: st }));
@@ -263,4 +267,52 @@ export function labelsConfirm(read: { row: 'call' | 'visit'; text: string }[]): 
     if (sc > best.score) best = { score: sc, label: t };
   }
   return { ok: best.score >= 1, label: best.label };
+}
+
+/** A PRINTED LABEL, SNAPPED TO THE RULES AROUND IT (v0.10.256). The PM report
+ *  is laid out differently from the Field report -- its label column runs on
+ *  below Service Visit Date (Start Time) and its rows are not the Field
+ *  form's heights -- so a box worked out from the label's own size took in
+ *  Call Type, Status and Start Time, and cut the list of UC Nos short. With
+ *  the label found, the rules around it give the real cells:
+ *    rows    -- the rule just above and just below the label; for "Service
+ *               Visit Date" plus the row above it (Call No/UC No), for
+ *               "Call No/UC No" plus the row below it;
+ *    left    -- the vertical rule just left of the label;
+ *    right   -- past the rule just right of the label (label | value), the
+ *               NEXT vertical rule that runs down beside BOTH rows: the end
+ *               of the value cells. Nothing beyond it is taken -- on the PM
+ *               form other sections sit to the right.
+ *  Null when the rules do not bracket the label plausibly: the caller then
+ *  keeps the label-sized box. */
+export function snapToRules(word: { x0: number; y0: number; x1: number; y1: number }, anchor: 'Service Visit Date' | 'Call No/UC No',
+  hs: HLine[], vs: VLine[], w: number, h: number): { x: number; y: number; w: number; h: number } | null {
+  const tol = Math.max(6, Math.round(Math.max(w, h) * 0.008));
+  const lh = Math.max(1, word.y1 - word.y0), cy = (word.y0 + word.y1) / 2;
+  const ys = rulesAcross(hs, word.x0, word.x1, 0, h, tol);
+  const above = ys.filter((y) => y < word.y0 + lh * 0.3);
+  const below = ys.filter((y) => y > word.y1 - lh * 0.3);
+  if (!above.length || !below.length) return null;
+  const a = above[above.length - 1], b = below[0];
+  const rowH = b - a;
+  if (rowH < lh * 1.0 || rowH > lh * 4) return null;
+  let top: number, bot: number;
+  if (anchor === 'Service Visit Date') {
+    if (above.length < 2) return null;
+    top = above[above.length - 2]; bot = b;
+  } else {
+    if (below.length < 2) return null;
+    top = a; bot = below[1];
+  }
+  if (bot - top > rowH * 3.2) return null;          // the neighbour row is not one row
+  const spans = (v: VLine, y0: number, y1: number) => v.y0 <= y0 + tol && v.y1 >= y1 - tol;
+  const leftRules = vs.filter((v) => v.x <= word.x0 + tol && v.x >= word.x0 - lh * 3 && spans(v, cy, cy));
+  const left = leftRules.length ? Math.max(...leftRules.map((v) => v.x)) : word.x0 - lh * 0.3;
+  const divider = vs.filter((v) => v.x >= word.x1 - tol && spans(v, cy, cy)).sort((p, q) => p.x - q.x)[0];
+  if (!divider) return null;
+  const end = vs.filter((v) => v.x > divider.x + lh * 2 && spans(v, top + (bot - top) * 0.25, bot - (bot - top) * 0.25)).sort((p, q) => p.x - q.x)[0];
+  if (!end) return null;
+  const x0 = Math.max(0, Math.round(left - tol)), y0 = Math.max(0, Math.round(top - tol));
+  const x1 = Math.min(w, Math.round(end.x + tol)), y1 = Math.min(h, Math.round(bot + tol));
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }

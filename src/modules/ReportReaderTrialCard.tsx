@@ -69,7 +69,7 @@ export function ReportReaderTrialCard() {
           set(i, {
             status: r.box ? 'found' : 'not found',
             note: (r.source === 'pdf' ? 'PDF page 1 · ' : 'photo · ')
-              + (r.box ? `${r.method === 'lines' ? `by the ruled lines, label read as "${r.box.label}"` : `by the printed label "${r.box.label}"`}${r.turned ? `, turned ${r.turned}°` : ''}${r.skew ? `, levelled ${r.skew}°` : ''}` : r.why),
+              + (r.box ? `${r.method === 'lines' ? `by the ruled lines, label read as "${r.box.label}"` : r.method === 'label+lines' ? `by the printed label "${r.box.label}", cut at the ruled lines around it` : `by the printed label "${r.box.label}"`}${r.turned ? `, turned ${r.turned}°` : ''}${r.skew ? `, levelled ${r.skew}°` : ''}` : r.why),
             crop: r.crop, thumb: r.thumb, anchor: r.box?.anchor ?? '', ms: r.ms,
           });
         } catch (e) {
