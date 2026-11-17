@@ -40,4 +40,6 @@ jobs:
         with:
           version: latest
       - name: Deploy read-report-box (JWT verification ON)
-        run: supabase functions deploy read-report-box --project-ref "$PROJECT_REF"
+        # --yes: the CLI asks for confirmation and a workflow cannot answer;
+        # --remote replaces the deprecated --project-ref.
+        run: supabase functions deploy read-report-box --remote="$PROJECT_REF" --yes
