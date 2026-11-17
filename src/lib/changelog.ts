@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.253',
+    date: '2026-11-17',
+    title: 'Report reader trial: PDFs, and photos taken sideways',
+    changes: [
+      'The Report reader trial now reads PDF reports too (their first page), drawn in your browser — nothing is sent.',
+      'A photo taken sideways or upside down is tried turned before giving up, and each result says which turn found the box. Pages are read at a higher resolution, for a whole sheet photographed with the form small in the frame.',
+    ],
+  },
+  {
     version: '0.10.252',
     date: '2026-11-17',
     title: 'Report reader trial (Phase A) on Admin Config',
