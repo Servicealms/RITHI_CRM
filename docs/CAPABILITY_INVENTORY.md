@@ -758,6 +758,16 @@ Purpose: the register of customer feedback, one column per question.
 | 9 | Export to CSV with a partial-load warning | CustomerFeedback.tsx:202-204 | export.data | partial: URS-013, FRS-018 | |
 | 10 | Refresh | CustomerFeedback.tsx:161-164 | none | GAP | Low |
 
+### Visit Date Check (`/visit-date-check`) — `src/modules/VisitDateCheck.tsx`
+Purpose: the Service Visit Date read on each manual report beside the Visit Date in RITHI, and its correction (0486).
+
+| # | Capability (plain words a user would use) | Where (file:line) | Guard (permission key / admin / none / DB policy if known) | Covered by | Note |
+|---|---|---|---|---|---|
+| 1 | List every reading (all pages) with the Visit Date now and when checked, outcome, reader, cost, report link | VisitDateCheck.tsx; supabase.ts listVisitDateChecks | mod:/visit-date-check (admin); DB visitdate.view | URS-193, FRS-291.4, OQ-313 | |
+| 2 | Check the next N visits not yet checked (cropped on the device, cut-out sent; Haiku then Sonnet; stored) | VisitDateCheck.tsx run(); visitDateRun.ts; read-report-box | visitdate.check (admin), checked again in the Edge Function | FRS-291.1-.3, OQ-313 | |
+| 3 | Use the date read / Keep RITHI's on a reading that differs | VisitDateCheck.tsx decide(); resolve_visit_date_read() | visitdate.fix (admin), checked in the function | FRS-291.5, OQ-313 | |
+| 4 | Outcome chips (exact), search, Excel / CSV with scope | VisitDateCheck.tsx | none | FRS-291.4 | |
+
 ### Feedback Without a Report (`/feedback-without-report`) — `src/modules/FeedbackWithoutReport.tsx`
 Purpose: administrators' list of feedback with no "Solved - Report Completed" visit behind it, naming which record is absent.
 

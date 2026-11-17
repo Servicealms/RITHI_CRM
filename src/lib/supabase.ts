@@ -5888,20 +5888,27 @@ export async function attachReportsToVisits(
 // ---------------------------------------------------------------------------
 // THE LATEST VISITS WITH A MANUAL REPORT (report-date trial, Phase A, 2026-11-17):
 // newest entry first, the columns the trial compares against and nothing else.
-/** What one model read in a report cut-out (Phase B, Edge Function
- *  read-report-box). Only the cut-out is sent -- never the photo. */
-export interface BoxRead {
-  which: 'haiku' | 'sonnet'; model: string; ok: boolean; error?: string; ms: number;
-  usage: { input_tokens: number; output_tokens: number };
-  result?: { legible: boolean; ucn_as_written: string | null; ucns: string[]; visit_date_as_written: string | null; visit_date: string | null; notes: string };
+/** One Visit Date Check reading (0486, Edge Function read-report-box): the
+ *  Service Visit Date a model read on the report's cut-out, one per visit. */
+export interface VisitDateReading {
+  id: number; checked_at: string; report_uid: string; ucn: string; engineer: string | null; call_status: string | null;
+  recorded_visit_at: string | null; current_visit_at: string | null; read_date: string | null; read_as_written: string | null;
+  outcome: 'match' | 'mismatch' | 'unreadable' | 'no_box'; notes: string; model: string; tried: string[]; first_error: string;
+  ms: number; input_tokens: number; output_tokens: number; cost_usd: number;
+  resolution: 'applied' | 'kept' | null; resolved_at: string | null; resolved_by_name: string | null;
+  old_visit_at: string | null; new_visit_at: string | null; manual_report: string | null;
 }
-export async function readReportBox(jpegDataUrl: string): Promise<BoxRead[]> {
+
+/** Send one visit's cut-out to be read; the function stores the reading.
+ *  `skipped` when the visit was already checked (it is never read twice). */
+export async function checkVisitDate(reportUid: string, jpegDataUrl: string, noBox?: string): Promise<{ skipped?: boolean; reading: Partial<VisitDateReading> }> {
   const { data, error } = await must().functions.invoke('read-report-box', {
-    body: { image: jpegDataUrl.replace(/^data:image\/jpeg;base64,/, '') },
+    body: noBox ? { report_uid: reportUid, no_box: noBox }
+                : { report_uid: reportUid, image: jpegDataUrl.replace(/^data:image\/jpeg;base64,/, '') },
   });
   if (error) {
     // The function says what is wrong in its body (no key, no permission,
-    // not deployed); show that rather than "non-2xx status code".
+    // both models failed); show that rather than "non-2xx status code".
     let msg = error.message;
     try {
       const b = await (error as { context?: Response }).context?.json();
@@ -5909,7 +5916,44 @@ export async function readReportBox(jpegDataUrl: string): Promise<BoxRead[]> {
     } catch { /* keep the client's message */ }
     throw new Error(msg);
   }
-  return ((data as { reads?: BoxRead[] } | null)?.reads ?? []);
+  return data as { skipped?: boolean; reading: Partial<VisitDateReading> };
+}
+
+export async function listVisitDateChecks(): Promise<VisitDateReading[]> {
+  const c = must();
+  return allRows<VisitDateReading>((from, to) => c.from('visit_date_check').select('*')
+    .order('checked_at', { ascending: false }).order('id', { ascending: false }).range(from, to));
+}
+
+/** The administrator's decision on a reading: apply its date to the visit, or keep RITHI's. */
+export async function resolveVisitDateRead(id: number, apply: boolean): Promise<string> {
+  const { data, error } = await must().rpc('resolve_visit_date_read', { p_id: id, p_apply: apply });
+  if (error) throw new Error(errMsg(error));
+  return String(data ?? '');
+}
+
+/** The latest visits with a manual report that have NOT been checked yet --
+ *  "The same records need not be re-run". Pages back through the visits until
+ *  `n` are found or 5,000 have been looked at. */
+export async function uncheckedManualReports(n: number): Promise<{ uid: string; ucn: string; visit_at: string; manual_report: string }[]> {
+  const c = must();
+  const checked = new Set((await allRows<{ report_uid: string }>((from, to) => c.from('visit_date_reads').select('report_uid')
+    .order('id', { ascending: true }).range(from, to))).map((r) => r.report_uid));
+  const out: { uid: string; ucn: string; visit_at: string; manual_report: string }[] = [];
+  const page = 500;
+  for (let from = 0; out.length < n && from < 5000; from += page) {
+    const { data, error } = await c.from('reports').select('uid,ucn,visit_at,manual_report')
+      .neq('manual_report', '').not('manual_report', 'is', null)
+      .order('updated_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false })
+      .range(from, from + page - 1);
+    if (error) throw new Error(errMsg(error));
+    for (const r of data ?? []) {
+      const uid = String(r.uid ?? '');
+      if (uid && !checked.has(uid) && out.length < n) out.push({ uid, ucn: String(r.ucn ?? ''), visit_at: String(r.visit_at ?? ''), manual_report: String(r.manual_report ?? '') });
+    }
+    if ((data ?? []).length < page) break;
+  }
+  return out;
 }
 
 export async function latestManualReports(n: number): Promise<{ uid: string; ucn: string; visit_at: string; manual_report: string }[]> {

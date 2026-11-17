@@ -191,6 +191,17 @@ up)_
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
   Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
   route A (GitHub) chosen.
+- v0.10.258 (the user's 5-report run: Visit Date Haiku 4/5, Sonnet 5/5; then
+  "Lets do only Visit Date ... If Haiku Fails then go to Sonnet ... store the
+  REsults ... Add it as a Report ... Provision for Admin ... to update the Visit
+  Date"; "The Same records need not be re-run"): migration 0486
+  (visit_date_reads, one per visit, written only by the function as service
+  role; view visit_date_check; resolve_visit_date_read()), read-report-box reads
+  the date only (Haiku, Sonnet on failure) and stores it, Reports -> Visit Date
+  Check (`/visit-date-check`, admin-only by key, granted to nobody). Keys
+  visitdate.view / .check / .fix to be ticked by the user later. Suite
+  visit_date_reads_test. **PENDING: migration applied by the workflow on merge
+  -- check the run; the user runs a first check on real visits.**
 - v0.10.257 Phase B: `supabase/functions/read-report-box` (Haiku 5.5 +
   Sonnet 5.5 side by side, blind, JSON schema, config.manage only, cut-out
   only) + `.github/workflows/deploy-functions.yml` (deploys ONLY the functions

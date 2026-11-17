@@ -74,7 +74,7 @@ export const DOC_PROCESSES: DocProcess[] = [
     checks: ['Training assignment, sessions and Training Form R/HR/11', 'QMS documents and service manuals'],
     keywords: ['training', 'document', 'qms', 'manual', 'knowledge'] },
   { id: '11', name: 'Reports, KPI and quality objectives', responsibility: 'NSM · Customer Support Manager',
-    paths: ['/', '/workload', '/kpi', '/objective', '/spare-insights', '/tracker', '/bulk-uploads', '/data-export', '/exports', '/exports/consumption', '/exports/kpi', '/exports/unused', '/exports/calls', '/exports/stores-dispatch'],
+    paths: ['/', '/workload', '/kpi', '/objective', '/spare-insights', '/tracker', '/bulk-uploads', '/data-export', '/exports', '/exports/consumption', '/exports/kpi', '/exports/unused', '/exports/calls', '/exports/stores-dispatch', '/visit-date-check'],
     checks: ['KPI, objectives and dashboards computed by the database', 'Reports and exports', 'Bulk uploads of historical data'],
     keywords: ['kpi', 'objective', 'dashboard', 'export', 'insight', 'tracker', 'upload', 'import'] },
   { id: '12', name: 'Data storage, audit and security', responsibility: 'Administrator · QA',

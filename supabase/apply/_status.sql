@@ -2416,7 +2416,14 @@ with checks(sort_order, bundle, provides, present) as (
         and exists (select 1 from pg_attribute where attrelid = coalesce(to_regclass('public.handstock_movements_history'), 0::regclass) and attname = 'before_count' and not attisdropped)
         and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.handstock_movements_history')), false)
         and (length(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements')), '')) - length(replace(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements')), ''), 'UNION ALL', '')))
-          = (length(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements_history')), '')) - length(replace(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements_history')), ''), 'UNION ALL', ''))))
+          = (length(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements_history')), '')) - length(replace(coalesce(pg_get_viewdef(to_regclass('public.handstock_movements_history')), ''), 'UNION ALL', '')))),
+    (393, 'Visit Date Check', 'visit_date_reads (one per visit, RLS on, no write policy), the visit_date_check view with security_invoker, and resolve_visit_date_read() (0486). NO means Reports -> Visit Date Check is empty or errors, or a reading cannot be applied. Restore: reports.sql (0486)',
+        to_regclass('public.visit_date_reads') is not null
+        and to_regclass('public.visit_date_reads_report_uid') is not null
+        and coalesce((select relrowsecurity from pg_class where oid = to_regclass('public.visit_date_reads')), false)
+        and not exists (select 1 from pg_policy where polrelid = coalesce(to_regclass('public.visit_date_reads'), 0::regclass) and polcmd in ('a', 'w', 'd', '*'))
+        and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.visit_date_check')), false)
+        and to_regprocedure('public.resolve_visit_date_read(bigint,boolean)') is not null)
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

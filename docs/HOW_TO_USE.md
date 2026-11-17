@@ -1909,6 +1909,23 @@ typed into a form that reads it.
   > right UCN in INST Call from the Warranty Register, and the machine leaves
   > the list.
 
+- **Visit Date Check** `/visit-date-check` — **administrators for now**
+  (grant it on Roles & Permissions → Reports → Visit Date Check). For each
+  visit checked: the **Service Visit Date written on the manual report**,
+  read by Claude, beside the **Visit Date in RITHI** — *Matches*, *Differs*,
+  *Unreadable* or *No box found*.
+  > **Check the next visits not yet checked** works through the visits with a
+  > manual report, newest first. The report is opened and cropped **on your
+  > device**; only the cut-out of the date box is sent. Claude **Haiku** reads
+  > it; **Sonnet** only when Haiku fails (an error, a refusal or no date). A
+  > visit is **checked once** — it is never read again.
+  >
+  > Where the dates **differ**, **Use dd-MMM-yyyy** changes the visit's Visit
+  > Date to the date read — only the **day** moves; the time of the visit and
+  > its Visit Entry Date stay — or **Keep RITHI's** leaves it. Each reading is
+  > decided once, with who and when, and the change is in the audit trail. A
+  > date in the future is refused. The *Differs — to decide* chip lists what is
+  > still waiting.
 - **Feedback Without a Report** `/feedback-without-report` — **administrators
   only.** The customer gave feedback on a visit; the visit was never written up.
   > Feedback is collected **after** a visit, so its existence is evidence the
@@ -2245,7 +2262,9 @@ typed into a form that reads it.
   Claude Haiku and Sonnet to read** to have *only the cut-out* read by both
   models side by side: each row then shows what each read, ✓ or ✗ against
   the UCN and Visit Date in RITHI, with time and cost, and a line at the top
-  scores the two. Only someone with *Admin config* can send. This is the
+  scores the two. Only someone with *Admin config* can send. (Since v0.10.258
+  the tick-box reads only the Visit Date — Haiku, then Sonnet if Haiku fails —
+  and stores it in Reports → Visit Date Check.) This is the
   first step towards checking the Visit Date against the report; reading the
   date itself is what the tick-box trials; the real-time check on Call Reporting comes after.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the
