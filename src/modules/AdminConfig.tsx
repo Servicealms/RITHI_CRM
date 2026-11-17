@@ -2,6 +2,7 @@ import { PageHeader } from '../components/ui/ui';
 import { CallRegistrationCard } from './CallRegistrationCard';
 import { AuditModeCard } from './AuditModeCard';
 import { DataImport } from './DataImport';
+import { ReportReaderTrialCard } from './ReportReaderTrialCard';
 
 // ===========================================================================
 // ADMIN CONFIG — what the app itself is configured with.
@@ -36,6 +37,8 @@ export function AdminConfig() {
       <CallRegistrationCard />
       <div style={{ height: 16 }} />
       <AuditModeCard />
+      <div style={{ height: 16 }} />
+      <ReportReaderTrialCard />
     </div>
   );
 }

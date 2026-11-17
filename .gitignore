@@ -12,3 +12,6 @@ dist-ssr
 migration-data/*.csv
 .env
 .env.local
+
+# The on-device text reader, copied from node_modules by scripts/copy-ocr.mjs
+public/ocr/

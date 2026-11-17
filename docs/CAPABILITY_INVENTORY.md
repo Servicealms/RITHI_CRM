@@ -2064,6 +2064,7 @@ Purpose: holds the legacy importer (see its own section above), SLA targets, the
 | 9 | Saving says it applies from now on and recorded answers are unchanged | FrequentFailureCard.tsx:55-62, 74-77 | — | FRS-054 | Not audit-logged |
 | 10 | Audit Mode: show ON/OFF; an admin switches it with a required reason; history table (when, to, reason, by) for admins | AuditModeCard.tsx:44-122 | UI `isAdmin`; DB `set_audit_mode()` refuses non-admin | NAR-001 | |
 | 11 | Card says nothing behaves differently while Audit Mode is on | AuditModeCard.tsx:73-78 | — | NAR-001 | |
+| 12 | Report reader trial (Phase A): latest N manual report photos, the Call No/UC No + Service Visit Date box found on the device from the printed label and shown beside the photo; counts found / not found / PDF / could not open; nothing sent | ReportReaderTrialCard.tsx; reportCrop.ts; reportOcr.ts; scripts/copy-ocr.mjs | `config.manage` | URS-193, FRS-290, OQ-311 | |
 
 ### Software Validation (`/software-validation`) — `src/modules/SoftwareValidation.tsx`
 Purpose: shows the whole validation package in tabs, prints it, and records IQ/OQ/PQ execution results.

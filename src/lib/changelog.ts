@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.252',
+    date: '2026-11-17',
+    title: 'Report reader trial (Phase A) on Admin Config',
+    changes: [
+      'Admin Config has a Report reader trial: it takes the latest manual report photos and shows, for each, the cut-out of the Call No/UC No and Service Visit Date box it found — so you can check it finds the right box and nothing else.',
+      'It runs entirely in your browser; nothing is sent anywhere. The first run downloads the reader (about 7 MB) from the app itself. PDFs are counted and skipped for now.',
+    ],
+  },
+  {
     version: '0.10.251',
     date: '2026-11-17',
     title: 'Contract Register: Contract Details export in the old layout',

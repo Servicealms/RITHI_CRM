@@ -2224,6 +2224,14 @@ typed into a form that reads it.
   Roles & Permissions (*audit.mode*, *import.panel*). **While Audit Mode is
   ON** a call's Update Party Details and Update Product Details are hidden (and
   refused).
+  **Report reader trial (Phase A)** — for whoever holds *Admin config*: takes
+  the latest manual report photos (20 by default), finds the **Call No/UC No +
+  Service Visit Date** box on each and shows the cut-out beside the photo, so
+  you can check it is the right box and holds nothing else. It all happens in
+  your browser — nothing is sent anywhere; the first run downloads the reader
+  (about 7 MB) from the app itself. PDFs are counted and skipped. This is the
+  first step towards checking the Visit Date against the report; reading the
+  date itself (Phase B) is not built yet.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the
   service is measured against. **SLA Targets**: a **name** for each SLA, its
   hours, and on/off. The Dashboard shows one tile and one list per SLA under
