@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.251',
+    date: '2026-11-17',
+    title: 'Contract Register: Contract Details export in the old layout',
+    changes: [
+      'New "Contract Details (Excel)" on the Contract Register: one row per machine on a contract, for every contract line, in the old ContractDetails layout — UID, Priority, Item Details Long, Item Details, MC Number … SA End Date, Added By.',
+      'Priority is 2 on every line with an MC Number, as the sheet had it; Status is today\'s (Active, About to Expire, Contract Expired); dates arrive as Excel dates.',
+    ],
+  },
+  {
     version: '0.10.250',
     date: '2026-11-17',
     title: 'Hand Stock: show the entries made before a count',

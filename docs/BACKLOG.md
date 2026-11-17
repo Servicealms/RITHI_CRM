@@ -160,6 +160,15 @@ up)_
 
 ---
 
+## 2026-11-17 — Contract Details export in the AppSheet layout (v0.10.251)
+
+- The user: "I want a Contract Export in this Format" (the 29 ContractDetails
+  headings). Chosen: Priority by the sheet's rule (2 where an MC Number),
+  today's Status, every line in the register. Reads `contract_details`.
+  Screen only.
+
+---
+
 ## 2026-11-17 — Hand Stock: show the entries before a count (0485, v0.10.250)
 
 - The user: "After I upload or Reconcile a Stock, I should still be able to

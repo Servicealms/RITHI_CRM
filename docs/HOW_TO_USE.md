@@ -1039,6 +1039,15 @@ real Excel dates — they sort, filter by month and take your own date format.
 **⭳ Export CSV** is still there, but a CSV holds only text, so its dates are
 written as `dd-MMM-yyyy` text.
 
+**⭳ Contract Details (Excel)** (Contract Register only) is the old AppSheet
+*ContractDetails* layout: one row per machine on a contract, for **every**
+contract line you can see — not just what is loaded on screen — under the 29
+headings UID, Priority, Item Details Long, Item Details, MC Number … SA End
+Date, Added By. A machine line's own value is used where it has one, else the
+entry's. **Priority** is 2 on every line with an MC Number, as the sheet had it;
+**Status** is today's (Active, About to Expire or Contract Expired), not the
+text first keyed.
+
 **Renew this contract** and **⇢ Convert to Contract** open in a **third column**
 beside the details and the products, so the machines being carried over stay in
 view.
