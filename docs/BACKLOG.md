@@ -171,6 +171,13 @@ up)_
 - Phase A shipped: Admin Config → Report reader trial (crop only, nothing
   sent). Found the box on 1 of the user's 3 low-resolution chat samples; real
   photos are 4–6× larger. **PENDING: the user runs it on real reports.**
+- v0.10.253: PDFs (page 1 via pdf.js) and turned photos.
+- v0.10.254 (the user: "can we search be done based on straight line and
+  horizontal line?", after two clear samples were missed): the box is found
+  FIRST by the ruled lines (`src/lib/reportGrid.ts`) — levelled, upright
+  checked, 5 of 5 chat samples found (the word search found 1 of 5), about
+  0.2 s a page; the word search is the fallback. **PENDING: the user re-runs
+  the trial on real reports.**
 - Phase B (crop sent to the model, results vs RITHI) needs an Anthropic API
   key + a Supabase Edge Function deploy — **the user has no API key yet.**
   PDFs need a page renderer if many reports are PDFs.

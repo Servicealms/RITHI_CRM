@@ -24,6 +24,8 @@ import { formatDay } from '../lib/dates';
 //
 // PDFs: page 1 is drawn in the browser by pdf.js (the first run found 15 of
 // the latest 20 reports were PDFs). A photo taken sideways is tried turned.
+// v0.10.254: the box is found FIRST by the form's ruled lines, and by the
+// printed label only when the lines give nothing; each result says which.
 // ===========================================================================
 
 interface Row {
@@ -66,7 +68,8 @@ export function ReportReaderTrialCard() {
           const r = await cropReportBox(new Blob([bytes], { type: mime }));
           set(i, {
             status: r.box ? 'found' : 'not found',
-            note: (r.source === 'pdf' ? 'PDF page 1 · ' : 'photo · ') + (r.box ? `from "${r.box.label}"${r.turned ? `, turned ${r.turned}°` : ''}` : r.why),
+            note: (r.source === 'pdf' ? 'PDF page 1 · ' : 'photo · ')
+              + (r.box ? `${r.method === 'lines' ? 'by the ruled lines' : `by the printed label "${r.box.label}"`}${r.turned ? `, turned ${r.turned}°` : ''}${r.skew ? `, levelled ${r.skew}°` : ''}` : r.why),
             crop: r.crop, thumb: r.thumb, anchor: r.box?.anchor ?? '', ms: r.ms,
           });
         } catch (e) {
@@ -84,7 +87,8 @@ export function ReportReaderTrialCard() {
     <SectionCard title="Report reader trial — Phase A (crop only)">
       <p className="muted" style={{ fontSize: 12.5, marginTop: 0 }}>
         Finds the <b>Call No/UC No + Service Visit Date</b> box on the latest manual report photos and shows the cut-out,
-        so you can check by eye that it is the right box and holds nothing else. Everything happens in this browser:
+        so you can check by eye that it is the right box and holds nothing else. The box is found by the form's ruled lines
+        (the label column and its rows), and by the printed label only when the lines give nothing. Everything happens in this browser:
         the photo (or page 1 of a PDF) is read and cropped here and <b>nothing is sent anywhere</b>. A sideways photo is tried turned.
         The first run downloads the reader (about 7 MB) from this app; a report takes a few seconds, longer when it has to be turned.
       </p>
@@ -97,7 +101,8 @@ export function ReportReaderTrialCard() {
       {err && <div className="sheet-banner sheet-banner-error" style={{ marginTop: 8 }}><span>{err}</span></div>}
       {rows.length > 0 && (
         <p style={{ fontSize: 13, margin: '10px 0 6px' }}>
-          <b>{rows.length}</b> reports · box found <b>{tally('found')}</b> · not found <b>{tally('not found')}</b> ·
+          <b>{rows.length}</b> reports · box found <b>{tally('found')}</b>
+          {tally('found') > 0 && <> (by lines {rows.filter((r) => r.status === 'found' && r.note.includes('ruled lines')).length})</>} · not found <b>{tally('not found')}</b> ·
           could not open <b>{tally('failed')}</b>
           {busy && <> · reading…</>}
         </p>
