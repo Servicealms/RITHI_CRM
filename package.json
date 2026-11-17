@@ -1,15 +1,16 @@
 {
   "name": "rithi-crm-field-service",
   "private": true,
-  "version": "0.10.251",
+  "version": "0.10.252",
   "type": "module",
   "description": "RITHI CRM - Field Service Module POC (Medical Domain)",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "dev": "node scripts/copy-ocr.mjs && vite",
+    "build": "node scripts/copy-ocr.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "docs:reqs": "esbuild scripts/requirements-doc.ts --bundle --platform=node --format=esm --define:import.meta.env={} --outfile=node_modules/.cache/requirements-doc.mjs --log-level=error && node node_modules/.cache/requirements-doc.mjs > docs/REQUIREMENTS.md",
+    "check:reportcrop": "esbuild scripts/check-report-crop.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check-report-crop.mjs --log-level=error && node node_modules/.cache/check-report-crop.mjs",
     "check:mapping": "esbuild scripts/check-report-mapping.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check-report-mapping.mjs --log-level=error && node node_modules/.cache/check-report-mapping.mjs",
     "check:uploads": "esbuild scripts/check-uploads.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check-uploads.mjs --log-level=error && node node_modules/.cache/check-uploads.mjs",
     "check:upserts": "node scripts/check-upsert-targets.mjs",
@@ -46,9 +47,11 @@
     "@supabase/supabase-js": "^2.112.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.5"
+    "react-router-dom": "^7.18.5",
+    "tesseract.js": "^5.1.1"
   },
   "devDependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^6.2.1",

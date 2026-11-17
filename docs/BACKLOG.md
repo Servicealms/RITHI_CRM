@@ -160,6 +160,23 @@ up)_
 
 ---
 
+## 2026-11-17 — Report date check: Google OCR trial failed; Phase A (crop on the device) built (v0.10.252)
+
+- Step 0 (Google's OCR in Apps Script) read the Service Visit Date on 1 of 20
+  reports and the UC No on 1 of 20 — not usable on handwriting.
+- The user chose option C with **crop and send**: only the Call No/UC No +
+  Service Visit Date box may leave our systems; the box is found from the
+  PRINTED label by an on-device reader (tesseract.js, self-hosted under
+  /ocr/ via scripts/copy-ocr.mjs); Haiku and Sonnet to be trialled side by side.
+- Phase A shipped: Admin Config → Report reader trial (crop only, nothing
+  sent). Found the box on 1 of the user's 3 low-resolution chat samples; real
+  photos are 4–6× larger. **PENDING: the user runs it on real reports.**
+- Phase B (crop sent to the model, results vs RITHI) needs an Anthropic API
+  key + a Supabase Edge Function deploy — **the user has no API key yet.**
+  PDFs need a page renderer if many reports are PDFs.
+
+---
+
 ## 2026-11-17 — MC7648 had no Contract Entry Date
 
 - Probes (read-only, via the workflow): MC7648 first written 05-Oct-2026

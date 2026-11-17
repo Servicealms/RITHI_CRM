@@ -5886,6 +5886,18 @@ export async function attachReportsToVisits(
 // pulls every visit's `data` to look at one text column is a register-sized
 // download for nothing.
 // ---------------------------------------------------------------------------
+// THE LATEST VISITS WITH A MANUAL REPORT (report-date trial, Phase A, 2026-11-17):
+// newest entry first, the columns the trial compares against and nothing else.
+export async function latestManualReports(n: number): Promise<{ uid: string; ucn: string; visit_at: string; manual_report: string }[]> {
+  const { data, error } = await must().from('reports')
+    .select('uid,ucn,visit_at,manual_report')
+    .neq('manual_report', '').not('manual_report', 'is', null)
+    .order('updated_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false })
+    .range(0, Math.max(1, Math.min(n, 200)) - 1);
+  if (error) throw new Error(errMsg(error));
+  return (data ?? []).map((r) => ({ uid: String(r.uid ?? ''), ucn: String(r.ucn ?? ''), visit_at: String(r.visit_at ?? ''), manual_report: String(r.manual_report ?? '') }));
+}
+
 export async function loadedReportRefs(): Promise<LoadedReport[]> {
   const c = must();
   const rows = await allRows<Record<string, unknown>>((from, to) => c
