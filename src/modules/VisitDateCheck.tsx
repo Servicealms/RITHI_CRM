@@ -15,6 +15,7 @@ import { Ucn } from '../lib/callstate';
 import { COMPLETE } from '../lib/exportscope';
 import { safeUrl } from '../lib/safeUrl';
 import { checkOneVisit, modelWords, OUTCOME_WORDS } from '../lib/visitDateRun';
+import { DailyCutouts } from './DailyCutouts';
 
 // ===========================================================================
 // VISIT DATE CHECK -- Reports (the user, 2026-11-17: "have a Mechanism to
@@ -79,6 +80,9 @@ export function VisitDateCheck() {
   const stop = useRef(false);
   const mayRun = can('visitdate.check');
   const mayFix = can('visitdate.fix');
+  // Two views (0487): the model's readings, and the daily cut-outs for a
+  // person to compare by eye.
+  const [view, setView] = useState<'readings' | 'daily'>('readings');
 
   const load = async () => {
     if (!supabaseConfigured()) return;
@@ -245,12 +249,31 @@ export function VisitDateCheck() {
     logAudit({ action: 'report.visit_date_check', meta: { rows: visible.length, scope, kind } });
   };
 
+  const tabs = (
+    <div className="dccr-tabs" role="tablist" style={{ marginBottom: 8 }}>
+      <button role="tab" aria-selected={view === 'readings'} className={`dccr-tab${view === 'readings' ? ' is-on' : ''}`} onClick={() => setView('readings')}>📅 Readings</button>
+      <button role="tab" aria-selected={view === 'daily'} className={`dccr-tab${view === 'daily' ? ' is-on' : ''}`} onClick={() => setView('daily')}>🖼️ Daily cut-outs</button>
+    </div>
+  );
+  if (view === 'daily') {
+    return (
+      <div>
+        <PageHeader title="Visit Date Check" icon="📅"
+          subtitle="The Service Visit Date box cut out of each manual report every morning, beside the Visit Date in RITHI — compare by eye." />
+        {tabs}
+        <DailyCutouts />
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader
         title="Visit Date Check" icon="📅"
         subtitle="The Service Visit Date written on each manual report, read by Claude and set beside the Visit Date in RITHI — and corrected where it differs."
         count={visible.length} onRefresh={() => void load()} refreshing={busy} />
+
+      {tabs}
 
       {mayRun && (
         <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap', margin: '4px 0 10px' }}>

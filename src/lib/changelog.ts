@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.260',
+    date: '2026-11-17',
+    title: 'Daily Visit Date cut-outs',
+    changes: [
+      'Every morning at 06:00 India time, the Service Visit Date box is cut out of each manual report entered the day before — no AI reads it, so there is no cost.',
+      'See them on Reports → Visit Date Check → Daily cut-outs: pick a day (yesterday by default) and each visit shows its UCN, engineer and Visit Date in RITHI beside the cut-out from the report, to compare by eye. Filter, search and export.',
+      'A visit is cropped once. A report that could not be opened is tried again the next morning (the job looks back three days).',
+    ],
+  },
+  {
     version: '0.10.259',
     date: '2026-11-17',
     title: 'Bulk close PM calls',

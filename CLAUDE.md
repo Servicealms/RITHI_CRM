@@ -277,6 +277,11 @@ on testing the old shape. **When a migration replaces a definition, move the
   secret `SUPABASE_ACCESS_TOKEN`; a function's own secrets live in Supabase.
   `daily-digest` and `scheduled-export` are deliberately NOT on the list: they
   send mail on a timer and going live is a decision, not a side effect.
+- **THE DAILY VISIT DATE CUT-OUTS RUN ON GITHUB** (`daily-report-crops.yml`,
+  06:00 India time, 0487). The runner opens whole manual reports -- customer
+  details -- in memory, and THE LOGS ARE PUBLIC: `scripts/daily-report-crops.ts`
+  prints counts only, and any change to it must keep it that way (no UCN, name,
+  link or file name in a log line or an error).
 - **CallReg redeploys** — a change to `apps-script/CallReg.gs` is not live until
   the Web App is redeployed. When a new `/exec` URL arrives, bake it into
   `DEFAULT_SHEETS_URL` in `src/lib/sheets.ts` and bump `DEFAULT_URL_VERSION`, so

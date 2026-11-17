@@ -1939,6 +1939,13 @@ typed into a form that reads it.
   > decided once, with who and when, and the change is in the audit trail. A
   > date in the future is refused. The *Differs — to decide* chip lists what is
   > still waiting.
+  >
+  > **Daily cut-outs** (the second tab): every morning at 06:00 India time the
+  > Service Visit Date box is cut out of each manual report entered the day
+  > before — **no AI, no cost** — and shown here by day (yesterday by
+  > default): UCN, engineer, Visit Date in RITHI and the cut-out side by side,
+  > to compare by eye. A visit is cropped once; a report that could not be
+  > opened is tried again the next morning.
 - **Feedback Without a Report** `/feedback-without-report` — **administrators
   only.** The customer gave feedback on a visit; the visit was never written up.
   > Feedback is collected **after** a visit, so its existence is evidence the

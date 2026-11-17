@@ -1145,7 +1145,9 @@ const MODULES = {
             '0224_solved_without_a_report.sql',
             // Visit Date Check (0486): the model's reading of the Service Visit
             // Date, kept, and resolve_visit_date_read() to correct the visit.
-            '0486_visit_date_reads.sql'],
+            '0486_visit_date_reads.sql',
+            // Daily cut-outs (0487): the 06:00 workflow's crops, no model.
+            '0487_visit_report_crops.sql'],
   },
   handstock: {
     // Written to the repo root as HandStock_X.sql, alongside Spare_1.sql — it
