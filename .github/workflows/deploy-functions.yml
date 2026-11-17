@@ -38,7 +38,9 @@ jobs:
           fi
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: "latest" asks the GitHub API which release is newest, and a
+          # rate limit on that lookup failed run 44078656108 before any deploy.
+          version: 3.2.0
       - name: Deploy read-report-box (JWT verification ON)
         # --yes: the CLI asks for confirmation and a workflow cannot answer;
         # --remote replaces the deprecated --project-ref.
