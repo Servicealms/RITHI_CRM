@@ -160,6 +160,23 @@ up)_
 
 ---
 
+## 2026-11-17 — Report date check: Step 0 trial (Apps Script, not the app)
+
+- The user: read the Service Visit Date off the uploaded manual report and
+  suggest a correction when it differs from the Visit Date entered. Customer
+  details must NOT leave our systems, and there is no AI API — so only
+  Google's own OCR, inside the Google account, on the files already in Drive.
+  Handwritten dates; Call Date sits beside the Service Visit Date on the form.
+- `apps-script/ReportDateTrial.gs`: run `runReportDateTrial` from the editor
+  (Drive API service added) on the latest 20 visits with a manual report; it
+  logs counts — dates read / matching / different / unsure, UC Nos likewise.
+- **PENDING: the user runs it and sends the counts.** Then: build (pop-up
+  suggestion + UC No check on Call Reporting, Field/Installation/PM; result
+  and choice recorded on the visit) or stop. Re-checking old reports is
+  Phase 2.
+
+---
+
 ## 2026-11-17 — Contract Details export in the AppSheet layout (v0.10.251)
 
 - The user: "I want a Contract Export in this Format" (the 29 ContractDetails
