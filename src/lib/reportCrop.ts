@@ -111,7 +111,7 @@ function boxFrom(label: OcrWord, k: { left: number; right: number; up: number; d
 }
 
 /** The box to send, or null with the reason. */
-export function findReportBox(lines: OcrLine[], imgW: number, imgH: number): { box: CropBox | null; why: string } {
+export function findReportBox(lines: OcrLine[], imgW: number, imgH: number): { box: CropBox | null; why: string; word?: OcrWord } {
   const tries: [OcrWord | null, CropBox['anchor'], typeof BOX.visit][] = [
     [findVisitLabel(lines), 'Service Visit Date', BOX.visit],
     [findCallNoLabel(lines), 'Call No/UC No', BOX.callNo],
@@ -125,7 +125,7 @@ export function findReportBox(lines: OcrLine[], imgW: number, imgH: number): { b
       continue;
     }
     if (b.w < 20 || b.h < 10) { why = `"${anchor}" found, but the box is too small to read`; continue; }
-    return { box: { ...b, anchor, label: label.text }, why: '' };
+    return { box: { ...b, anchor, label: label.text }, why: '', word: label };
   }
   return { box: null, why };
 }

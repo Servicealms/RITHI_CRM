@@ -184,6 +184,12 @@ up)_
   inset, single-line read). All 6 chat samples confirmed; a drawn checklist
   page refused. **PENDING: re-run on real reports; send a PM report header
   so we know where the date sits on PM pages.**
+- v0.10.256 (the user's run: PM PDFs found by label but cut with Call Type,
+  Status, Start Time and the UC No list truncated, 12-18 s each): a label box
+  is fitted to the rules around the label (`snapToRules`); each turn tried by
+  lines then label. Drawn PM page: exactly the two rows, whole UC No list.
+- **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
+  Edge Functions → Secrets as ANTHROPIC_API_KEY; function to be written.
 - Phase B (crop sent to the model, results vs RITHI) needs an Anthropic API
   key + a Supabase Edge Function deploy — **the user has no API key yet.**
   PDFs need a page renderer if many reports are PDFs.

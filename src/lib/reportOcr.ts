@@ -11,7 +11,7 @@
 // the box, so it can be checked before any reading service exists.
 // ===========================================================================
 import { findReportBox, type CropBox, type OcrLine } from './reportCrop';
-import { findBoxByLines, inkMask, estimateSkew, labelCells, labelsConfirm, type Cell } from './reportGrid';
+import { findBoxByLines, gridLines, snapToRules, inkMask, estimateSkew, labelCells, labelsConfirm, type Cell } from './reportGrid';
 
 type TesseractWorker = {
   recognize: (img: HTMLCanvasElement, opts?: object, out?: object) => Promise<{ data: { blocks?: Array<{ paragraphs: Array<{ lines: Array<{ words: Array<{ text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }> }> }> }> | null } }>;
@@ -115,7 +115,7 @@ export function canvasJpeg(c: HTMLCanvasElement, box?: { x: number; y: number; w
 export interface CropResult {
   box: CropBox | null; why: string; crop: string; thumb: string; ms: number; turned: number; source: 'photo' | 'pdf';
   /** How the box was found: by the form's ruled lines, or by the printed label. */
-  method: 'lines' | 'label' | '';
+  method: 'lines' | 'label+lines' | 'label' | '';
   /** The tilt corrected before looking, in degrees. */
   skew: number;
 }
@@ -183,17 +183,25 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
   const done = (c: HTMLCanvasElement, box: CropBox, turned: number, method: CropResult['method'], skew: number): CropResult =>
     ({ box, why: '', crop: canvasJpeg(c, box), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew });
 
-  // A box from the lines is used only once its label cells READ as the
-  // labels (the user, 2026-11-17: "It is finding random Boxes" -- PM pages are
-  // full of tables of even rows). Unconfirmed, it is not used at all.
-  let linesWhy = '', tried = 0;
+  // Each turn of the page is tried both ways before the next: by the ruled
+  // lines, then by the printed label -- an upright page (most PDFs) is
+  // settled at the first turn.
+  //
+  // BY THE LINES, a box is used only once its label cells READ as the labels
+  // (the user, 2026-11-17: "It is finding random Boxes" -- PM pages are full
+  // of tables of even rows). Unconfirmed, it is not used at all.
+  //
+  // BY THE LABEL, the box is then fitted to the rules around the label
+  // (snapToRules): the PM form's rows are not the Field form's, and a box
+  // sized from the label took in too many rows and cut the UC Nos short.
+  let tried = 0, firstWhy = '';
   for (const deg of [0, 180, 90, 270] as const) {
     let c = deg === 0 ? upright : rotated(upright, deg);
     let g = greyBytes(c);
     const skew = estimateSkew(inkMask(g, c.width, c.height), c.width, c.height);
     if (Math.abs(skew) >= 0.2) { c = tilted(c, -skew); g = greyBytes(c); }
-    const r = findBoxByLines(g, c.width, c.height);
-    if (!linesWhy && r.why) linesWhy = r.why;
+    const grid = gridLines(g, c.width, c.height);
+    const r = findBoxByLines(g, c.width, c.height, grid);
     for (const cand of r.boxes.filter((b) => b.upright)) {
       tried++;
       const read: { row: 'call' | 'visit'; text: string }[] = [];
@@ -201,16 +209,17 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
       const ok = labelsConfirm(read);
       if (ok.ok) return done(c, { ...cand.box, anchor: 'Ruled lines', label: ok.label }, deg, 'lines', skew);
     }
-  }
-  if (tried) linesWhy = `the lines gave ${tried} table${tried === 1 ? '' : 's'} of even rows, but none had the Call No/UC No or Service Visit Date label`;
-
-  let firstWhy = '';
-  for (const deg of [0, 90, 270, 180] as const) {
-    const c = deg === 0 ? upright : rotated(upright, deg);
-    const { box, why } = findReportBox(await readLines(c), c.width, c.height);
-    if (box) return done(c, box, deg, 'label', 0);
+    const { box, why, word } = findReportBox(await readLines(c), c.width, c.height);
+    if (box && word && box.anchor !== 'Ruled lines') {
+      const snapped = snapToRules(word, box.anchor, grid.hs, grid.vs, c.width, c.height);
+      const fits = snapped && snapped.w <= 0.7 * c.width && snapped.h <= 0.4 * c.height;
+      return done(c, fits ? { ...snapped, anchor: box.anchor, label: box.label } : box, deg, fits ? 'label+lines' : 'label', skew);
+    }
     if (!firstWhy) firstWhy = why;
   }
-  return { box: null, why: `${linesWhy}; and by the printed words: ${firstWhy} (tried upright and turned 90, 270 and 180 degrees)`, crop: '',
+  const linesWhy = tried
+    ? `the lines gave ${tried} table${tried === 1 ? '' : 's'} of even rows, but none had the Call No/UC No or Service Visit Date label`
+    : 'no ruled label column was found';
+  return { box: null, why: `${linesWhy}; and by the printed words: ${firstWhy} (tried upright and turned 180, 90 and 270 degrees)`, crop: '',
            thumb: canvasJpeg(upright, undefined, 360), ms: Math.round(performance.now() - t0), turned: 0, source, method: '', skew: 0 };
 }

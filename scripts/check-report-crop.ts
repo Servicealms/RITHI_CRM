@@ -2,7 +2,7 @@
 // Pure: no reader, no browser. The words are shaped like what the on-device
 // reader returned for the user's own sample (2026-11-17), misreads included.
 import { findReportBox, findVisitLabel, findCallNoLabel, similar, type OcrLine } from '../src/lib/reportCrop';
-import { findBoxByLines as linesAll, inkMask, estimateSkew, labelCells, labelsConfirm } from '../src/lib/reportGrid';
+import { findBoxByLines as linesAll, inkMask, estimateSkew, labelCells, labelsConfirm, gridLines, snapToRules } from '../src/lib/reportGrid';
 const findBoxByLines = (g: Uint8Array, w: number, h: number) => { const r = linesAll(g, w, h); const b = r.boxes[0]; return { box: b?.box ?? null, upright: b?.upright ?? true, rows: b?.rows ?? 0, why: r.why, stack: b?.stack }; };
 
 let failed = 0;
@@ -97,6 +97,30 @@ console.log('-- a box from the lines is used only when its labels read as the la
      !labelsConfirm([{ row: 'call', text: 'Low in O2' }, { row: 'visit', text: 'Patient disconnection' }, { row: 'visit', text: 'Apnea alarm' }]).ok);
   ok('handwriting alone does not ("26K16FOOOR", "Te AT Th EF")', !labelsConfirm([{ row: 'call', text: '26K16FOOOR' }, { row: 'visit', text: 'Te AT Th EF' }]).ok);
   ok('"Service Visit Date" in the Call No row does not count there', !labelsConfirm([{ row: 'call', text: 'Service Visit Date' }]).ok);
+}
+
+console.log('-- a printed label, cut at the rules around it (the PM form) --');
+{
+  // The PM form: label column on the LEFT (60..260), values to 620, where a
+  // vertical rule closes the section; another section (the customer's) to
+  // the right. Rows: Call Type 100-150, Status 150-250 (taller), Call No/UC No
+  // 250-300, Service Visit Date 300-350, Start Time 350-400.
+  const w = 1000, h = 700, g = new Uint8Array(w * h).fill(255);
+  const hl = (y: number, x0: number, x1: number) => { for (let x = x0; x <= x1; x++) for (let k = 0; k < 3; k++) g[(y + k) * w + x] = 20; };
+  const vl = (x: number, y0: number, y1: number) => { for (let y = y0; y <= y1; y++) for (let k = 0; k < 3; k++) g[y * w + x + k] = 20; };
+  for (const y of [100, 150, 250, 300, 350, 400]) hl(y, 60, 620);
+  for (const y of [100, 160, 220, 280, 340, 400]) hl(y, 640, 950);            // the other section
+  vl(60, 100, 400); vl(260, 100, 400); vl(620, 100, 400); vl(450, 100, 150);  // label | value | section end; Call Date
+  vl(640, 100, 400); vl(950, 100, 400);
+  const { hs, vs } = gridLines(g, w, h);
+  const word = { x0: 75, y0: 312, x1: 240, y1: 338 };                          // "Service Visit Date"
+  const b = snapToRules(word, 'Service Visit Date', hs, vs, w, h);
+  ok('the box is the Call No/UC No and Service Visit Date rows only (not Status, not Start Time)', !!b && Math.abs(b.y - 250) <= 12 && Math.abs(b.y + b.h - 350) <= 12);
+  ok('from the label column to the rule closing the value cells -- the whole UC No list', !!b && Math.abs(b.x - 60) <= 12 && Math.abs(b.x + b.w - 620) <= 12);
+  ok('nothing of the section to the right', !!b && b.x + b.w < 640);
+  const c = snapToRules({ x0: 75, y0: 262, x1: 240, y1: 288 }, 'Call No/UC No', hs, vs, w, h);
+  ok('found from "Call No/UC No", the same two rows', !!c && Math.abs(c.y - 250) <= 12 && Math.abs(c.y + c.h - 350) <= 12);
+  ok('no rules around a label gives no snap (the label-sized box is kept)', snapToRules({ x0: 700, y0: 500, x1: 860, y1: 526 }, 'Service Visit Date', hs, vs, w, h) === null);
 }
 
 console.log(failed ? `\n${failed} FAILED` : '\nall passed');

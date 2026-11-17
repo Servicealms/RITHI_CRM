@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.256',
+    date: '2026-11-17',
+    title: 'Report reader trial: PM reports cut to just the two rows',
+    changes: [
+      'On PM reports, where the box is found from the printed label, the cut-out is now fitted to the ruled lines around the label: just the Call No/UC No and Service Visit Date rows (no longer Call Type, Status and Start Time), and wide enough to keep the whole list of UC Nos, stopping at the line that closes the value cells so nothing from the next section is included.',
+      'Each page is now tried by its lines and then by its label before it is turned, so an upright PDF is settled much sooner.',
+    ],
+  },
+  {
     version: '0.10.255',
     date: '2026-11-17',
     title: 'Report reader trial: no more random boxes',

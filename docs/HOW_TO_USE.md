@@ -2239,7 +2239,9 @@ typed into a form that reads it.
   is used only when its cells read as the labels (Call No/UC No or Service
   Visit Date) — the label as read is shown with the result — so a page with
   other tables (a PM checklist) comes back *not found* rather than with the
-  wrong box. This is the
+  wrong box. When the box is found from the printed label (as on PM
+  reports), it is then cut at the ruled lines around the label: just those
+  two rows, and the whole list of UC Nos. This is the
   first step towards checking the Visit Date against the report; reading the
   date itself (Phase B) is not built yet.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the
