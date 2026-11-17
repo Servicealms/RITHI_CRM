@@ -295,7 +295,9 @@ export function snapToRules(word: { x0: number; y0: number; x1: number; y1: numb
   if (!above.length || !below.length) return null;
   const a = above[above.length - 1], b = below[0];
   const rowH = b - a;
-  if (rowH < lh * 1.0 || rowH > lh * 4) return null;
+  // A row is one to five label-heights tall: printed forms run 2-3, a
+  // generously spaced PDF table 4-5 (the drawn PM page, 4.3).
+  if (rowH < lh * 1.0 || rowH > lh * 5) return null;
   let top: number, bot: number;
   if (anchor === 'Service Visit Date') {
     if (above.length < 2) return null;

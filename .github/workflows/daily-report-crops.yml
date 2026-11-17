@@ -1,0 +1,60 @@
+# DAILY VISIT DATE CUT-OUTS (0487) -- every morning at 06:00 India time
+# (the user, 2026-11-17: "Create a Scheduled task to do this read report and
+# crop and present this as Data on a daily basis.. without involving Haiku ...
+# do this check for all calls with report updated yesterday").
+#
+# For each visit entered in the last DAYS days (up to yesterday, India time)
+# with a manual report and no cut-out yet, scripts/daily-report-crops.ts opens
+# the report through the CallReg bridge, finds the Service Visit Date box the
+# way the app does, and stores ONLY the cut-out in public.visit_report_crops.
+# No model is called. Shown on Reports -> Visit Date Check -> Daily cut-outs.
+#
+# The full report is held only in this runner's memory and a temp folder the
+# script deletes. THE LOGS ARE PUBLIC (this repository is public): the script
+# prints counts only.
+#
+# Needs the repository secret SUPABASE_DB_URL (the same one the migrations use).
+name: Daily Visit Date cut-outs
+
+on:
+  schedule:
+    - cron: '30 0 * * *'     # 00:30 UTC = 06:00 India time
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Look back this many days (up to yesterday). Default 3.'
+        required: false
+        default: '3'
+
+concurrency:
+  group: daily-report-crops
+  cancel-in-progress: false
+
+jobs:
+  crop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      DAYS: ${{ github.event.inputs.days || '3' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: The database secret is set
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Add the repository secret SUPABASE_DB_URL, then re-run this workflow."
+            exit 1
+          fi
+      - name: Install psql and pdftoppm
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client poppler-utils
+      - name: Install packages
+        # sharp is installed here only -- the app itself does not need it.
+        run: npm ci --no-audit --no-fund && npm install --no-save --no-audit --no-fund sharp@0.33.5
+      - name: Build the job
+        run: npx esbuild scripts/daily-report-crops.ts --bundle --platform=node --format=esm --external:sharp --external:tesseract.js --outfile=node_modules/.cache/daily-report-crops.mjs --log-level=error
+      - name: Crop yesterday's reports
+        run: node node_modules/.cache/daily-report-crops.mjs

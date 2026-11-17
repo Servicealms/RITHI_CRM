@@ -191,6 +191,14 @@ up)_
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
   Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
   route A (GitHub) chosen.
+- v0.10.260 Daily Visit Date cut-outs (the user: "Scheduled task ... read
+  report and crop and present this as Data on a daily basis ... without
+  involving Haiku ... report updated yesterday"; chosen: GitHub workflow,
+  06:00 IST). 0487 visit_report_crops; .github/workflows/daily-report-crops.yml
+  runs scripts/daily-report-crops.ts (sharp + pdftoppm + tesseract, the app's
+  reportGrid/reportCrop), counts-only logs; Visit Date Check -> Daily cut-outs.
+  Needs SUPABASE_DB_URL (already set). GitHub disables scheduled workflows in a
+  public repo after 60 days with no commits -- re-enable under Actions if so.
 - v0.10.259 PM Bulk Close (the user, 2026-11-17: "bulk close PM Calls ... same
   customer ... separate line items pointing to the same Manual report"; choices:
   any status, spares per call, same feedback on each, same Party name). No

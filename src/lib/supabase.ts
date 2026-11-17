@@ -5932,6 +5932,27 @@ export async function resolveVisitDateRead(id: number, apply: boolean): Promise<
   return String(data ?? '');
 }
 
+/** One daily cut-out (0487): the Service Visit Date box of a visit's manual
+ *  report, cropped by the 06:00 daily job; no model reads it. */
+export interface ReportCrop {
+  id: number; report_uid: string; ucn: string; engineer: string; visit_at: string | null; entry_at: string | null;
+  entry_day: string; manual_report: string; status: 'found' | 'no_box'; method: string; note: string; crop_jpeg: string;
+}
+/** The cut-outs of the visits entered on one India-time day. */
+export async function listReportCrops(day: string): Promise<ReportCrop[]> {
+  const c = must();
+  return allRows<ReportCrop>((from, to) => c.from('visit_report_crops')
+    .select('id,report_uid,ucn,engineer,visit_at,entry_at,entry_day,manual_report,status,method,note,crop_jpeg')
+    .eq('entry_day', day).order('entry_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
+}
+/** When the daily job last stored a cut-out, or null. */
+export async function lastReportCropAt(): Promise<string | null> {
+  const { data, error } = await must().from('visit_report_crops').select('created_at')
+    .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(1).maybeSingle();
+  if (error) throw new Error(errMsg(error));
+  return (data?.created_at as string | undefined) ?? null;
+}
+
 /** The latest visits with a manual report that have NOT been checked yet --
  *  "The same records need not be re-run". Pages back through the visits until
  *  `n` are found or 5,000 have been looked at. */

@@ -2423,7 +2423,12 @@ with checks(sort_order, bundle, provides, present) as (
         and coalesce((select relrowsecurity from pg_class where oid = to_regclass('public.visit_date_reads')), false)
         and not exists (select 1 from pg_policy where polrelid = coalesce(to_regclass('public.visit_date_reads'), 0::regclass) and polcmd in ('a', 'w', 'd', '*'))
         and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.visit_date_check')), false)
-        and to_regprocedure('public.resolve_visit_date_read(bigint,boolean)') is not null)
+        and to_regprocedure('public.resolve_visit_date_read(bigint,boolean)') is not null),
+    (394, 'Daily Visit Date cut-outs', 'visit_report_crops (one per visit, RLS on, no write policy) for the 06:00 daily job (0487). NO means Visit Date Check -> Daily cut-outs errors and the daily job cannot store. Restore: reports.sql (0487)',
+        to_regclass('public.visit_report_crops') is not null
+        and to_regclass('public.visit_report_crops_report_uid') is not null
+        and coalesce((select relrowsecurity from pg_class where oid = to_regclass('public.visit_report_crops')), false)
+        and not exists (select 1 from pg_policy where polrelid = coalesce(to_regclass('public.visit_report_crops'), 0::regclass) and polcmd in ('a', 'w', 'd', '*')))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

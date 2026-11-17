@@ -12,7 +12,7 @@ worse than none — somebody plans around it. Reading 156 migration files to
 describe a default is the method that has produced wrong answers in this
 project before.
 
-**121 tables · 47 views · 3558 columns · 273 policies · 70 foreign keys.**
+**122 tables · 47 views · 3577 columns · 274 policies · 70 foreign keys.**
 
 ## How to read this
 
@@ -153,6 +153,7 @@ rule — and a table with RLS on and **no** policy for a command denies everyone
 - [user_signatures](#user-signatures)
 - [validation_results](#validation-results)
 - [visit_date_reads](#visit-date-reads)
+- [visit_report_crops](#visit-report-crops)
 
 Views are listed [after the tables](#views).
 
@@ -1439,8 +1440,8 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 **Constraints:**
 
-- `handstock_adjustments_reason` — `CHECK ((btrim(reason) <> ''::text))`
 - `handstock_adjustments_qty_nonzero` — `CHECK ((qty <> (0)::numeric))`
+- `handstock_adjustments_reason` — `CHECK ((btrim(reason) <> ''::text))`
 
 **Triggers:** `handstock_adjustments_bi` → `handstock_adjustments_bi()` · `zzz_sys_stamp` → `sys_stamp()`
 
@@ -2013,8 +2014,8 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 **Constraints:**
 
-- `indoor_jobs_condemned_needs_reason` — `CHECK (((status <> 'Condemned'::text) OR (btrim(condemned_reason) <> ''::text)))`
 - `indoor_jobs_other_needs_note` — `CHECK (((activity <> 'Other'::text) OR (btrim(activity_note) <> ''::text)))`
+- `indoor_jobs_condemned_needs_reason` — `CHECK (((status <> 'Condemned'::text) OR (btrim(condemned_reason) <> ''::text)))`
 
 **Triggers:** `indoor_job_visit_by_approval` → `indoor_job_visit_by_approval()` · `indoor_report_keeps_its_number` → `indoor_report_keeps_its_number()` · `zy_indoor_jobs_call_status` → `indoor_jobs_call_status()` · `zz_indoor_jobs_guard` → `indoor_jobs_guard()` · `zz_indoor_jobs_stamp` → `indoor_jobs_stamp()` · `zzz_sys_stamp` → `sys_stamp()`
 
@@ -4703,9 +4704,9 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 **Constraints:**
 
+- `stock_record_files_ref_check` — `CHECK ((btrim(ref) <> ''::text))`
 - `stock_record_files_file_name_check` — `CHECK ((btrim(file_name) <> ''::text))`
 - `stock_record_files_url_check` — `CHECK ((btrim(url) <> ''::text))`
-- `stock_record_files_ref_check` — `CHECK ((btrim(ref) <> ''::text))`
 
 **Triggers:** `stock_record_files_stamp` → `stock_record_files_stamp()` · `zzz_sys_stamp` → `sys_stamp()`
 
@@ -5033,9 +5034,9 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 **Constraints:**
 
-- `training_requests_dates` — `CHECK (((to_date IS NULL) OR (from_date IS NULL) OR (to_date >= from_date)))`
-- `training_requests_plan_array` — `CHECK ((jsonb_typeof(evaluation_plan) = 'array'::text))`
 - `training_requests_record_array` — `CHECK ((jsonb_typeof(record_lines) = 'array'::text))`
+- `training_requests_plan_array` — `CHECK ((jsonb_typeof(evaluation_plan) = 'array'::text))`
+- `training_requests_dates` — `CHECK (((to_date IS NULL) OR (from_date IS NULL) OR (to_date >= from_date)))`
 
 **Triggers:** `no_hard_delete` → `block_hard_delete()` · `training_request_guard` → `training_request_guard()` · `zzz_sys_stamp` → `sys_stamp()`
 
@@ -5364,6 +5365,46 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 | Command | Policy | Using | With check |
 | --- | --- | --- | --- |
 | SELECT | `visit_date_reads_read` | `( SELECT has_perm('visitdate.view'::text) AS has_perm)` | — |
+
+---
+
+## visit_report_crops
+
+> Daily cut-outs (0487): the Service Visit Date box of each visit's manual report, cropped by the daily workflow (no model), one per visit, for a person to compare with the Visit Date.
+
+**Primary key:** `id` · **Row-level security:** **on**
+
+| # | Column | Type | Null | Default | Allowed values / reference |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `id` | bigint _(identity)_ | **no** |  |  |
+| 2 | `report_uid` | text | **no** |  |  |
+| 3 | `ucn` | text | **no** | `''::text` |  |
+| 4 | `engineer` | text | **no** | `''::text` |  |
+| 5 | `visit_at` | timestamp with time zone | yes |  |  |
+| 6 | `entry_at` | timestamp with time zone | yes |  |  |
+| 7 | `entry_day` | date | yes |  |  |
+| 8 | `manual_report` | text | **no** | `''::text` |  |
+| 9 | `status` | text | **no** |  | found · no_box |
+| 10 | `method` | text | **no** | `''::text` |  |
+| 11 | `note` | text | **no** | `''::text` |  |
+| 12 | `crop_jpeg` | text | **no** | `''::text` |  |
+| 13 | `ms` | integer | **no** | `0` |  |
+| 14 | `created_at` | timestamp with time zone | **no** | `now()` |  |
+| 15 | `sys_id` | uuid | **no** | `gen_random_uuid()` |  |
+| 16 | `sys_created_by` | uuid | yes |  |  |
+| 17 | `sys_created_on` | timestamp with time zone | yes |  |  |
+| 18 | `sys_updated_by` | uuid | yes |  |  |
+| 19 | `sys_updated_on` | timestamp with time zone | yes |  |  |
+
+**Unique:** `report_uid` _(visit_report_crops_report_uid)_ · `sys_id` _(visit_report_crops_sys_id_key)_
+
+**Triggers:** `zzz_sys_stamp` → `sys_stamp()`
+
+**Permissions**
+
+| Command | Policy | Using | With check |
+| --- | --- | --- | --- |
+| SELECT | `visit_report_crops_read` | `( SELECT has_perm('visitdate.view'::text) AS has_perm)` | — |
 
 ---
 

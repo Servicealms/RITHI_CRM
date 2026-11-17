@@ -768,6 +768,7 @@ Purpose: the Service Visit Date read on each manual report beside the Visit Date
 | 2 | Check the next N visits not yet checked (cropped on the device, cut-out sent; Haiku then Sonnet; stored) | VisitDateCheck.tsx run(); visitDateRun.ts; read-report-box | visitdate.check (admin), checked again in the Edge Function | FRS-291.1-.3, OQ-313 | |
 | 3 | Use the date read / Keep RITHI's on a reading that differs | VisitDateCheck.tsx decide(); resolve_visit_date_read() | visitdate.fix (admin), checked in the function | FRS-291.5, OQ-313 | |
 | 4 | Outcome chips (exact), search, Excel / CSV with scope | VisitDateCheck.tsx | none | FRS-291.4 | |
+| 5 | Daily cut-outs: the visits entered on a day with the cut-out from the report beside the Visit Date (cropped at 06:00 by the daily workflow, no model) | DailyCutouts.tsx; scripts/daily-report-crops.ts; daily-report-crops.yml | mod:/visit-date-check; DB visitdate.view | FRS-293, OQ-315 | |
 
 ### Feedback Without a Report (`/feedback-without-report`) — `src/modules/FeedbackWithoutReport.tsx`
 Purpose: administrators' list of feedback with no "Solved - Report Completed" visit behind it, naming which record is absent.
