@@ -2,7 +2,8 @@
 // Pure: no reader, no browser. The words are shaped like what the on-device
 // reader returned for the user's own sample (2026-11-17), misreads included.
 import { findReportBox, findVisitLabel, findCallNoLabel, similar, type OcrLine } from '../src/lib/reportCrop';
-import { findBoxByLines, inkMask, estimateSkew } from '../src/lib/reportGrid';
+import { findBoxByLines as linesAll, inkMask, estimateSkew, labelCells, labelsConfirm } from '../src/lib/reportGrid';
+const findBoxByLines = (g: Uint8Array, w: number, h: number) => { const r = linesAll(g, w, h); const b = r.boxes[0]; return { box: b?.box ?? null, upright: b?.upright ?? true, rows: b?.rows ?? 0, why: r.why, stack: b?.stack }; };
 
 let failed = 0;
 const ok = (label: string, cond: boolean) => { console.log(`${cond ? '  ✓' : '  ✗'} ${label}`); if (!cond) failed++; };
@@ -64,7 +65,7 @@ function form(opts: { gapInRule?: boolean; tilt?: number } = {}) {
   ok('clear of the customer\'s side (its lines end at 520)', !!r.box && r.box.x > 520);
   ok('read as upright', r.upright);
   const flip = Uint8Array.from(g).reverse();
-  ok('the same page upside down is found and said to be upside down', findBoxByLines(flip, w, h).upright === false);
+  ok('the same page upside down offers no upright box (it is turned and found that way)', !linesAll(flip, w, h).boxes.some((b) => b.upright));
 }
 {
   const { g, w, h } = form({ gapInRule: true });
@@ -79,7 +80,23 @@ function form(opts: { gapInRule?: boolean; tilt?: number } = {}) {
 {
   const blank = new Uint8Array(1000 * 700).fill(255);
   const r = findBoxByLines(blank, 1000, 700);
-  ok('a page without the form gives no box, with the reason', r.box === null && /not found/.test(r.why));
+  ok('a page without the form gives no box, with the reason', r.box === null && /was found/.test(r.why));
+}
+console.log('-- a box from the lines is used only when its labels read as the labels --');
+{
+  const { g, w, h } = form();
+  const st = findBoxByLines(g, w, h).stack!;
+  const cells = labelCells(st);
+  ok('cells are read from both rows, inside the rules', cells.some((c) => c.row === 'call') && cells.some((c) => c.row === 'visit')
+     && cells.every((c) => c.y > 250 && c.y + c.h < 350));
+  ok('one cell lies left of the column, in case its left rule was too faint', cells.some((c) => c.x < 550));
+  ok('"Service Vist Date" confirms', labelsConfirm([{ row: 'visit', text: 'Service Vist Date' }]).ok);
+  ok('the blurriest sample, "Barve Vist Ons", confirms', labelsConfirm([{ row: 'visit', text: 'Barve Vist Ons' }]).ok);
+  ok('"Cal NoUC No," confirms', labelsConfirm([{ row: 'call', text: 'Cal NoUC No,' }]).ok);
+  ok('PM checklist words do not ("Low in O2", "Patient disconnection", "Apnea alarm")',
+     !labelsConfirm([{ row: 'call', text: 'Low in O2' }, { row: 'visit', text: 'Patient disconnection' }, { row: 'visit', text: 'Apnea alarm' }]).ok);
+  ok('handwriting alone does not ("26K16FOOOR", "Te AT Th EF")', !labelsConfirm([{ row: 'call', text: '26K16FOOOR' }, { row: 'visit', text: 'Te AT Th EF' }]).ok);
+  ok('"Service Visit Date" in the Call No row does not count there', !labelsConfirm([{ row: 'call', text: 'Service Visit Date' }]).ok);
 }
 
 console.log(failed ? `\n${failed} FAILED` : '\nall passed');

@@ -2235,7 +2235,11 @@ typed into a form that reads it.
   the column of labels from Engineer Name down to Service Visit Date — so it
   is cut at the cell borders even when the small printed words are too
   blurred to read; a slightly tilted photo is levelled first, and the printed
-  words are only searched when the lines give nothing. This is the
+  words are only searched when the lines give nothing. A box from the lines
+  is used only when its cells read as the labels (Call No/UC No or Service
+  Visit Date) — the label as read is shown with the result — so a page with
+  other tables (a PM checklist) comes back *not found* rather than with the
+  wrong box. This is the
   first step towards checking the Visit Date against the report; reading the
   date itself (Phase B) is not built yet.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the

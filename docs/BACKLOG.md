@@ -178,6 +178,12 @@ up)_
   checked, 5 of 5 chat samples found (the word search found 1 of 5), about
   0.2 s a page; the word search is the fallback. **PENDING: the user re-runs
   the trial on real reports.**
+- v0.10.255 (the user's run: 1 of 5 right, 4 "random boxes" -- PM checklist
+  pages, which are tables of even rows): a lines box is used only when its
+  label cells READ as "Service Visit Date" / "Call No/UC No" (cell by cell,
+  inset, single-line read). All 6 chat samples confirmed; a drawn checklist
+  page refused. **PENDING: re-run on real reports; send a PM report header
+  so we know where the date sits on PM pages.**
 - Phase B (crop sent to the model, results vs RITHI) needs an Anthropic API
   key + a Supabase Edge Function deploy — **the user has no API key yet.**
   PDFs need a page renderer if many reports are PDFs.
