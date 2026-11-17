@@ -160,6 +160,18 @@ up)_
 
 ---
 
+## 2026-11-17 — MC7648 had no Contract Entry Date
+
+- Probes (read-only, via the workflow): MC7648 first written 05-Oct-2026
+  15:17:14 IST, ~1 hour before the app began stamping a new contract's entry
+  date (f26ec57c, 16:12 IST). 2 of 7,704 entries are blank — MC7648 and one
+  from 03-Sep. `contract_entries.entry_at` has NO database default (sale
+  entries got one in 0230).
+- `supabase/apply/_fill_contract_entry_date.sql` fills a blank date from the
+  entry's own created_at. **PENDING: the user runs it** (dry run, then apply).
+
+---
+
 ## 2026-11-17 — Report date check: Step 0 trial (Apps Script, not the app)
 
 - The user: read the Service Visit Date off the uploaded manual report and
