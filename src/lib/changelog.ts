@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.254',
+    date: '2026-11-17',
+    title: 'Report reader trial: the box is found by the form\'s ruled lines',
+    changes: [
+      'The Report reader trial now finds the Call No/UC No + Service Visit Date box by the form\'s straight lines — the column of labels (Engineer Name down to Service Visit Date) and its rows — instead of reading the small printed words. It found the box on all five of your samples, including the two the word search missed, and cuts exactly at the cell borders.',
+      'A page photographed at a slight angle is levelled first; an upside-down page is recognised and turned. The printed-word search is still tried when the lines give nothing. Each result says how its box was found.',
+    ],
+  },
+  {
     version: '0.10.253',
     date: '2026-11-17',
     title: 'Report reader trial: PDFs, and photos taken sideways',

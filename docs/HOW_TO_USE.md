@@ -2231,7 +2231,11 @@ typed into a form that reads it.
   your browser — nothing is sent anywhere; the first run downloads the reader
   (about 7 MB) from the app itself. A PDF is read from its first page; a
   photo taken sideways or upside down is tried turned, and the result says
-  which turn found the box. This is the
+  which turn found the box. The box is found by the form's **ruled lines** —
+  the column of labels from Engineer Name down to Service Visit Date — so it
+  is cut at the cell borders even when the small printed words are too
+  blurred to read; a slightly tilted photo is levelled first, and the printed
+  words are only searched when the lines give nothing. This is the
   first step towards checking the Visit Date against the report; reading the
   date itself (Phase B) is not built yet.
 - **SLA / Objective Configuration** `/sla-objective-config` — the targets the

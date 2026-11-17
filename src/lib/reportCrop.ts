@@ -26,7 +26,7 @@
 
 export interface OcrWord { text: string; x0: number; y0: number; x1: number; y1: number }
 export interface OcrLine { words: OcrWord[] }
-export interface CropBox { x: number; y: number; w: number; h: number; anchor: 'Service Visit Date' | 'Call No/UC No'; label: string }
+export interface CropBox { x: number; y: number; w: number; h: number; anchor: 'Service Visit Date' | 'Call No/UC No' | 'Ruled lines'; label: string }
 
 /** Tuning, in multiples of the label's own height (h) and width (w). */
 export const BOX = {

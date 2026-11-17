@@ -1,5 +1,7 @@
 // ===========================================================================
 // THE ON-DEVICE READER, AND THE CROP (report-date check, Phase A).
+// The box is found first by the form's ruled lines (reportGrid.ts), and by the
+// printed label only when the lines give nothing (v0.10.254).
 //
 // Everything here runs in the browser. The reader is tesseract.js, served from
 // the app's own /ocr/ folder (scripts/copy-ocr.mjs) and loaded only when it is
@@ -9,6 +11,7 @@
 // the box, so it can be checked before any reading service exists.
 // ===========================================================================
 import { findReportBox, type CropBox, type OcrLine } from './reportCrop';
+import { findBoxByLines, inkMask, estimateSkew } from './reportGrid';
 
 type TesseractWorker = {
   recognize: (img: HTMLCanvasElement, opts?: object, out?: object) => Promise<{ data: { blocks?: Array<{ paragraphs: Array<{ lines: Array<{ words: Array<{ text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }> }> }> }> | null } }>;
@@ -108,7 +111,13 @@ export function canvasJpeg(c: HTMLCanvasElement, box?: { x: number; y: number; w
   return o.toDataURL('image/jpeg', 0.85);
 }
 
-export interface CropResult { box: CropBox | null; why: string; crop: string; thumb: string; ms: number; turned: number; source: 'photo' | 'pdf' }
+export interface CropResult {
+  box: CropBox | null; why: string; crop: string; thumb: string; ms: number; turned: number; source: 'photo' | 'pdf';
+  /** How the box was found: by the form's ruled lines, or by the printed label. */
+  method: 'lines' | 'label' | '';
+  /** The tilt corrected before looking, in degrees. */
+  skew: number;
+}
 
 async function readLines(c: HTMLCanvasElement): Promise<OcrLine[]> {
   const w = await ocrWorker();
@@ -120,24 +129,61 @@ async function readLines(c: HTMLCanvasElement): Promise<OcrLine[]> {
   return lines;
 }
 
-/** Read the printed labels on a report (photo, or page 1 of a PDF) and cut out
- *  the box. A photo taken sideways or upside down is tried at 90, 270 and 180
- *  degrees before giving up -- each turn is one more read, so a report found
- *  upright costs one. */
+/** One byte a pixel (the canvas is already grey: the red channel will do). */
+function greyBytes(c: HTMLCanvasElement): Uint8Array {
+  const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+  const g = new Uint8Array(c.width * c.height);
+  for (let i = 0; i < g.length; i++) g[i] = d[i * 4];
+  return g;
+}
+
+/** The canvas turned by a small angle about its centre, the corners white. */
+function tilted(c: HTMLCanvasElement, deg: number): HTMLCanvasElement {
+  const o = document.createElement('canvas');
+  o.width = c.width; o.height = c.height;
+  const g = o.getContext('2d')!;
+  g.fillStyle = '#fff'; g.fillRect(0, 0, o.width, o.height);
+  g.translate(o.width / 2, o.height / 2);
+  g.rotate((deg * Math.PI) / 180);
+  g.drawImage(c, -c.width / 2, -c.height / 2);
+  return o;
+}
+
+/** Find the box on a report (photo, or page 1 of a PDF) and cut it out.
+ *
+ *  FIRST BY THE FORM'S RULED LINES (src/lib/reportGrid.ts): fast, needs no
+ *  reader, and holds up where the small printed labels blur. The page is
+ *  levelled first if it was photographed at a slight angle. A page found
+ *  upside down is turned 180 degrees; a sideways one is tried at 90 and 270.
+ *
+ *  THEN, ONLY IF THE LINES GIVE NOTHING, BY THE PRINTED LABEL (the reader,
+ *  as before), upright and turned. */
 export async function cropReportBox(src: Blob): Promise<CropResult> {
   const t0 = performance.now();
   const isPdf = /pdf/i.test(src.type);
+  const source = isPdf ? 'pdf' as const : 'photo' as const;
   const upright = isPdf ? await pdfCanvas(src) : await photoCanvas(src);
+  const done = (c: HTMLCanvasElement, box: CropBox, turned: number, method: CropResult['method'], skew: number): CropResult =>
+    ({ box, why: '', crop: canvasJpeg(c, box), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew });
+
+  let linesWhy = '';
+  for (const deg of [0, 180, 90, 270] as const) {
+    let c = deg === 0 ? upright : rotated(upright, deg);
+    let g = greyBytes(c);
+    const skew = estimateSkew(inkMask(g, c.width, c.height), c.width, c.height);
+    if (Math.abs(skew) >= 0.2) { c = tilted(c, -skew); g = greyBytes(c); }
+    const r = findBoxByLines(g, c.width, c.height);
+    if (r.box && r.upright) return done(c, { ...r.box, anchor: 'Ruled lines', label: `the ruled label column, ${r.rows} rows` }, deg, 'lines', skew);
+    if (!linesWhy) linesWhy = r.box ? 'the ruled label column was found only upside down' : r.why;
+  }
+
   let firstWhy = '';
   for (const deg of [0, 90, 270, 180] as const) {
     const c = deg === 0 ? upright : rotated(upright, deg);
     const { box, why } = findReportBox(await readLines(c), c.width, c.height);
-    if (box) {
-      return { box, why: '', crop: canvasJpeg(c, box), thumb: canvasJpeg(c, undefined, 360),
-               ms: Math.round(performance.now() - t0), turned: deg, source: isPdf ? 'pdf' : 'photo' };
-    }
+    if (box) return done(c, box, deg, 'label', 0);
     if (!firstWhy) firstWhy = why;
   }
-  return { box: null, why: `${firstWhy} (tried upright and turned 90, 270 and 180 degrees)`, crop: '',
-           thumb: canvasJpeg(upright, undefined, 360), ms: Math.round(performance.now() - t0), turned: 0, source: isPdf ? 'pdf' : 'photo' };
+  return { box: null, why: `${linesWhy}; and by the printed words: ${firstWhy} (tried upright and turned 90, 270 and 180 degrees)`, crop: '',
+           thumb: canvasJpeg(upright, undefined, 360), ms: Math.round(performance.now() - t0), turned: 0, source, method: '', skew: 0 };
 }
