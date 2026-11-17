@@ -4844,9 +4844,11 @@ const HANDSTOCK_MOVEMENT_TIEBREAK = [
 // Every movement, newest first — the Movements tab of the Hand Stock register.
 // Optional engineer / part filters narrow it server-side.
 export async function listAllHandstockMovements(
-  limit = 1000, offset = 0, filter: { engineerKey?: string; partCode?: string } = {},
+  limit = 1000, offset = 0, filter: { engineerKey?: string; partCode?: string; beforeCount?: boolean } = {},
 ): Promise<Record<string, unknown>[]> {
-  let q = must().from('handstock_movements').select('*');
+  // "Show entries before the count" (0485) reads the same movements WITHOUT
+  // the count filter, each marked before_count.
+  let q = must().from(filter.beforeCount ? 'handstock_movements_history' : 'handstock_movements').select('*');
   if (filter.engineerKey) q = q.eq('engineer_key', filter.engineerKey);
   if (filter.partCode) q = q.eq('part_code', filter.partCode);
   // The view has NO unique column, so the tie on `moved_at` (a dispatch moves
@@ -4862,8 +4864,8 @@ export async function listAllHandstockMovements(
 }
 // The movement history behind one line — every stock-out, consumption and
 // transfer for that engineer and spare, newest first.
-export async function listHandstockMovements(engineerKey: string, partCode = '', limit = 500): Promise<Record<string, unknown>[]> {
-  let q = must().from('handstock_movements').select('*').eq('engineer_key', engineerKey);
+export async function listHandstockMovements(engineerKey: string, partCode = '', limit = 500, beforeCount = false): Promise<Record<string, unknown>[]> {
+  let q = must().from(beforeCount ? 'handstock_movements_history' : 'handstock_movements').select('*').eq('engineer_key', engineerKey);
   if (partCode) q = q.eq('part_code', partCode);
   const { data, error } = await q.order('moved_at', { ascending: false, nullsFirst: false }).limit(limit);
   if (error) throw new Error(errMsg(error));

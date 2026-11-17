@@ -108,7 +108,24 @@ const asMovement = (r: Record<string, unknown>): HandstockMovement => ({
   ref: String(r.ref ?? ''), ref_type: String(r.ref_type ?? ''), ref_uid: String(r.ref_uid ?? ''),
   ucn: String(r.ucn ?? ''), call_number: String(r.call_number ?? ''),
   party_name: String(r.party_name ?? ''), remarks: String(r.remarks ?? ''),
+  before_count: r.before_count === true,
 });
+
+// "SHOW ENTRIES BEFORE THE COUNT" (0485, the user, 2026-11-17). A count hides
+// what was entered before it from the trail, because the count already holds
+// it. On request those entries come back, greyed and marked, and the figure
+// does not change. One switch, one label, wherever a movement list is shown.
+const BEFORE_COUNT_LABEL = 'Show entries before the count';
+const BEFORE_COUNT_TAG = 'before the count — not in the figure';
+function BeforeCountSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="row" style={{ gap: 6, alignItems: 'center', fontSize: 12.5, cursor: 'pointer' }}
+      title="Entries made before the latest physical count of a part are inside that count, so the stock figure leaves them out. Tick to see them here; the figure does not change.">
+      <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} />
+      {BEFORE_COUNT_LABEL}
+    </label>
+  );
+}
 
 const stockBadge = (onHand: number) => (
   <span className={`badge badge-${balanceTone(onHand)}`}>{onHand}</span>
@@ -569,9 +586,10 @@ function Movements({
   const [offset, setOffset] = useState(0);
   const [more, setMore] = useState(false);
   const [err, setErr] = useState('');
+  const [beforeCount, setBeforeCount] = useState(false);
 
   const fetchPage = async (from: number, engineerKey: string) => {
-    const raw = await listAllHandstockMovements(PAGE, from, engineerKey ? { engineerKey } : {});
+    const raw = await listAllHandstockMovements(PAGE, from, { ...(engineerKey ? { engineerKey } : {}), beforeCount });
     return raw.map((m, i) => ({ ...asMovement(m), id: `${from + i}` } as MoveRow));
   };
 
@@ -582,12 +600,12 @@ function Movements({
       setAllMoves(page); setOffset(page.length); setMore(page.length === PAGE);
     } catch (e) {
       const text = e instanceof Error ? e.message : String(e);
-      if (isMissingTable(text, 'handstock_balance', 'handstock_movements', 'handstock_opening')) onMigrationError();
+      if (isMissingTable(text, 'handstock_balance', 'handstock_movements', 'handstock_opening', 'handstock_movements_history')) onMigrationError();
       else setErr(text);
       setAllMoves([]); setMore(false);
     } finally { setBusy(false); }
   };
-  useEffect(() => { void load(engineerFilter); /* eslint-disable-next-line */ }, [engineerFilter]);
+  useEffect(() => { void load(engineerFilter); /* eslint-disable-next-line */ }, [engineerFilter, beforeCount]);
 
   const loadMore = async () => {
     setBusy(true);
@@ -609,7 +627,9 @@ function Movements({
   }, [moves, search, kind]);
   // REGION (2026-11-13): the engineer's CURRENT User Master region, on the
   // screen and in its export alike -- read when shown, never stored.
-  const visible = useMemo(() => visibleBase.map((r) => ({ ...r, region: regionFor(regionOf, r.engineer) })), [visibleBase, regionOf]);
+  const visible = useMemo(() => visibleBase.map((r) => ({ ...r, region: regionFor(regionOf, r.engineer),
+    in_figure: r.before_count ? 'No — before the count' : 'Yes' })), [visibleBase, regionOf]);
+  const hiddenCount = useMemo(() => moves.filter((m) => m.before_count).length, [moves]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -619,7 +639,8 @@ function Movements({
 
   const columns: Column<MoveRow>[] = [
     { key: 'moved_at', header: 'When', width: 135, render: (m) => fmtLongDate(m.moved_at) },
-    { key: 'movement', header: 'Movement', width: 120, wrap: false, render: (m) => <span className={`badge badge-${movementTone(m.movement)}`}>{m.movement}</span> },
+    { key: 'movement', header: 'Movement', width: 120, wrap: false, render: (m) => (
+      <span className={`badge badge-${movementTone(m.movement)}`} style={m.before_count ? { opacity: 0.45 } : undefined}>{m.movement}</span>) },
     { key: 'engineer', header: 'Engineer', width: 160 },
     { key: 'region', header: 'Region', width: 100, wrap: false },
     { key: 'part_code', header: 'Spare', width: 115, wrap: false },
@@ -629,6 +650,8 @@ function Movements({
     { key: 'ref_type', header: 'Against', width: 100, wrap: false },
     { key: 'party_name', header: 'Party / other engineer', width: 200 },
     { key: 'remarks', header: 'Remarks', width: 180 },
+    ...(beforeCount ? [{ key: 'in_figure', header: 'In the figure?', width: 170, wrap: false,
+      render: (m: MoveRow) => (m.before_count ? <span className="muted"><i>{BEFORE_COUNT_TAG}</i></span> : 'Yes') } as Column<MoveRow>] : []),
   ];
 
   const KINDS: MovementKind[] = ['Stock out', 'Consumption', 'Transfer in', 'Transfer out', 'Return', 'Adjustment', 'Reconciliation'];
@@ -661,6 +684,8 @@ function Movements({
             <SelectPicker className="hs-eng-filter" value={engineerFilter} onChange={setEngineerFilter}
               placeholder="All engineers"
               options={engineers.map((e) => ({ value: e.engineer_key, label: e.engineer }))} />
+            <BeforeCountSwitch on={beforeCount} onChange={setBeforeCount} />
+            {beforeCount && <span className="muted" style={{ fontSize: 12 }}>{hiddenCount}{more ? '+' : ''} before a count</span>}
             <div className="spacer" />
             {moves.length > 0 && (
               <button className="btn btn-sm" onClick={() => csvExport('hand-stock-movements.csv', columns.map((c) => ({ key: c.key, header: c.header })), visible as unknown as Record<string, unknown>[], partial(more))}>⭳ Export CSV</button>
@@ -682,16 +707,17 @@ function MovementTrail({ row, onTransfer, historyIgnored = false }: { row: Row; 
   const [moves, setMoves] = useState<HandstockMovement[]>([]);
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
+  const [beforeCount, setBeforeCount] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setBusy(true); setErr(''); setMoves([]);
-    listHandstockMovements(row.engineer_key, row.part_code, MOVES_CAP)
+    listHandstockMovements(row.engineer_key, row.part_code, MOVES_CAP, beforeCount)
       .then((r) => { if (alive) setMoves(r.map(asMovement)); })
       .catch((e) => { if (alive) setErr(e instanceof Error ? e.message : String(e)); })
       .finally(() => { if (alive) setBusy(false); });
     return () => { alive = false; };
-  }, [row.engineer_key, row.part_code]);
+  }, [row.engineer_key, row.part_code, beforeCount]);
 
   const field = (label: string, value: unknown) => (
     <div className="rep-field"><span className="field-label">{label}</span><span>{String(value ?? '') || '—'}</span></div>
@@ -710,7 +736,8 @@ function MovementTrail({ row, onTransfer, historyIgnored = false }: { row: Row; 
     const balances: number[] = new Array(n);
     for (let i = n - 1; i >= 0; i--) {
       const m = moves[i];
-      bal += (m.direction === 'IN' ? 1 : -1) * (Number(m.qty) || 0);
+      // An entry before the count is not in the figure, so it moves no balance.
+      if (!m.before_count) bal += (m.direction === 'IN' ? 1 : -1) * (Number(m.qty) || 0);
       balances[i] = Math.round(bal * 1000) / 1000;
     }
     return moves.map((m, i) => ({ n: n - i, m, balance: balances[i] }));
@@ -720,6 +747,7 @@ function MovementTrail({ row, onTransfer, historyIgnored = false }: { row: Row; 
   // asked while the history is ignored: the level is then restated without
   // the imported movements the trail still lists.
   const trailEnd = trail.length ? trail[0].balance : 0;
+  const hiddenCount = moves.filter((m) => m.before_count).length;
   const trailDisagrees = complete && !historyIgnored && !busy && !err && trail.length > 0
     && Math.abs(trailEnd - (Number(row.on_hand) || 0)) > 0.0005;
 
@@ -731,11 +759,13 @@ function MovementTrail({ row, onTransfer, historyIgnored = false }: { row: Row; 
       { key: 'ref_type', header: 'Reference type' }, { key: 'ref', header: 'Reference' },
       { key: 'ucn', header: 'UCN' }, { key: 'call_number', header: 'Call No' },
       { key: 'party_name', header: 'Party / with' }, { key: 'remarks', header: 'Remarks' },
+      ...(beforeCount ? [{ key: 'in_figure', header: 'In the figure?' }] : []),
     ];
     const rows = trail.map((t) => ({
+      in_figure: t.m.before_count ? 'No — before the count' : 'Yes',
       n: t.n, moved_at: t.m.moved_at, movement: t.m.movement,
       in: t.m.direction === 'IN' ? t.m.qty : '', out: t.m.direction === 'OUT' ? t.m.qty : '',
-      balance: t.balance, ref_type: t.m.ref_type, ref: t.m.ref, ucn: t.m.ucn,
+      balance: t.m.before_count ? '' : t.balance, ref_type: t.m.ref_type, ref: t.m.ref, ucn: t.m.ucn,
       call_number: t.m.call_number, party_name: t.m.party_name, remarks: t.m.remarks,
     } as Record<string, unknown>));
     const name = `hand-stock-${String(row.engineer).replace(/\W+/g, '-')}-${String(row.part_code).replace(/\W+/g, '-')}-${todayLocal()}`;
@@ -838,9 +868,11 @@ function MovementTrail({ row, onTransfer, historyIgnored = false }: { row: Row; 
         )}
         {moves.length > 0 && (
           <>
-            <div className="row" style={{ gap: 6, margin: '4px 0 8px' }}>
+            <div className="row" style={{ gap: 6, margin: '4px 0 8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-sm" onClick={() => downloadTrail('xlsx')}>⭳ Download (Excel)</button>
               <button className="btn btn-sm" onClick={() => downloadTrail('csv')}>⭳ CSV</button>
+              <BeforeCountSwitch on={beforeCount} onChange={setBeforeCount} />
+              {beforeCount && <span className="muted" style={{ fontSize: 12 }}>{hiddenCount} before the count, greyed — they move no balance</span>}
             </div>
             <div className="assoc-scroll">
               <table className="assoc-table" style={{ minWidth: 820 }}>
@@ -853,13 +885,15 @@ function MovementTrail({ row, onTransfer, historyIgnored = false }: { row: Row; 
                 </thead>
                 <tbody>
                   {trail.map((t) => (
-                    <tr key={t.n}>
+                    <tr key={t.n} style={t.m.before_count ? { opacity: 0.55 } : undefined}
+                      title={t.m.before_count ? `Entered ${BEFORE_COUNT_TAG}` : undefined}>
                       <td>{t.n}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>{formatDayTime(t.m.moved_at) || '—'}</td>
-                      <td><span className={`badge badge-${movementTone(t.m.movement)}`}>{t.m.movement}</span></td>
+                      <td><span className={`badge badge-${movementTone(t.m.movement)}`}>{t.m.movement}</span>
+                        {t.m.before_count && <div className="muted" style={{ fontSize: 11 }}><i>{BEFORE_COUNT_TAG}</i></div>}</td>
                       <td style={{ textAlign: 'right' }}>{t.m.direction === 'IN' ? t.m.qty : ''}</td>
                       <td style={{ textAlign: 'right' }}>{t.m.direction === 'OUT' ? t.m.qty : ''}</td>
-                      {complete && <td style={{ textAlign: 'right' }}><b>{t.balance}</b></td>}
+                      {complete && <td style={{ textAlign: 'right' }}>{t.m.before_count ? <span className="muted">—</span> : <b>{t.balance}</b>}</td>}
                       <td>{[t.m.ref_type, t.m.ref].filter(Boolean).join(' ')}</td>
                       <td>{t.m.ucn}</td>
                       <td>{t.m.party_name}</td>

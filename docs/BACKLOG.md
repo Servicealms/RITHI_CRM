@@ -160,6 +160,17 @@ up)_
 
 ---
 
+## 2026-11-17 — Hand Stock: show the entries before a count (0485, v0.10.250)
+
+- The user: "After I upload or Reconcile a Stock, I should still be able to
+  See Old Historical Transactions" — then "Show entries before the count -
+  Add this." `handstock_movements_history` = 0468's arms without the count
+  filter, with `before_count`. The figure still reads handstock_movements.
+- 0485 auto-applies on merge. `_status.sql` row 392 also compares the two
+  views' arm counts: a new arm must go into BOTH.
+
+---
+
 ## 2026-11-13 — Same line at the same moment refused in words (0484, v0.10.249)
 
 - Reported on the first upload after 0483: "duplicate key value violates

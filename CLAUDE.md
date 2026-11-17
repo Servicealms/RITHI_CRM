@@ -709,7 +709,9 @@ on testing the old shape. **When a migration replaces a definition, move the
   whose `entered_at` (sys_created_on, else created_at) is before the latest
   `handstock_reconciliations` row for the same engineer + part, and adds that
   count as a Reconciliation arm. **A NEW ARM OF `handstock_movements` MUST
-  APPEND `entered_at`**, or every count ignores it (a NULL entry time counts
+  ALSO GO INTO `handstock_movements_history`** (0485 — the same arms without
+  the count filter, behind "Show entries before the count"; `_status.sql`
+  row 392 compares their arm counts), **AND MUST APPEND `entered_at`**, or every count ignores it (a NULL entry time counts
   as before every count). The view reads `sys_created_on`, which sys_columns
   (0244) attaches LAST on a fresh apply, so 0468 adds the plain column to the
   ten arm tables first; a new arm table goes on that list too. The read policy
