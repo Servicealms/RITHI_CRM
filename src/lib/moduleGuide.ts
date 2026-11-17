@@ -869,6 +869,23 @@ export const MODULE_GUIDE: ModuleGuideEntry[] = [
     ],
   },
   {
+    route: '/visit-date-check',
+    purpose: 'The Service Visit Date written on each manual report, read by Claude and set beside the Visit Date in RITHI.',
+    does: [
+      'Check the next visits not yet checked: the report is cropped on this device and only the date box is sent',
+      'See each reading: matches, differs, unreadable, or no box found, with who read it and the cost',
+      'Where it differs, use the date read (the visit\'s day changes) or keep RITHI\'s',
+      'Filter, search and export to Excel or CSV',
+    ],
+    records: ['visit_date_reads', 'visit_date_check', 'reports', 'audit_log'],
+    rules: [
+      'A visit is checked once; it is never read again',
+      'Claude Haiku reads first; Claude Sonnet only when Haiku fails (an error, a refusal or no date)',
+      'Using the date read moves only the day: the time of the visit and its Visit Entry Date stay',
+      'Each reading is decided once, and the change is in the audit trail',
+    ],
+  },
+  {
     route: '/install-calls-unmapped',
     purpose: 'Warranty machines with no installation call mapped to them, why, and the calls that could be theirs.',
     does: [

@@ -1142,7 +1142,10 @@ const MODULES = {
             // view reads `public.reports`, a VIEW IS RESOLVED AT CREATION, and
             // `daily_review` runs BEFORE `reports` in ALL_ORDER. Filed there it
             // would die on a fresh apply.
-            '0224_solved_without_a_report.sql'],
+            '0224_solved_without_a_report.sql',
+            // Visit Date Check (0486): the model's reading of the Service Visit
+            // Date, kept, and resolve_visit_date_read() to correct the visit.
+            '0486_visit_date_reads.sql'],
   },
   handstock: {
     // Written to the repo root as HandStock_X.sql, alongside Spare_1.sql — it

@@ -20,6 +20,18 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.258',
+    date: '2026-11-17',
+    title: 'Visit Date Check: read, stored, reported and correctable',
+    changes: [
+      'New report under Reports: Visit Date Check (administrators for now; grant it to other roles on Roles & Permissions when ready). It lists, for every visit checked, the Service Visit Date written on the manual report beside the Visit Date in RITHI: Matches, Differs, Unreadable or No box found.',
+      'Only the Visit Date is read now (the UC No is dropped). Claude Haiku reads it first; Claude Sonnet is asked only when Haiku fails — an error, a refusal or no readable date. Each result says who read it and what it cost.',
+      '"Check the next visits not yet checked" works through the visits with a manual report, newest first. A visit is checked once and never again; every reading is stored in the database.',
+      'Where the dates differ, an administrator can "Use" the date read — the visit\'s day changes; its time and its Visit Entry Date do not — or "Keep RITHI\'s". Each decision is recorded with who and when, and the change is in the audit trail.',
+      'The trial on Admin Config now reads and stores the Visit Date the same way.',
+    ],
+  },
+  {
     version: '0.10.257',
     date: '2026-11-17',
     title: 'Report reader trial: the cut-out read by Claude Haiku and Sonnet',

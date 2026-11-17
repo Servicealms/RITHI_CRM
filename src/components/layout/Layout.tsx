@@ -245,6 +245,9 @@ export const NAV: NavGroup[] = [
       // Beside the feedback report it checks, and LAST in the group so the
       // permission matrix's order matches this one.
       { to: '/feedback-without-report', label: 'Feedback Without a Report', icon: '🔎', adminOnly: true },
+      // VISIT DATE CHECK (0486) — administrators to begin with; the user grants
+      // other roles on Roles & Permissions once it is working (2026-11-17).
+      { to: '/visit-date-check', label: 'Visit Date Check', icon: '📅', adminOnly: true },
       // HAND STOCK REPORT — administrators to begin with (the user,
       // 2026-09-24: "Default access to Admin/Super Admin, Rest of the Access I
       // will select from Roles & Permissions"). `admin: true` on the module

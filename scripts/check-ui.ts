@@ -7381,6 +7381,7 @@ console.log('\n-- the Roles & Permissions matrix follows the MENU, and every scr
   // that no migration do it. A key here reaches administrators only until then.
   const HAND_GRANTED: Record<string, string> = {
     'mod:/new-employee-requests': 'the user, 2026-10-21, asked whether a migration may grant New Employee Requests to RM, RGM, Admin, NSM and Technical Support: "No, I will grant it myself"',
+    'mod:/visit-date-check': 'the user, 2026-11-17: "Provision for Admin [I will change this later via Roles and Permission]" and "i will need to give access to Additional roles later, once this is working fine"',
   };
   eq('every module key is written into app_roles by some migration',
     MODULES.map((m) => moduleAction(m.path))

@@ -177,6 +177,13 @@ export const MODULES: ModuleDef[] = [
   // role that can open Reports. The user asked for administrators only
   // (2026-09-22), and `admin: true` keeps it out of NON_ADMIN_MODULES.
   { path: '/feedback-without-report', label: 'Feedback Without a Report', admin: true },
+  // VISIT DATE CHECK (0486) -- in the Reports group and NOT under `/exports`
+  // (which would inherit from `mod:/exports` and reach every role that opens
+  // Reports). Administrators to begin with: `admin: true`, and NO migration
+  // grants it -- an administrator passes can() and has_perm() already, and the
+  // user will tick it for other roles here (2026-11-17: "i will need to give
+  // access to Additional roles later, once this is working fine").
+  { path: '/visit-date-check', label: 'Visit Date Check', admin: true },
   // HAND STOCK REPORT — in the Reports group and NOT under `/exports`, for
   // the same reason as the line above: every `mod:/exports/...` key inherits
   // from `mod:/exports`, so filing it there would hand it to every role that
@@ -434,6 +441,10 @@ export const FUNCTIONAL_ACTIONS: ActionDef[] = [
   { group: 'Analytics', key: 'reports.view', label: 'View reports' },
   { group: 'Analytics', key: 'feedback.view', label: 'View feedback' },
   { group: 'Analytics', key: 'export.data', label: 'Export / download CSV' },
+  // Visit Date Check (0486): granted to no role -- an administrator holds them.
+  { group: 'Analytics', key: 'visitdate.view', label: 'Visit Date Check — see the readings' },
+  { group: 'Analytics', key: 'visitdate.check', label: 'Visit Date Check — send reports to be read (Claude; costs money)' },
+  { group: 'Analytics', key: 'visitdate.fix', label: 'Visit Date Check — change a visit\'s Visit Date to the date read' },
   { group: 'Admin', key: 'users.manage', label: 'Manage users (all of the below)' },
   // THE PARTS OF "MANAGE USERS" (finding 67). Creating a login no longer
   // carries the right to decide what that login may do. Resetting a password
@@ -826,6 +837,8 @@ export const PERM_TREE: PermHeader[] = [
     // that is easy to get wrong — a page filed under the wrong neighbour is
     // how somebody grants the wrong thing believing they granted the right one.
     { path: '/feedback-without-report', label: 'Feedback Without a Report', actions: [] },
+    // Not a child of /exports; administrators only until ticked here (0486).
+    { path: '/visit-date-check', label: 'Visit Date Check', actions: ['visitdate.view', 'visitdate.check', 'visitdate.fix'] },
     // ALSO not a child of /exports, and also administrators to begin with. Tick
     // it here for any other role -- that is the whole point of it having a key.
     { path: '/handstock-report', label: 'Hand Stock Report', actions: [] },

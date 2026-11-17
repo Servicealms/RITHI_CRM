@@ -12,7 +12,7 @@ worse than none — somebody plans around it. Reading 156 migration files to
 describe a default is the method that has produced wrong answers in this
 project before.
 
-**120 tables · 45 views · 3487 columns · 272 policies · 70 foreign keys.**
+**121 tables · 47 views · 3558 columns · 273 policies · 70 foreign keys.**
 
 ## How to read this
 
@@ -152,6 +152,7 @@ rule — and a table with RLS on and **no** policy for a command denies everyone
 - [user_rr](#user-rr)
 - [user_signatures](#user-signatures)
 - [validation_results](#validation-results)
+- [visit_date_reads](#visit-date-reads)
 
 Views are listed [after the tables](#views).
 
@@ -1556,6 +1557,7 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 | 16 | `sys_created_on` | timestamp with time zone | yes |  |  |
 | 17 | `sys_updated_by` | uuid | yes |  |  |
 | 18 | `sys_updated_on` | timestamp with time zone | yes |  |  |
+| 19 | `upload_batch` | text | **no** | `''::text` |  |
 
 **Unique:** `sys_id` _(handstock_reconciliations_sys_id_key)_ · `engineer_key, part_code, reconciled_at` _(handstock_reconciliations_uniq)_
 
@@ -1563,7 +1565,7 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 - `handstock_reconciliations_qty` — `CHECK ((physical_qty >= (0)::numeric))`
 
-**Triggers:** `handstock_reconciliations_bi` → `handstock_reconciliations_bi()` · `zzz_sys_stamp` → `sys_stamp()`
+**Triggers:** `handstock_reconciliations_bi` → `handstock_reconciliations_bi()` · `record_audit_d` → `record_audit_fn()` · `record_audit_i` → `record_audit_fn()` · `zzz_sys_stamp` → `sys_stamp()`
 
 **Permissions**
 
@@ -3816,8 +3818,8 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 **Constraints:**
 
-- `recycle_requests_returned_qty_check` — `CHECK (((returned_qty IS NULL) OR (returned_qty > (0)::numeric)))`
 - `recycle_requests_qty_check` — `CHECK ((qty > (0)::numeric))`
+- `recycle_requests_returned_qty_check` — `CHECK (((returned_qty IS NULL) OR (returned_qty > (0)::numeric)))`
 
 **Triggers:** `recycle_requests_guard` → `recycle_requests_guard()` · `zzz_sys_stamp` → `sys_stamp()`
 
@@ -4701,9 +4703,9 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 **Constraints:**
 
-- `stock_record_files_ref_check` — `CHECK ((btrim(ref) <> ''::text))`
 - `stock_record_files_file_name_check` — `CHECK ((btrim(file_name) <> ''::text))`
 - `stock_record_files_url_check` — `CHECK ((btrim(url) <> ''::text))`
+- `stock_record_files_ref_check` — `CHECK ((btrim(ref) <> ''::text))`
 
 **Triggers:** `stock_record_files_stamp` → `stock_record_files_stamp()` · `zzz_sys_stamp` → `sys_stamp()`
 
@@ -5317,6 +5319,54 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 
 ---
 
+## visit_date_reads
+
+> Visit Date Check (0486): the Service Visit Date a model read on a visit's manual report, one row per visit, written only by the Edge Function read-report-box; resolution set only by resolve_visit_date_read().
+
+**Primary key:** `id` · **Row-level security:** **on**
+
+| # | Column | Type | Null | Default | Allowed values / reference |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `id` | bigint _(identity)_ | **no** |  |  |
+| 2 | `report_uid` | text | **no** |  |  |
+| 3 | `ucn` | text | **no** | `''::text` |  |
+| 4 | `recorded_visit_at` | timestamp with time zone | yes |  |  |
+| 5 | `read_date` | date | yes |  |  |
+| 6 | `read_as_written` | text | yes |  |  |
+| 7 | `notes` | text | **no** | `''::text` |  |
+| 8 | `outcome` | text | **no** |  | match · mismatch · unreadable · no_box |
+| 9 | `model` | text | **no** | `''::text` |  |
+| 10 | `tried` | ARRAY | **no** | `'{}'::text[]` |  |
+| 11 | `first_error` | text | **no** | `''::text` |  |
+| 12 | `ms` | integer | **no** | `0` |  |
+| 13 | `input_tokens` | integer | **no** | `0` |  |
+| 14 | `output_tokens` | integer | **no** | `0` |  |
+| 15 | `cost_usd` | numeric | **no** | `0` |  |
+| 16 | `read_by` | uuid | yes |  |  |
+| 17 | `created_at` | timestamp with time zone | **no** | `now()` |  |
+| 18 | `resolution` | text | yes |  | applied · kept |
+| 19 | `resolved_by` | uuid | yes |  |  |
+| 20 | `resolved_at` | timestamp with time zone | yes |  |  |
+| 21 | `old_visit_at` | timestamp with time zone | yes |  |  |
+| 22 | `new_visit_at` | timestamp with time zone | yes |  |  |
+| 23 | `sys_id` | uuid | **no** | `gen_random_uuid()` |  |
+| 24 | `sys_created_by` | uuid | yes |  |  |
+| 25 | `sys_created_on` | timestamp with time zone | yes |  |  |
+| 26 | `sys_updated_by` | uuid | yes |  |  |
+| 27 | `sys_updated_on` | timestamp with time zone | yes |  |  |
+
+**Unique:** `report_uid` _(visit_date_reads_report_uid)_ · `sys_id` _(visit_date_reads_sys_id_key)_
+
+**Triggers:** `record_audit_i` → `record_audit_fn()` · `record_audit_u` → `record_audit_fn()` · `zzz_sys_stamp` → `sys_stamp()`
+
+**Permissions**
+
+| Command | Policy | Using | With check |
+| --- | --- | --- | --- |
+| SELECT | `visit_date_reads_read` | `( SELECT has_perm('visitdate.view'::text) AS has_perm)` | — |
+
+---
+
 ## Views
 
 A view over an RLS-protected table **must** carry `security_invoker=on`, or it
@@ -5344,6 +5394,7 @@ silently, with no error. `npm run check:views` fails any that lacks it.
 | `field_failure_register` | **on** | 62 |
 | `handstock_balance` | **on** | 22 |
 | `handstock_movements` | **on** | 17 |
+| `handstock_movements_history` | **on** | 18 |
 | `indoor_dc_list` | **on** | 20 |
 | `indoor_job_list` | **on** | 111 |
 | `kpi_field_inst` | **on** | 38 |
@@ -5369,6 +5420,7 @@ silently, with no error. `npm run check:views` fails any that lacks it.
 | `training_history` | **on** | 15 |
 | `training_status` | **on** | 19 |
 | `unused_spare_report` | **on** | 25 |
+| `visit_date_check` | **on** | 25 |
 | `warranty_sale_details` | **on** | 46 |
 
 **`call_dates`** — Per call: First Attended (earlier of first visit and first spare request), Last Visit and Solved (visit date of the standing Solved - Report Completed entry), all India dates (0424); the Call Pending Reason of the latest visit entry while the call is open (0433); and the engineer of that latest entry, for the Region (0479). security_invoker: one row per call the reader may see.
@@ -5383,7 +5435,9 @@ silently, with no error. `npm run check:views` fails any that lacks it.
 
 **`feedback_without_report`** — Customer feedback with no "Solved - Report Completed" visit behind it. The feedback is the evidence that a visit happened; the report is the record of it, and a call carrying one without the other is a visit that was never written up. `missing` names which of the four findings applies. Administrators only, by the module key rather than by a rule of its own (0229).
 
-**`kpi_field_inst`** — The KPI workbook's Field_INST tab, columns A-AG, for Field, Installation and PM calls (PM since 0390); every date an India date and the first spare request read by call_first_spare_on() (0425); every day count is the lower of complaint-to and breakdown-to that is not negative (call_days(), 0440), the three "... Days From" columns name the date each count came from (0442), and "Register" says which of the three registers the call is on (0450). The per-call lookups into reports and spare_requests are LATERAL so the caller's date range narrows the calls FIRST (0159).
+**`handstock_movements_history`** — Hand stock movements INCLUDING those entered before the latest physical count of the line (before_count = true); the figure reads handstock_movements, which leaves them out (0485).
+
+**`kpi_field_inst`** — The KPI workbook's Field_INST tab, columns A-AG, for Field, Installation and PM calls (PM since 0390); every date an India date and the first spare request read by call_first_spare_dates() (0471; per call by call_first_spare_on() 0425-0450); every day count is the lower of complaint-to and breakdown-to that is not negative (call_days(), 0440), the three "... Days From" columns name the date each count came from (0442), and "Register" says which of the three registers the call is on (0450). The per-call lookup into reports is ONE LATERAL pass (0471; three until then) so the caller's date range narrows the calls FIRST (0159).
 
 **`product_database`** — The install base as it stands NOW: the party from the later of the latest sale and the latest ownership transfer (0238), and the contract and installation call that name that machine AND that party. Item Status is warranty-first over the matching contract; the engineer is always the Party Master's. The stored values are kept beside them as *_keyed.
 
