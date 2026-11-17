@@ -275,7 +275,7 @@ export interface IndoorDraftMode {
 }
 
 export function CallReportDrawer({
-  call, open, onClose, onSaved, indoor,
+  call, open, onClose, onSaved, indoor, bulk,
 }: {
   call: CallLike | null;
   open: boolean;
@@ -283,6 +283,12 @@ export function CallReportDrawer({
   onSaved?: (mode: string, ucn: string) => void;
   /** Present = the Indoor Service Report stage: a draft, not a visit. */
   indoor?: IndoorDraftMode;
+  /** PM BULK CLOSE (the user, 2026-11-17): several PM calls of ONE customer,
+   *  closed by one form. The visit details, the status, the manual report and
+   *  the feedback are filled once; the spares are entered PER CALL; and each
+   *  call gets a visit of its own (fileVisit, once per call), all pointing at
+   *  the same manual report. `call` is the first of them. */
+  bulk?: CallLike[];
 }) {
   const { user, isAdmin, can } = useAuth();
   const scope = useAccessScope();
@@ -290,6 +296,9 @@ export function CallReportDrawer({
   const callNumber = String(call?.callNumber ?? call?.['call_number'] ?? '');
   const callType = String(call?.callType ?? call?.['call_type'] ?? '');
   const partyName = String(call?.partyName ?? call?.['party_name'] ?? '');
+  const bulkCalls = bulk && bulk.length > 1 && !indoor ? bulk : null;
+  const bulkKey = bulkCalls ? bulkCalls.map((c) => String(c.ucn ?? '')).join('|') : '';
+  const ucnOf = (c: CallLike) => String(c.ucn ?? '');
   const pendingReasons = useMaster('pendingreason');
   // The call's product's complaints plus the all-products ones (useComplaints).
   const complaintList = useComplaints();
@@ -333,8 +342,16 @@ export function CallReportDrawer({
   const breakdownISO = localIsoDate(call?.breakdownDate ?? call?.['breakdown_date'])
     ?? toIsoDate(call?.breakdownDate ?? call?.['breakdown_date'])
     ?? '';
-  const visitFromISO = breakdownISO || complaintISO;
-  const visitFromWhat: 'breakdown' | 'complaint' = breakdownISO ? 'breakdown' : 'complaint';
+  // IN BULK, THE LATEST OF THE CALLS' BOUNDS: one visit date is filed on every
+  // call, so it must be allowed on each of them.
+  const boundOf = (c: CallLike | null | undefined): { iso: string; what: 'breakdown' | 'complaint' } => {
+    const b = localIsoDate(c?.breakdownDate ?? c?.['breakdown_date']) ?? toIsoDate(c?.breakdownDate ?? c?.['breakdown_date']) ?? '';
+    const k = localIsoDate(c?.complaintDate ?? c?.['complaint_date']) ?? toIsoDate(c?.complaintDate ?? c?.['complaint_date']) ?? '';
+    return b ? { iso: b, what: 'breakdown' } : { iso: k, what: 'complaint' };
+  };
+  const bulkBound = bulkCalls ? bulkCalls.map(boundOf).filter((x) => x.iso).sort((a, b) => b.iso.localeCompare(a.iso))[0] : undefined;
+  const visitFromISO = bulkCalls ? (bulkBound?.iso ?? '') : (breakdownISO || complaintISO);
+  const visitFromWhat: 'breakdown' | 'complaint' = bulkCalls ? (bulkBound?.what ?? 'complaint') : (breakdownISO ? 'breakdown' : 'complaint');
   const [engineer, setEngineer] = useState('');
   // THE INDOOR VISIT'S ENGINEER IS PICKED (the user, 2026-10-03): any active
   // person on the User Master, defaulting to the signed-in Indoor engineer, and
@@ -385,7 +402,12 @@ export function CallReportDrawer({
   const [stockBusy, setStockBusy] = useState(false);
   // GRIR / traceability rides with each line: which part was actually fitted,
   // not just which kind — the answer to "which sensor went into this machine".
-  const [spares, setSpares] = useState<{ part: string; qty: string; grir: string }[]>([]);
+  const [spares, setSpares] = useState<{ part: string; qty: string; grir: string; ucn?: string }[]>([]);
+  // IN BULK, SPARES ARE PER CALL (the user's choice): the call the next line is
+  // booked against. Every line carries its call's UCN.
+  const [spareFor, setSpareFor] = useState('');
+  // Calls already filed by this bulk close, so a retry files only the rest.
+  const [bulkProgress, setBulkProgress] = useState<Record<string, VisitProgress & { done?: boolean }>>({});
   const [spareDraft, setSpareDraft] = useState({ part: '', qty: '1', grir: '' });
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   // THE CALL'S PRODUCT + ITS ACCESSORIES + THE COMMON PARTS, out of what the
@@ -410,6 +432,7 @@ export function CallReportDrawer({
     setStatus(''); setPendingReason(''); setUpdateWork('Yes'); setManualLink(''); setUploading(false); setProgress({});
     setWork({}); setSignoff({});
     setVisitDate(todayISO()); setShowAllStock(false); setSpares([]); setSpareDraft({ part: '', qty: '1', grir: '' }); setFeedback({});
+    setBulkProgress({}); setSpareFor(bulkCalls ? ucnOf(bulkCalls[0]) : '');
     setEngineer(selfName || String(call?.allocatedTo ?? ''));
     if (indoor) {
       // THE INDOOR DRAFT: the fixed three, the signed-in engineer, and what
@@ -438,7 +461,7 @@ export function CallReportDrawer({
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, ucn]);
+  }, [open, ucn, bulkKey]);
 
   // The Indoor job's Call Status / Pending Reason change on the Workshop record
   // while this form is open: follow them (they are one value, 0372).
@@ -514,7 +537,8 @@ export function CallReportDrawer({
     return () => { alive = false; };
   }, [open, wantsConsumption, engineer]);
 
-  const callProduct = String(call?.productName ?? call?.['product_name'] ?? '').trim();
+  const spareCall = bulkCalls ? (bulkCalls.find((c) => ucnOf(c) === spareFor) ?? bulkCalls[0]) : call;
+  const callProduct = String(spareCall?.productName ?? spareCall?.['product_name'] ?? '').trim();
   const fitsCall = spareParts.fits(callProduct);
   const stockNarrowed = !!callProduct && !showAllStock;
   const stockShown = stockNarrowed ? stock.filter((r) => fitsCall(r.part, r.part_code)) : stock;
@@ -535,7 +559,7 @@ export function CallReportDrawer({
   // They have to be the same rules: the line the engineer is looking at is
   // consumption whether or not they thought to press Add, and a line that Save
   // accepts on terms Add would refuse is a quality record nobody checked.
-  const draftLine = (): { line: { part: string; qty: string; grir: string } } | { error: string } | null => {
+  const draftLine = (): { line: { part: string; qty: string; grir: string; ucn?: string } } | { error: string } | null => {
     const part = spareDraft.part.trim();
     if (!part) return null;
     const n = labour.isLabour(part) ? LABOUR_QTY : Math.floor(Number(spareDraft.qty) || 0);
@@ -543,7 +567,7 @@ export function CallReportDrawer({
     // NO hand-stock limit (0401, the user, 2026-10-08: "Allow even if it's
     // negative but notify the Spare Coordinator"): a line beyond the balance
     // is booked and the coordinator told; the form warns, it does not refuse.
-    return { line: { part, qty: String(n), grir: spareDraft.grir.trim() } };
+    return { line: { part, qty: String(n), grir: spareDraft.grir.trim(), ...(bulkCalls ? { ucn: spareFor } : {}) } };
   };
 
   const addSpare = () => {
@@ -597,7 +621,7 @@ export function CallReportDrawer({
     // carries the report number).
     const res = indoor
       ? await indoor.upload(file, reportNo.trim())
-      : await uploadToDrive(file, `${ucn || 'Report'} - Manual Report`, driveFolderForCall(callType));
+      : await uploadToDrive(file, bulkCalls ? `${ucn} +${bulkCalls.length - 1} PM - Manual Report` : `${ucn || 'Report'} - Manual Report`, driveFolderForCall(callType));
     setUploading(false);
     if (!res.ok || !res.url) { setErr(res.error ?? 'Upload failed.'); return; }
     setManualLink(res.url);
@@ -638,6 +662,8 @@ export function CallReportDrawer({
         .map((f) => (indoor?.linked?.[f.key] ? `${f.key} (${indoor.linked[f.key].from})` : f.key));
       if (miss.length) return `Fill the Service Report: ${miss.join(', ')}.`;
       const consProblem = consumptionProblem(String(work['Add Consumption?'] ?? ''), spares.length, spareDraft.part);
+      if (bulkCalls && spares.some((sp) => !bulkCalls.some((c) => ucnOf(c) === sp.ucn)))
+        return 'Every spare must be booked against one of the selected calls.';
       if (consProblem) return consProblem;
       // SPARES ON A VISIT ARE THEIR OWN TICK (finding 67, 0289). Said BEFORE
       // anything is written: the visit is saved first, so a refusal arriving
@@ -683,6 +709,40 @@ export function CallReportDrawer({
       setBusy(false);
       if (!r.ok) { setErr(r.error ?? 'Could not save the draft.'); return; }
       onSaved?.('drafted', ucn);
+      onClose();
+      return;
+    }
+    if (bulkCalls) {
+      // ONE VISIT PER CALL, through the one writer, all carrying the same
+      // manual report. Each call gets its own spares; Add Consumption? reads
+      // Yes only on a call that has some. A failure stops nothing else: the
+      // calls filed stay filed, and a retry files only what is left.
+      const together = bulkCalls.map(ucnOf).join(', ');
+      const failed: string[] = [];
+      const next = { ...bulkProgress };
+      for (const c of bulkCalls) {
+        const u = ucnOf(c);
+        if (next[u]?.done) continue;
+        const mine = allSpares.filter((sp) => sp.ucn === u).map(({ part, qty, grir }) => ({ part, qty, grir }));
+        const w = { ...draft.work };
+        if (wantsConsumption) w['Add Consumption?'] = mine.length ? 'Yes' : 'No';
+        const r = await fileVisit(c, { ...draft, work: w, spares: mine }, {
+          filerEmail: user?.email ?? '', visitEntry, progress: next[u] ?? {},
+          extraData: { 'Bulk Close': `${bulkCalls.length} PM calls filed together: ${together}` },
+          onProgress: (p) => { next[u] = { ...p }; },
+        });
+        if (r.ok) next[u] = { ...(next[u] ?? {}), uid: r.uid, done: true };
+        else failed.push(`${u}: ${r.error}`);
+        setBulkProgress({ ...next });
+      }
+      setBusy(false);
+      const done = bulkCalls.filter((c) => next[ucnOf(c)]?.done).length;
+      if (failed.length) {
+        setErr(`${done} of ${bulkCalls.length} calls filed. Not filed — ${failed.join(' · ')} — fix it and press Save again to file just those.`);
+        return;
+      }
+      logAudit({ action: 'call.report.bulk_close', target: together, status: 'ok', meta: { calls: bulkCalls.length, call_status: status } });
+      onSaved?.('bulk', together);
       onClose();
       return;
     }
@@ -831,7 +891,7 @@ export function CallReportDrawer({
       ) : (
         <div className="detail-hint">📝 Each save is a new <b>visit</b> in the report history. Spares → <b>spare_consumption</b>, feedback → <b>feedback</b>.</div>
       )}
-      {!inline && priorVisits.length > 0 && (
+      {!inline && !bulkCalls && priorVisits.length > 0 && (
         <div className="detail-hint" style={{ background: 'var(--surface-2, #f4f6f8)' }}>
           🕓 {priorVisits.length} previous visit{priorVisits.length === 1 ? '' : 's'} — last: {String(priorVisits[0].call_status ?? '—')} by {String(priorVisits[0].engineer ?? '—')} on {fmtLongDate(priorVisits[0].visit_at) || '—'}
           {!!lastManualReport && (
@@ -846,8 +906,35 @@ export function CallReportDrawer({
         <div className="muted" style={{ padding: 16 }}>Loading report…</div>
       ) : (
         <div className="rep-form">
+          {bulkCalls && (
+            <section className="rep-sec">
+              <div className="rep-sec-title">Bulk close — {bulkCalls.length} PM calls of {partyName || 'one customer'}</div>
+              <p className="muted" style={{ fontSize: 12.5, margin: '0 0 6px' }}>
+                What you fill below is filed on <b>every</b> call as a visit of its own, all pointing at the same manual report.
+                Spares are booked against the call you choose for each line.
+              </p>
+              <table className="assoc-table" style={{ fontSize: 12.5 }}>
+                <thead><tr><th>UC Number</th><th>Product</th><th>Serial</th><th>Engineer</th><th></th></tr></thead>
+                <tbody>
+                  {bulkCalls.map((c) => {
+                    const u = ucnOf(c);
+                    return (
+                      <tr key={u}>
+                        <td>{u}</td>
+                        <td>{String(c.productName ?? c['product_name'] ?? '')}</td>
+                        <td>{String(c.serial ?? '')}</td>
+                        <td>{String(c.allocatedTo ?? c['allocated_to'] ?? '')}</td>
+                        <td>{bulkProgress[u]?.done ? '✓ filed' : ''}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </section>
+          )}
+
           {/* The call — all fetched from the call being updated. */}
-          {!inline && <section className="rep-sec">
+          {!inline && !bulkCalls && <section className="rep-sec">
             <div className="rep-sec-title">Call</div>
             <div className="rep-grid">
               <label className="rep-field">
@@ -1011,6 +1098,7 @@ export function CallReportDrawer({
                 <ul className="rep-spare-list">
                   {spares.map((s, i) => (
                     <li key={i} className="rep-spare-row">
+                      {bulkCalls && <span className="muted" style={{ fontSize: 12, minWidth: 96 }} title="The call this spare is booked against">{s.ucn}</span>}
                       <SelectPicker
                         className="spare-part" value={s.part}
                         onChange={(v) => editSpare(i, { part: v })}
@@ -1035,6 +1123,13 @@ export function CallReportDrawer({
                     </li>
                   ))}
                 </ul>
+              )}
+              {bulkCalls && (
+                <label className="rep-field" style={{ maxWidth: 360, marginBottom: 6 }}>
+                  <span className="field-label">Book the next spare against</span>
+                  <SelectPicker value={spareFor} onChange={setSpareFor}
+                    options={bulkCalls.map((c) => ({ value: ucnOf(c), label: `${ucnOf(c)} · ${String(c.productName ?? c['product_name'] ?? '')} ${String(c.serial ?? '')}`.trim() }))} />
+                </label>
               )}
               <div className="spare-row">
                 <SelectPicker
@@ -1135,7 +1230,7 @@ export function CallReportDrawer({
 
           <div className="rep-actions">
             {!inline && <button className="btn" onClick={onClose} disabled={busy}>Cancel</button>}
-            <button className="btn btn-primary" onClick={() => void save()} disabled={busy || uploading || !status}>{busy ? 'Saving…' : uploading ? 'Uploading…' : inline ? 'Upload service report' : indoor ? 'Save the report and the visit draft' : 'Save Report'}</button>
+            <button className="btn btn-primary" onClick={() => void save()} disabled={busy || uploading || !status}>{busy ? 'Saving…' : uploading ? 'Uploading…' : inline ? 'Upload service report' : indoor ? 'Save the report and the visit draft' : bulkCalls ? `Save a visit on each of the ${bulkCalls.length} calls` : 'Save Report'}</button>
           </div>
         </div>
       )}
@@ -1155,7 +1250,7 @@ export function CallReportDrawer({
   );
   if (inline) return <div className="rep-inline">{body}</div>;
   return (
-    <Drawer open={open} onClose={onClose} title={indoor ? `Indoor Service Report — ${ucn}` : ucn ? `Visit Entry — ${ucn}` : 'Visit Entry'} width={820}>
+    <Drawer open={open} onClose={onClose} title={bulkCalls ? `Bulk close — ${bulkCalls.length} PM calls` : indoor ? `Indoor Service Report — ${ucn}` : ucn ? `Visit Entry — ${ucn}` : 'Visit Entry'} width={820}>
       {body}
     </Drawer>
   );

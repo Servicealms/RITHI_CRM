@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.259',
+    date: '2026-11-17',
+    title: 'Bulk close PM calls',
+    changes: [
+      'On Preventive (PM), tick two or more open PM calls of the same customer and press ✅ Bulk close. One Visit Entry form opens for all of them: fill the visit, the status, the Service Report, the feedback and upload the manual report once.',
+      'On save, each call gets a visit of its own — separate entries in the visit history, all pointing at the same manual report — and each call\'s status follows its visit. Spares are booked per call: pick the call for each spare line.',
+      'A selection with calls of different customers, or a call that is already solved or cancelled, is refused with the names. If one call fails to save, the others stay saved and pressing Save again files just the rest.',
+      'Visit Date Check reads a manual report shared by several visits once and reuses the date on the others, at no extra cost.',
+    ],
+  },
+  {
     version: '0.10.258',
     date: '2026-11-17',
     title: 'Visit Date Check: read, stored, reported and correctable',

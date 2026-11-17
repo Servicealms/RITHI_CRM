@@ -624,6 +624,7 @@ Purpose: the same register component for preventive-maintenance calls.
 | 1 | All Field Call Register capabilities, scoped to PM calls | FieldCalls.tsx:444-454, 462-464 | mod:/pm-calls | as the Field Call Register section | |
 | 2 | + New PM Call singly | FieldCalls.tsx:1198 | calls.create | partial: URS-005 — PM scheduled and recorded; single creation gate not stated | |
 | 3 | PM calls dated to the 1st of their due month appear by that date | FieldCalls.tsx:449 | none | FRS-032 | Created by PM Bulk Upload |
+| 4 | Bulk close: one Visit Entry form for several open PM calls of one customer; a visit filed on each, one manual report, spares per call | FieldCalls.tsx startBulkClose; CallReporting.tsx CallReportDrawer (bulk) | pm.report.visit | FRS-292, OQ-314 | |
 
 ### Pending Calls (`/pending-calls`) — `src/modules/PendingCalls.tsx`
 Purpose: every call nobody has closed, across Field, Installation and PM, with re-allotment.
