@@ -30,7 +30,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
-import { findBoxByLines, gridLines, snapToRules, inkMask, estimateSkew, labelCells, labelsConfirm } from '../src/lib/reportGrid';
+import { findBoxByLines, gridLines, snapToRules, inkMask, estimateSkew, labelCells, labelsConfirm, formRegion } from '../src/lib/reportGrid';
 import { findReportBox, type OcrLine, type CropBox } from '../src/lib/reportCrop';
 import { driveFileId } from '../src/lib/drive';
 
@@ -63,12 +63,15 @@ async function ocr(): Promise<Worker> {
 interface Page { png: Buffer; grey: Buffer; w: number; h: number }
 
 /** A page at ~2,600 px, greyed and contrasted as the app does, turned by `deg`. */
-async function prep(src: Buffer, deg: 0 | 90 | 180 | 270): Promise<Page> {
+async function prep(src: Buffer, deg: 0 | 90 | 180 | 270, already = false): Promise<Page> {
   const m = await sharp(src).metadata();
   const s = TARGET / Math.max(m.width ?? TARGET, m.height ?? TARGET);
-  const png = await sharp(src).flatten({ background: '#ffffff' })
+  let pipe = sharp(src).flatten({ background: '#ffffff' })
     .resize(Math.round((m.width ?? TARGET) * s), Math.round((m.height ?? TARGET) * s))
-    .rotate(deg).grayscale().linear(1.4, -51.2).png().toBuffer();
+    .rotate(deg).grayscale();
+  // A zoomed-in cut of a page already greyed and contrasted is not done twice.
+  if (!already) pipe = pipe.linear(1.4, -51.2);
+  const png = await pipe.png().toBuffer();
   return withGrey(png);
 }
 async function withGrey(png: Buffer): Promise<Page> {
@@ -103,20 +106,27 @@ async function readPage(p: Page): Promise<OcrLine[]> {
 interface Found { status: 'found' | 'no_box'; method: string; note: string; crop: string }
 
 /** The app's cropReportBox, server side. */
-async function cropReport(src: Buffer): Promise<Found> {
-  let firstWhy = '';
+interface Seen { w: number; h: number; skew: number; tables: number; words: number; why: string }
+
+/** One pass over a picture, upright then turned 180, 90, 270. */
+async function onePass(src: Buffer, already: boolean, seen: Seen): Promise<Found | null> {
   for (const deg of [0, 180, 90, 270] as const) {
-    const { page, skew } = await level(await prep(src, deg));
+    const { page, skew } = await level(await prep(src, deg, already));
+    if (deg === 0) { seen.w = page.w; seen.h = page.h; seen.skew = skew; }
     const grid = gridLines(page.grey, page.w, page.h);
     const r = findBoxByLines(page.grey, page.w, page.h, grid);
-    const turn = `${deg ? `, turned ${deg}°` : ''}${skew ? `, levelled ${skew}°` : ''}`;
-    for (const cand of r.boxes.filter((b) => b.upright)) {
+    const turn = `${deg ? `, turned ${deg}°` : ''}${skew ? `, levelled ${skew}°` : ''}${already ? ', zoomed into the form' : ''}`;
+    const upright = r.boxes.filter((b) => b.upright);
+    seen.tables = Math.max(seen.tables, upright.length);
+    for (const cand of upright) {
       const read: { row: 'call' | 'visit'; text: string }[] = [];
       for (const cell of labelCells(cand.stack)) read.push({ row: cell.row, text: await readCell(page, cell) });
       const ok = labelsConfirm(read);
       if (ok.ok) return { status: 'found', method: 'lines', note: `by the ruled lines, label read as "${ok.label}"${turn}`, crop: await jpeg(page, cand.box) };
     }
-    const { box, why, word } = findReportBox(await readPage(page), page.w, page.h);
+    const lines = await readPage(page);
+    seen.words = Math.max(seen.words, lines.reduce((t, l) => t + l.words.length, 0));
+    const { box, why, word } = findReportBox(lines, page.w, page.h);
     if (box && word && box.anchor !== 'Ruled lines') {
       const snapped = snapToRules(word, box.anchor, grid.hs, grid.vs, page.w, page.h);
       const fits = snapped && snapped.w <= 0.7 * page.w && snapped.h <= 0.4 * page.h;
@@ -124,9 +134,31 @@ async function cropReport(src: Buffer): Promise<Found> {
       return { status: 'found', method: fits ? 'label+lines' : 'label',
                note: `by the printed label "${box.label}"${fits ? ', cut at the ruled lines' : ''}${turn}`, crop: await jpeg(page, b) };
     }
-    if (!firstWhy) firstWhy = why;
+    if (!seen.why) seen.why = why;
   }
-  return { status: 'no_box', method: '', note: firstWhy || 'no box found', crop: '' };
+  return null;
+}
+
+/** The app's cropReportBox, server side -- and, when nothing is found, a
+ *  second pass ZOOMED INTO THE FORM (v0.10.262): a whole sheet photographed
+ *  with the form small in the frame. A "no box" says what was seen. */
+async function cropReport(src: Buffer): Promise<Found> {
+  const seen: Seen = { w: 0, h: 0, skew: 0, tables: 0, words: 0, why: '' };
+  const first = await onePass(src, false, seen);
+  if (first) return first;
+  // Where the form is, on the levelled upright page; cut to it and try again.
+  const { page } = await level(await prep(src, 0));
+  const reg = formRegion(page.grey, page.w, page.h);
+  let zoomed = 'no smaller form area to zoom into';
+  if (reg) {
+    const cut = await sharp(page.png).extract({ left: reg.x, top: reg.y, width: reg.w, height: reg.h }).png().toBuffer();
+    const second = await onePass(cut, true, { ...seen });
+    if (second) return second;
+    zoomed = `zoomed into the form area (${Math.round(100 * reg.w / page.w)}% x ${Math.round(100 * reg.h / page.h)}% of the page) and tried again`;
+  }
+  const note = `${seen.why || 'no box found'} -- page ${seen.w}x${seen.h} px, tilt ${seen.skew}°, ` +
+    `${seen.tables} ruled table${seen.tables === 1 ? '' : 's'} of even rows, ${seen.words} words read; ${zoomed}`;
+  return { status: 'no_box', method: '', note: note.slice(0, 480), crop: '' };
 }
 
 async function jpeg(p: Page, b: { x: number; y: number; w: number; h: number }): Promise<string> {

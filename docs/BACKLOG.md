@@ -191,6 +191,12 @@ up)_
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
   Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
   route A (GitHub) chosen.
+- v0.10.262 "No box found" (first run: 165 visits -- 81 found, 57 no box, 27
+  not opened): tilt to 8°, row floor 0.6%, a second pass zoomed into the form
+  area (formRegion), diagnostics on every no-box. Reproduced with the user's
+  sample shrunk to 30% of a 4000x3000 photo and tilted 5-6°: all three were
+  "no box" before, found after; the six earlier samples unchanged. The 57 are
+  stored, so they need `_redo_daily_cutouts.sql` + Crop this day now.
 - v0.10.261 Daily cut-outs for a chosen day (the user, 2026-11-18): workflow
   input `date`; Edge Function run-daily-crops (visitdate.check; starts the
   workflow for a day, lists runs); "Crop this day now" on Daily cut-outs.

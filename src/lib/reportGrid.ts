@@ -117,7 +117,9 @@ export function findLabelStacks(hs: HLine[], vs: VLine[], w: number, h: number):
     if (Math.abs(a.y1 - last) > tol * 1.5 && Math.abs(b.y1 - last) > tol * 1.5) continue;
     const gaps = ys.slice(1).map((y, i) => y - ys[i]);
     const ratio = Math.max(...gaps) / Math.min(...gaps);
-    if (ratio > 2.2 || gaps[gaps.length - 1] < h * 0.012) continue;
+    // A row of 0.6% of the page or more: a form small in the frame has rows
+    // of about 1% (v0.10.262; it was 1.2%, which refused exactly those).
+    if (ratio > 2.2 || gaps[gaps.length - 1] < h * 0.006) continue;
     cands.push({ a, b, ys, ratio });
   }
   // Most rows first, then the most even rows. A page can carry several such
@@ -172,10 +174,12 @@ export function findLabelStack(hs: HLine[], vs: VLine[], w: number, h: number): 
  *  ruled line sits LOWER than its left). The ruled lines make the row
  *  profile of the ink sharpest when the page is read at the right angle:
  *  try angles from -4 to +4 degrees and keep the sharpest. */
-export function estimateSkew(m: Uint8Array, w: number, h: number): number {
+export function estimateSkew(m: Uint8Array, w: number, h: number, maxDeg = 8): number {
+  // UP TO 8 DEGREES (v0.10.262; it was 4, and a phone photo of a sheet on a
+  // desk is often more): every half degree first, then every tenth around the
+  // best -- the same answer as a fine sweep at a fifth of the work.
   const step = Math.max(1, Math.round(Math.max(w, h) / 1300));
-  let best = 0, bestScore = -1;
-  for (let deg = -4; deg <= 4.0001; deg += 0.1) {
+  const score = (deg: number) => {
     const t = Math.tan((deg * Math.PI) / 180);
     const off = Math.ceil(Math.abs(t) * w) + 1;
     const prof = new Float64Array(h + 2 * off);
@@ -183,9 +187,41 @@ export function estimateSkew(m: Uint8Array, w: number, h: number): number {
       if (m[y * w + x]) prof[Math.round(y - x * t) + off]++;
     }
     let s = 0; for (const v of prof) s += v * v;
-    if (s > bestScore) { bestScore = s; best = deg; }
+    return s;
+  };
+  let best = 0, bestScore = -1;
+  for (let deg = -maxDeg; deg <= maxDeg + 0.0001; deg += 0.5) {
+    const sc = score(deg); if (sc > bestScore) { bestScore = sc; best = deg; }
+  }
+  const coarse = best;
+  for (let deg = coarse - 0.4; deg <= coarse + 0.4001; deg += 0.1) {
+    const sc = score(deg); if (sc > bestScore) { bestScore = sc; best = deg; }
   }
   return Math.round(best * 10) / 10;
+}
+
+/** WHERE THE FORM IS IN THE PHOTO (v0.10.262). A whole sheet photographed on
+ *  a desk leaves the form a third of the frame, its rows too short to count as
+ *  a column and its labels too small to read. The ruled lines still show where
+ *  it is: the area their long horizontal rules span, with a margin. Null when
+ *  that is most of the photo already (nothing to gain by zooming). */
+export function formRegion(grey: ArrayLike<number>, w: number, h: number): { x: number; y: number; w: number; h: number } | null {
+  const m = inkMask(grey, w, h);
+  const L = Math.max(w, h);
+  const hs = horizontalLines(m, w, h, L * 0.03);
+  if (hs.length < 3) return null;
+  // The middle of the rules, not their extremes: an edge of the desk or of the
+  // page is one stray rule and must not set the box.
+  const sorted = (a: number[]) => [...a].sort((p, q) => p - q);
+  const pick = (a: number[], f: number) => a[Math.min(a.length - 1, Math.max(0, Math.floor(f * (a.length - 1))))];
+  const x0s = sorted(hs.map((l) => l.x0)), x1s = sorted(hs.map((l) => l.x1)), ys = sorted(hs.map((l) => l.y));
+  const mx = Math.round(L * 0.04);
+  const x0 = Math.max(0, pick(x0s, 0.1) - mx), x1 = Math.min(w, pick(x1s, 0.9) + mx);
+  const y0 = Math.max(0, pick(ys, 0.05) - mx), y1 = Math.min(h, pick(ys, 0.95) + mx);
+  const rw = x1 - x0, rh = y1 - y0;
+  if (rw < w * 0.1 || rh < h * 0.1) return null;
+  if (rw * rh > 0.6 * w * h) return null;
+  return { x: x0, y: y0, w: rw, h: rh };
 }
 
 /** The heights at which a ruled line runs across [xa, xb]. A rule on a bent
