@@ -1953,7 +1953,10 @@ typed into a form that reads it.
   > day picked straight away (those already cropped are skipped); the runs are
   > listed under it and the day reloads when its run finishes. Each cut-out
   > runs from the label to the **right edge of the page**, so the whole
-  > handwritten value is in it. **Decision** on each row: **✓ RITHI is
+  > handwritten value is in it. **Mark, then Save all**: mark rows as *RITHI is
+  > right* or pick a date, then press **Save all** once (one confirmation lists
+  > them). **↻ Re-crop this day** crops the day again, replacing the cut-outs
+  > not yet decided; decided ones stay. **Decision** on each row: **✓ RITHI is
   > right**, or set the date to what the report says and press **Change** —
   > the visit's Visit Date moves to that day (its time and Visit Entry Date
   > stay); decided once, with who and when. *To check* lists what is waiting.

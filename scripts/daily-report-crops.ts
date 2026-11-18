@@ -40,6 +40,10 @@ const DAYS = Math.max(1, Math.min(31, Number(process.env.DAYS || 3)));
 // a choosen date"): DATE=YYYY-MM-DD crops the visits ENTERED on that India-time
 // day instead of the look-back window. Anything else is refused, not guessed.
 const DATE = (process.env.DATE ?? '').trim();
+// RE-CROP (the user, 2026-11-18: "add Provision to Re-Run Existing Records
+// again"): FORCE=true crops visits that already have a cut-out too, replacing
+// it -- but never one a person has decided (review set): that is a record.
+const FORCE = (process.env.FORCE ?? '') === 'true';
 if (DATE && !/^\d{4}-\d{2}-\d{2}$/.test(DATE)) { console.log('::error::DATE must be YYYY-MM-DD'); process.exit(1); }
 const DB = process.env.SUPABASE_DB_URL ?? '';
 const work = mkdtempSync(join(tmpdir(), 'crops-'));
@@ -237,7 +241,8 @@ async function main() {
        where coalesce(r.manual_report, '') <> '' and coalesce(r.uid, '') <> ''
          and ${DATE ? `(r.updated_at at time zone 'Asia/Kolkata')::date = date '${DATE}'`
                     : `(r.updated_at at time zone 'Asia/Kolkata')::date between ${today} - ${DAYS} and ${today} - 1`}
-         and not exists (select 1 from public.visit_report_crops c where c.report_uid = r.uid)
+         and not exists (select 1 from public.visit_report_crops c where c.report_uid = r.uid
+                          ${FORCE ? 'and c.review is not null' : ''})
        order by r.updated_at, r.id
        limit 3000) t;`).trim() || '[]');
 
@@ -261,9 +266,13 @@ async function main() {
             from json_to_record($j$${JSON.stringify(row).replace(/\$j\$/g, '')}$j$::json)
                  as x(uid text, ucn text, engineer text, visit_at timestamptz, entry_at timestamptz, entry_day date,
                       manual_report text, status text, method text, note text, crop_jpeg text, ms integer)
-          on conflict (report_uid) do nothing;`);
+          on conflict (report_uid) do ${FORCE ? `update set
+            engineer = excluded.engineer, visit_at = excluded.visit_at, entry_at = excluded.entry_at, entry_day = excluded.entry_day,
+            manual_report = excluded.manual_report, status = excluded.status, method = excluded.method, note = excluded.note,
+            crop_jpeg = excluded.crop_jpeg, ms = excluded.ms, created_at = now()
+            where public.visit_report_crops.review is null` : 'nothing'};`);
   }
-  const line = `${DATE ? `Visits entered on ${DATE}` : `Visits entered in the last ${DAYS} day(s) up to yesterday`}, not yet cropped: ${tally.visits} · box found ${tally.found} (lines ${tally.lines}, label ${tally.label}) · no box ${tally.noBox} · could not open ${tally.notOpened} (tried again next run) · same report reused ${tally.reused}`;
+  const line = `${DATE ? `Visits entered on ${DATE}` : `Visits entered in the last ${DAYS} day(s) up to yesterday`}, ${FORCE ? 'cropped again (undecided ones replaced)' : 'not yet cropped'}: ${tally.visits} · box found ${tally.found} (lines ${tally.lines}, label ${tally.label}) · no box ${tally.noBox} · could not open ${tally.notOpened} (tried again next run) · same report reused ${tally.reused}`;
   console.log(line);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Daily Visit Date cut-outs\n\n${line}\n`);
 }

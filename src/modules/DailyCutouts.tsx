@@ -61,17 +61,38 @@ export function DailyCutouts() {
   // "RITHI is right", or change the visit's Visit Date to the date on the
   // report -- the day only. Same key as on Haiku Read: visitdate.fix.
   const mayFix = can('visitdate.fix');
-  const [fixDate, setFixDate] = useState<Record<number, string>>({});
-  const [deciding, setDeciding] = useState<number | null>(null);
-  const decide = async (r: ReportCrop, date: string | null) => {
-    const ask = date
-      ? `Change the Visit Date of ${r.ucn} from ${r.visit_at ? formatDay(r.visit_at) : '(none)'} to ${formatDay(date)}?\n\nOnly the day changes: the time of the visit and its Visit Entry Date stay. This cannot be undone here.`
-      : `Mark ${r.ucn} as checked: the Visit Date in RITHI (${r.visit_at ? formatDay(r.visit_at) : 'none'}) matches the report?`;
-    if (!window.confirm(ask)) return;
-    setDeciding(r.id); setErr(null);
-    try { await reviewVisitCrop(r.id, date); setTick((t) => t + 1); }
-    catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setDeciding(null); }
+  // MARK, THEN SAVE ONCE (the user, 2026-11-18: "Change all Dates and Save it
+  // in 1 Go. Instead of Saving every change with a Pop Up"): each row is
+  // marked -- 'ok' = RITHI is right, a date = change to it -- and one Save
+  // files them all, after one confirmation listing them.
+  const [pending, setPending] = useState<Record<number, string>>({});
+  const [saving, setSaving] = useState(false);
+  const mark = (id: number, v: string | null) => setPending((p) => {
+    const n = { ...p };
+    if (v === null) delete n[id]; else n[id] = v;
+    return n;
+  });
+  const saveAll = async () => {
+    const items = rows.filter((r) => pending[r.id] && !r.review);
+    if (!items.length) return;
+    const changes = items.filter((r) => pending[r.id] !== 'ok');
+    const lines = items.slice(0, 12).map((r) => pending[r.id] === 'ok'
+      ? `• ${r.ucn}: RITHI is right (${r.visit_at ? formatDay(r.visit_at) : 'none'})`
+      : `• ${r.ucn}: ${r.visit_at ? formatDay(r.visit_at) : 'none'} → ${formatDay(pending[r.id])}`);
+    const more = items.length > 12 ? `\n… and ${items.length - 12} more` : '';
+    if (!window.confirm(`Save ${items.length} decision${items.length === 1 ? '' : 's'}?` +
+      (changes.length ? ` ${changes.length} visit${changes.length === 1 ? '' : 's'} will get a new Visit Date (the day only; the time of the visit and its Visit Entry Date stay).` : '') +
+      `\n\n${lines.join('\n')}${more}\n\nThis cannot be undone here.`)) return;
+    setSaving(true); setErr(null);
+    const failed: string[] = [];
+    for (const r of items) {
+      try { await reviewVisitCrop(r.id, pending[r.id] === 'ok' ? null : pending[r.id]); mark(r.id, null); }
+      catch (e) { failed.push(`${r.ucn}: ${e instanceof Error ? e.message : String(e)}`); }
+    }
+    setSaving(false);
+    logAudit({ action: 'report.daily_cutouts.decide', meta: { day, saved: items.length - failed.length, failed: failed.length } });
+    if (failed.length) setErr(`${items.length - failed.length} of ${items.length} saved. Not saved — ${failed.join(' · ')}`);
+    setTick((t) => t + 1);
   };
   const [runs, setRuns] = useState<CropRun[]>([]);
   const [runMsg, setRunMsg] = useState('');
@@ -114,13 +135,19 @@ export function DailyCutouts() {
     return () => { alive = false; if (t) clearInterval(t); };
   }, [mayRun, active]);
 
-  const runDay = async () => {
-    if (!window.confirm(`Crop the manual reports of the visits entered on ${formatDay(day)} now?\n\nVisits already cropped are skipped. The reports are opened on GitHub's runner; only the cut-outs are kept.`)) return;
+  // RE-CROP (the user, 2026-11-18: "add Provision to Re-Run Existing Records
+  // again"): crops the day's visits again, replacing every cut-out NOT yet
+  // decided; a decided one is a record of what a person saw and stays.
+  const runDay = async (force = false) => {
+    const ask = force
+      ? `Crop the visits entered on ${formatDay(day)} AGAIN?\n\nEvery cut-out of that day not yet decided is replaced (useful after an improvement, or for a "No box found"). Decided ones stay as they are.`
+      : `Crop the manual reports of the visits entered on ${formatDay(day)} now?\n\nVisits already cropped are skipped. The reports are opened on GitHub's runner; only the cut-outs are kept.`;
+    if (!window.confirm(ask)) return;
     setStarting(true); setRunMsg('');
     try {
-      await dailyCropsRun('run', day);
-      setRunMsg(`Started for ${formatDay(day)}. It appears below in a few seconds; this page reloads the day when it finishes.`);
-      logAudit({ action: 'report.daily_cutouts.run', meta: { day } });
+      await dailyCropsRun('run', day, force);
+      setRunMsg(`${force ? 'Re-crop' : 'Crop'} started for ${formatDay(day)}. It appears below in a few seconds; this page reloads the day when it finishes.`);
+      logAudit({ action: 'report.daily_cutouts.run', meta: { day, force } });
       setTimeout(() => { void dailyCropsRun('status').then((r) => setRuns(r.runs ?? [])).catch(() => undefined); }, 5000);
     } catch (e) {
       setRunMsg(e instanceof Error ? e.message : String(e));
@@ -182,10 +209,16 @@ export function DailyCutouts() {
         </label>
         <span className="muted" style={{ fontSize: 12.5 }}>{formatDay(day)}</span>
         {mayRun && (
-          <button className="btn btn-primary btn-sm" disabled={starting || !day} onClick={() => void runDay()}
-            title="Crop the manual reports of the visits entered on this day now (those already cropped are skipped)">
-            {starting ? 'Starting…' : '▶ Crop this day now'}
-          </button>
+          <>
+            <button className="btn btn-primary btn-sm" disabled={starting || !day} onClick={() => void runDay(false)}
+              title="Crop the manual reports of the visits entered on this day now (those already cropped are skipped)">
+              {starting ? 'Starting…' : '▶ Crop this day now'}
+            </button>
+            <button className="btn btn-sm" disabled={starting || !day} onClick={() => void runDay(true)}
+              title="Crop this day again, replacing every cut-out not yet decided (decided ones stay)">
+              ↻ Re-crop this day
+            </button>
+          </>
         )}
       </div>
       {mayRun && (runMsg || runs.length > 0) && (
@@ -215,6 +248,17 @@ export function DailyCutouts() {
           </span></div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
+            {mayFix && Object.keys(pending).length > 0 && (() => {
+              const ids = Object.keys(pending).map(Number);
+              const nChange = ids.filter((id) => pending[id] !== 'ok').length;
+              return (
+                <div className="sheet-banner" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', margin: '0 0 8px', position: 'sticky', left: 0 }}>
+                  <span><b>{ids.length}</b> marked — {nChange} date change{nChange === 1 ? '' : 's'}, {ids.length - nChange} RITHI is right</span>
+                  <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => void saveAll()}>{saving ? 'Saving…' : `Save all ${ids.length}`}</button>
+                  <button className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setPending({})}>Discard</button>
+                </div>
+              );
+            })()}
             <table className="assoc-table" style={{ minWidth: 820 }}>
               <thead><tr><th>#</th><th>UCN</th><th>Engineer</th><th>Visit Date in RITHI</th><th>Cut-out from the report</th><th>Decision</th><th>How</th><th>Report</th></tr></thead>
               <tbody>
@@ -235,17 +279,17 @@ export function DailyCutouts() {
                         : !mayFix || r.status !== 'found' ? <span className="muted">—</span>
                           : (() => {
                             const cur = localIsoDate(r.visit_at ?? '') ?? '';
-                            const pick = fixDate[r.id] ?? cur;
+                            const p = pending[r.id];
+                            const pick = p && p !== 'ok' ? p : cur;
                             return (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <button className="btn btn-sm" disabled={deciding === r.id} onClick={() => void decide(r, null)}>✓ RITHI is right</button>
-                                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                                  <input className="input" type="date" style={{ width: 140 }} value={pick} max={todayLocal()}
-                                    onChange={(e) => setFixDate((m) => ({ ...m, [r.id]: e.target.value }))} />
-                                  <button className="btn btn-primary btn-sm" disabled={deciding === r.id || !pick || pick === cur}
-                                    title="Set the visit's Visit Date to this day (the time of the visit and the Visit Entry Date stay)"
-                                    onClick={() => void decide(r, pick)}>Change</button>
-                                </div>
+                                <button className={`btn btn-sm${p === 'ok' ? ' btn-primary' : ''}`} disabled={saving}
+                                  onClick={() => mark(r.id, p === 'ok' ? null : 'ok')}>{p === 'ok' ? '✓ RITHI is right (marked)' : '✓ RITHI is right'}</button>
+                                <input className="input" type="date" style={{ width: 150, ...(p && p !== 'ok' ? { outline: '2px solid var(--text)' } : {}) }}
+                                  value={pick} max={todayLocal()} disabled={saving}
+                                  title="Set the date the report shows; it is saved with Save all"
+                                  onChange={(e) => mark(r.id, e.target.value && e.target.value !== cur ? e.target.value : null)} />
+                                {p && p !== 'ok' && <span style={{ fontSize: 11.5 }}><b>Change to {formatDay(p)}</b> — saved with Save all</span>}
                               </div>
                             );
                           })()}</td>

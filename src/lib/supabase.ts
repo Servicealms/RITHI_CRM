@@ -5951,8 +5951,8 @@ export interface CropRun { id: number; title: string; event: string; status: str
 /** Start the daily cut-outs for the visits entered on one day, or list the
  *  latest runs. Through the Edge Function run-daily-crops, which holds the
  *  GitHub token and checks visitdate.check. */
-export async function dailyCropsRun(action: 'run' | 'status', date?: string): Promise<{ started?: boolean; runs?: CropRun[] }> {
-  const { data, error } = await must().functions.invoke('run-daily-crops', { body: { action, date } });
+export async function dailyCropsRun(action: 'run' | 'status', date?: string, force = false): Promise<{ started?: boolean; runs?: CropRun[] }> {
+  const { data, error } = await must().functions.invoke('run-daily-crops', { body: { action, date, force } });
   if (error) {
     let msg = error.message;
     try {

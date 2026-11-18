@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.264',
+    date: '2026-11-18',
+    title: 'Daily cut-outs: decide many, save once; re-crop a day',
+    changes: [
+      'Mark each row — ✓ RITHI is right, or pick the date the report shows — and press Save all once. One confirmation lists every decision; there is no pop-up per row. Discard drops the marks.',
+      '↻ Re-crop this day crops the day\'s visits again, replacing every cut-out not yet decided (for example after an improvement, or a "No box found"). Decided rows stay exactly as they are.',
+    ],
+  },
+  {
     version: '0.10.263',
     date: '2026-11-18',
     title: 'Visit Date Check opens on Daily cut-outs; Readings is now "Haiku Read"',

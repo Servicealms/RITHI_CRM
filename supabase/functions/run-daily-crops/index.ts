@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
   if (!(await holds(req.headers.get('Authorization') ?? '', 'visitdate.check'))) {
     return json({ error: 'Only a holder of Visit Date Check (an administrator for now) may start the cut-outs' }, 403);
   }
-  let body: { action?: string; date?: string };
+  let body: { action?: string; date?: string; force?: boolean };
   try { body = await req.json(); } catch { return json({ error: 'Body must be JSON' }, 400); }
 
   if (body.action === 'status') {
@@ -76,10 +76,11 @@ Deno.serve(async (req) => {
     if (date > indiaToday()) return json({ error: 'That day has not happened yet' }, 400);
     const r = await gh(`/actions/workflows/${WORKFLOW}/dispatches`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ref: 'main', inputs: { date } }),
+      // force: crop again, replacing the day's cut-outs not yet decided.
+      body: JSON.stringify({ ref: 'main', inputs: { date, force: body.force ? 'true' : 'false' } }),
     });
     if (r.status !== 204) return json({ error: `GitHub did not start it (${r.status}): ${(await r.text()).slice(0, 200)}` }, 502);
-    return json({ started: true, date });
+    return json({ started: true, date, force: !!body.force });
   }
 
   return json({ error: "action must be 'run' or 'status'" }, 400);

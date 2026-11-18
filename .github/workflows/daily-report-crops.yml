@@ -17,7 +17,7 @@
 name: Daily Visit Date cut-outs
 # The run's title names the day it was asked for, so RITHI can show the run
 # it started (run-daily-crops reads it back).
-run-name: "Daily cut-outs ${{ github.event.inputs.date || 'scheduled' }}"
+run-name: "Daily cut-outs ${{ github.event.inputs.date || 'scheduled' }}${{ github.event.inputs.force == 'true' && ' (re-crop)' || '' }}"
 
 on:
   schedule:
@@ -32,6 +32,10 @@ on:
         description: 'Or crop ONE day: visits entered on this date (YYYY-MM-DD). Leave blank for the look-back.'
         required: false
         default: ''
+      force:
+        description: 'Crop again, replacing the cut-outs not yet decided (true/false).'
+        required: false
+        default: 'false'
 
 concurrency:
   group: daily-report-crops
@@ -45,6 +49,7 @@ jobs:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       DAYS: ${{ github.event.inputs.days || '3' }}
       DATE: ${{ github.event.inputs.date || '' }}
+      FORCE: ${{ github.event.inputs.force || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
