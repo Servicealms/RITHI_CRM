@@ -579,7 +579,7 @@ against the call it was fitted to.
 
 - **Stock Out** `/stock-out` — a flat list of what Stores has issued; a different
   question from the dispatch queue, and now grantable separately.
-- **Hand Stock** `/handstock` — what an engineer holds. **Worked out, never
+- **Hand Stock** `/handstock` — what an engineer holds. **Filters:** besides the engineer, *Last counted* (Any / Never counted / Counted between two dates) and *Last movement* (from–to) are always on the toolbar. A **"Hand stock gone negative"** notification opens that engineer's part with its movements; once opened it leaves the bell list (*Show read* brings it back). **Worked out, never
   stored**: issued − consumed ± transfers − returns.
   > **🚫 Inactive users hidden** (on by default, remembered): people marked
   > inactive on the User Master are left off the Stock Level list — its counts,
