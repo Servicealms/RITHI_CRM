@@ -10140,8 +10140,24 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
   // #1 MY WORKLOAD COUNTS AGAINST THE TEAM, not against the empty scope the
   // first render has.
   const wl = readFileSync('src/modules/Workload.tsx', 'utf8');
+  // NAR-014..NAR-025 (2026-11-18): ONE list of non-auditable screens, read
+  // by every place that shows a screen.
+  {
+    const ah = r('src/lib/auditHidden.ts');
+    for (const p of ['/kpi', '/objective', '/spare-insights', '/training', '/product-database-2', '/indoor', '/call-review',
+      '/exports/unused', '/feedback-without-report', '/visit-date-check', '/install-calls-unmapped']) {
+      eq(`${p} is hidden in Audit Mode`, ah.includes(`'${p}',`), true);
+    }
+    eq('...the route guard sends a hidden page home', /audit\.on && audit\.known && isAuditHiddenPath\(location\.pathname\)\) return <Navigate to="\/" replace \/>/.test(r('src/App.tsx')), true);
+    eq('...the menu and search leave it out', r('src/components/layout/Layout.tsx').includes('!((it.hideInAudit || isAuditHiddenPath(it.to)) && auditOn)'), true);
+    eq('...the Module Guide leaves it out', r('src/components/guide/ModuleGuide.tsx').includes('(it.hideInAudit || isAuditHiddenPath(it.to)) && auditOn'), true);
+    eq('...Roles & Permissions leaves out its row', r('src/modules/RolePermissions.tsx').includes('!(auditOn && p.path && isAuditHiddenPath(p.path))'), true);
+    eq('...My Workload leaves out its section', r('src/modules/Workload.tsx').includes("!(auditOn && isAuditHiddenPath(j.needs.replace('mod:', '')))"), true);
+    eq('...the data flows leave out its steps', r('src/components/flow/FlowDiagram.tsx').includes('withoutHiddenSteps('), true);
+    eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);
+  }
   eq('My Workload loads once the access scope is ready',
-    /if \(scope\.ready\) load\(\);[^\n]*\}, \[scope\.ready\]\);/.test(wl), true);
+    /if \(scope\.ready\) load\(\);[^\n]*\}, \[scope\.ready(, auditOn)?\]\);/.test(wl), true);
 
   // #17 "EVERYTHING IS DONE" IS SAID ONLY WHEN IT CAN BE TRUE: a role that
   // sees every record, and no filter narrowing the list.
@@ -10777,7 +10793,8 @@ console.log('\n-- the Daily Complaint Review: auto review is a role’s switch (
   eq('...the switch, its state and its message are not shown in Audit Mode; the sweep is left alone',
     /\{auto && !auditOn && \(\s*<span className="conn-dot conn-off"/.test(dccr) && dccr.includes('if (auditOnRef.current) { void load(filter); return; }'), true);
   eq('...review.auto is not shown in Audit Mode on Roles & Permissions, User Master -> Access or My Profile',
-    /AUDIT_HIDDEN_ACTIONS: ReadonlySet<string> = new Set\(\['review\.auto'\]\)/.test(r('src/lib/rbac.ts'))
+    /AUDIT_HIDDEN_ACTIONS: \{ has\(key: string\): boolean \} = \{ has: isAuditHiddenKey \}/.test(r('src/lib/rbac.ts'))
+      && /'review\.auto',\s+\/\/ NAR-013/.test(r('src/lib/auditHidden.ts'))
       && r('src/modules/RolePermissions.tsx').includes('const childKeys = [...shownActions(page)];')
       && r('src/modules/UserMasterView.tsx').includes('!(auditOn && AUDIT_HIDDEN_ACTIONS.has(a.key))')
       && r('src/modules/Profile.tsx').includes('!(auditOn && AUDIT_HIDDEN_ACTIONS.has(k))'), true);

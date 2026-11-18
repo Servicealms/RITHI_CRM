@@ -20,6 +20,19 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.268',
+    date: '2026-11-18',
+    title: 'Audit Mode hides the non-auditable screens',
+    // About the hidden screens themselves, so hidden with them.
+    auditHidden: true,
+    changes: [
+      'With Audit Mode on, these are hidden: KPI & Failure Analysis, Objective, Spare Insights, Training, Product Database 2.0, all of Indoor Service (Register, Spare Recycling, Pre-Delivery Quality Check, Indoor DC approvals and the Indoor print pages), Call Review, Not Consumed Against this Call, Feedback Without a Report, Visit Date Check and Machines Without an Installation Call.',
+      'Hidden means: not on the menu, in search, in the Module Guide or in How to Use; a link or a typed address goes to the home screen; their rows and permissions are not shown on Roles & Permissions, User Master or My Profile; their data-flow steps and their Version History entries are left out. My Workload drops the Indoor DCs section.',
+      'The two signature permissions for administrators (see and upload a person\'s signature) are now also hidden on Roles & Permissions, User Master and My Profile. The buttons on User Master already were.',
+      'Nothing is taken away from anybody: switch Audit Mode off and everything is back as it was.',
+    ],
+  },
+  {
     version: '0.10.267',
     date: '2026-11-18',
     title: 'Hand Stock: Last counted and Last movement filters; negative-stock notifications open the line',
@@ -33,6 +46,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.266',
     date: '2026-11-18',
     title: 'Haiku Read: choose the day or the UCNs; correct counts',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Haiku Read now reads what you choose: the visits entered on a day, or the UCNs you type or paste — not "the next 20". It says how many it found and how many were read already (skipped), and asks before it starts, with the estimated cost.',
       'The All count on Daily cut-outs and Haiku Read is the number of rows again. It was adding "To check" (a part of "Box found") on top, so 53 rows read as 91.',
@@ -42,6 +57,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.265',
     date: '2026-11-18',
     title: 'Visit Date Check: Corrected dates report',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'New tab Corrected dates on Visit Date Check: every Visit Date changed from a Daily cut-out or a Haiku Read — when it was corrected, who did it, what the date was, what it was set to, and what it is now. A visit changed again since is flagged. Filter, search and export to Excel or CSV.',
     ],
@@ -50,6 +67,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.264',
     date: '2026-11-18',
     title: 'Daily cut-outs: decide many, save once; re-crop a day',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Mark each row — ✓ RITHI is right, or pick the date the report shows — and press Save all once. One confirmation lists every decision; there is no pop-up per row. Discard drops the marks.',
       '↻ Re-crop this day crops the day\'s visits again, replacing every cut-out not yet decided (for example after an improvement, or a "No box found"). Decided rows stay exactly as they are.',
@@ -59,6 +78,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.263',
     date: '2026-11-18',
     title: 'Visit Date Check opens on Daily cut-outs; Readings is now "Haiku Read"',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Visit Date Check now opens on Daily cut-outs, the first tab. The AI tab is second and renamed Haiku Read.',
       'Haiku only reads when you press Check on Haiku Read — the 06:00 daily job never sends anything to it.',
@@ -68,6 +89,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.262',
     date: '2026-11-18',
     title: 'Fewer "No box found" on the daily cut-outs',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'When the box is not found, the page is searched again zoomed into the area where the form\'s lines are — a whole sheet photographed on a desk leaves the form small in the frame, its rows too short and its labels too small to read.',
       'A photo tilted up to 8° is now straightened (it was 4°), and a form small in the frame no longer has its rows dismissed as too short.',
@@ -78,6 +101,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.261',
     date: '2026-11-18',
     title: 'Daily cut-outs: correct the Visit Date, crop any day now, full-width cut-outs',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Each daily cut-out now has a Decision: ✓ RITHI is right, or set the date to what the report says and press Change — the visit\'s Visit Date moves to that day (its time and its Visit Entry Date stay). Decided once, with who and when; a future date is refused. The "To check" chip lists what is still waiting. Administrators for now (key "Change the Visit Date").',
       'Every cut-out now keeps its left edge and its two rows but runs to the right edge of the page, so the handwritten date is never cut off where a line was taken for the end of the box (the daily job and the Report reader trial alike).',
@@ -89,6 +114,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.260',
     date: '2026-11-17',
     title: 'Daily Visit Date cut-outs',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Every morning at 06:00 India time, the Service Visit Date box is cut out of each manual report entered the day before — no AI reads it, so there is no cost.',
       'See them on Reports → Visit Date Check → Daily cut-outs: pick a day (yesterday by default) and each visit shows its UCN, engineer and Visit Date in RITHI beside the cut-out from the report, to compare by eye. Filter, search and export.',
@@ -99,6 +126,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.259',
     date: '2026-11-17',
     title: 'Bulk close PM calls',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [3],
     changes: [
       'On Preventive (PM), tick two or more open PM calls of the same customer and press ✅ Bulk close. One Visit Entry form opens for all of them: fill the visit, the status, the Service Report, the feedback and upload the manual report once.',
       'On save, each call gets a visit of its own — separate entries in the visit history, all pointing at the same manual report — and each call\'s status follows its visit. Spares are booked per call: pick the call for each spare line.',
@@ -110,6 +139,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.258',
     date: '2026-11-17',
     title: 'Visit Date Check: read, stored, reported and correctable',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'New report under Reports: Visit Date Check (administrators for now; grant it to other roles on Roles & Permissions when ready). It lists, for every visit checked, the Service Visit Date written on the manual report beside the Visit Date in RITHI: Matches, Differs, Unreadable or No box found.',
       'Only the Visit Date is read now (the UC No is dropped). Claude Haiku reads it first; Claude Sonnet is asked only when Haiku fails — an error, a refusal or no readable date. Each result says who read it and what it cost.',
@@ -122,6 +153,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.257',
     date: '2026-11-17',
     title: 'Report reader trial: the cut-out read by Claude Haiku and Sonnet',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'The Report reader trial has a new tick-box: "Also send each cut-out to Claude Haiku and Sonnet to read". Ticked, ONLY the cut-out (the Call No/UC No and Service Visit Date rows) is sent — never the photo — and each model\'s reading is shown beside it, marked ✓ or ✗ against the UCN and Visit Date in RITHI, with the time taken and the cost.',
       'A summary line gives each model\'s score (UC No right, Visit Date right), its average time and the total cost, so the two can be compared on your own reports.',
@@ -132,6 +165,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.256',
     date: '2026-11-17',
     title: 'Report reader trial: PM reports cut to just the two rows',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'On PM reports, where the box is found from the printed label, the cut-out is now fitted to the ruled lines around the label: just the Call No/UC No and Service Visit Date rows (no longer Call Type, Status and Start Time), and wide enough to keep the whole list of UC Nos, stopping at the line that closes the value cells so nothing from the next section is included.',
       'Each page is now tried by its lines and then by its label before it is turned, so an upright PDF is settled much sooner.',
@@ -168,6 +203,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.252',
     date: '2026-11-17',
     title: 'Report reader trial (Phase A) on Admin Config',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Admin Config has a Report reader trial: it takes the latest manual report photos and shows, for each, the cut-out of the Call No/UC No and Service Visit Date box it found — so you can check it finds the right box and nothing else.',
       'It runs entirely in your browser; nothing is sent anywhere. The first run downloads the reader (about 7 MB) from the app itself. PDFs are counted and skipped for now.',
@@ -222,6 +259,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.246',
     date: '2026-11-13',
     title: 'Objective evidence: Region column',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'The evidence download for every call-based objective has a Region column beside the engineer: the region of the Visiting Service Engineer, else of the engineer the call is allotted to, from the User Master.',
       'The Customer Feedback Satisfaction evidence has Region beside its Engineer.',
@@ -283,6 +322,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.239',
     date: '2026-11-13',
     title: 'Region on every register; pending reason in evidence; disabled login inactive',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [1],
     changes: [
       'Region column on the Field, Installation and PM call registers, Spare Requests, RM Approval, Pending Dispatch and Stock Out lines, Spare Consumption, Stock Transfer (From Region and To Region), Material Returns, Hand Stock and its movements and the Hand Stock Report, and in each one\'s download. It is the engineer\'s current region from the User Master, not stored, so it follows a move. On a call it is the Visiting Service Engineer\'s (latest visit), else Call Allocated To\'s.',
       'Objective: every call-based objective\'s evidence download has a Call Pending Reason column beside the call\'s status.',
@@ -328,6 +369,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.234',
     date: '2026-11-13',
     title: 'KPI & Failure Analysis: Call Type filter',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'KPI & Failure Analysis has a Call Type filter at the top: All, Field, Installation or PM. Every figure on the page follows it: the cards, the failure rate per 100 machines, how products fail, and spare use by cover, region and product. It opens on Field and remembers your last choice on that device.',
       'A call counts under the register it is in (Field Call Register, Installation Calls or PM), whatever its Call Type text says. The machines in the field are always the whole Product Register. Clicking a complaint opens the register of the Call Type chosen.',
@@ -387,6 +430,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.228',
     date: '2026-10-27',
     title: 'The Training Record sheet prints on A4 from page 3',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Training Requests → 📄 Record sheet prints the Record alone, to go with HR\'s two pages: A4, numbered from page 3 and continuing, every employee over as many pages as needed.',
       'Every printed page — the form and the Record sheet — has the header (the logo and its table) and the footer. The header reads TRAINING FORM, without the Request No.; the Record sheet still shows the number in square brackets.',
@@ -433,6 +478,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.224',
     date: '2026-10-27',
     title: 'Training Form Record for big lists; machine copies notice changes',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0,  1,  2,  3],
+    auditTitle: "The machine and party copies on your device notice changes",
     changes: [
       'On a Training Form added from HR\'s document, only the Record is filled in now: training dates, names, content of training and status. The plan and the evaluation stay as HR\'s document gave them.',
       'Content of training by designation: type, once, what each User Master designation is trained on. People added to a form get their designation\'s content.',
@@ -477,6 +525,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.220',
     date: '2026-10-27',
     title: 'Training Forms from HR, signed in RITHI; a reminder to save your signature',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0,  1,  2],
+    auditTitle: "A reminder to save your signature",
     changes: [
       'Training → Training Requests → ＋ Add from HR document: choose the Training Form .docx that HR made. RITHI reads it and fills in the number, plan, approval, dates, employees and evaluation for you to check, then keeps the document attached (📎 HR document). There is no approval step in RITHI; the approval is what HR\'s document says.',
       'Topics, dates, the record and the evaluation (all the actuals) are updated here. The Evaluator is now a named field.',
@@ -489,6 +540,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.219',
     date: '2026-10-23',
     title: 'Training Request (Training Form R/HR/11) with every New Employee Request',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'A New Employee Request now asks for the training plan: Training Topic, Trainer name and designation, and the Risk (Low, Medium or High).',
       'Each request raises the person\'s Training Request. The training is approved or not approved along with the request, by the same person; a rejection reason becomes "If No Reason".',
@@ -500,6 +553,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.218',
     date: '2026-10-23',
     title: 'Training: everyone active on the User Master in one go',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'When choosing people for training, there is now a tick: All active users on the User Master. It shows how many people that is.',
       'It works when assigning training, when adding a session\'s attendees, and when choosing trainees on a QMS document upload.',
@@ -722,6 +777,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.196',
     date: '2026-10-14',
     title: 'Objective 11 download: every date behind the TTA',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'The evidence download for Problem Call attending within 3 days now lists, for each call after its UCN and Call Number: Call Registration Date, Complaint Date, Breakdown Date, First Visit Date, First Visit Recorded Date (when that visit was entered), First Spare Request Date, Attended On, TTA Counted From, TTA (Days) and TTA ( R ).',
       'Attended On is the earlier of the first visit and the first spare request. TTA (Days) is the number compared with 3; TTA ( R ) is the band, as in the KPI Export. TTA Counted From says whether the days came from the Complaint or the Breakdown Date.',
@@ -839,6 +896,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.185',
     date: '2026-10-13',
     title: 'Objective: the Total column is calculated',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'The Total column on the Objective page is now worked out the way the shared sheet does it. For the FFR count it is the sum of the months. For every percentage objective it is the average of the months that have a figure. Blank and NA months are left out.',
       'It updates by itself whenever a month changes, whether by Re-Calculate or a month typed over by hand. An objective with no calculation keeps the Total typed for it.',
@@ -921,6 +980,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.177',
     date: '2026-10-12',
     title: 'Objective: visit dates are India dates',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'FIXED: the Breakdown, Preventive Maintenance and Installation figures and the "attended within 3 days" figure took a visit\'s date in UTC, so a visit made between midnight and 05:30 India time counted as the day before. They now use the India date, as Customer feedback already did.',
       'Press Re-Calculate to update the figures. This moves most of them a little: almost every visit loaded from a file is recorded at midnight India time, so almost every one was being counted a day early.',
@@ -930,6 +991,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.176',
     date: '2026-10-12',
     title: 'Objective: Customer feedback worked out as the Customer Feedback workbook does',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'The Customer feedback objective is now calculated, the way the Customer Feedback workbook calculates it. Each answer is scored Excellent 4, Good 3, Average 2, Poor 1. An installation call\'s satisfaction is its 5 installation answers out of 20; any other call\'s is its 6 PM / Field answers out of 24. The figure is the average satisfaction of the feedback whose visit date falls in the period.',
       'Press Re-Calculate to fill it. The 95% typed in for March and June is replaced by the calculated figure (about 94.5% and 95.4%).',
@@ -968,6 +1031,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.172',
     date: '2026-10-12',
     title: 'Objective: Missed PMs left out of the PM figure, with a toggle',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'A Missed PM is a PM call added after the month it is registered for (its Added On date is later), for example a March PM added in October. The Preventive Maintenance objective now leaves Missed PMs out by default.',
       'Each PM objective has a Count Missed PMs tick in its definition, to count them again. The evidence download says which way it was counted.',
@@ -978,6 +1043,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.171',
     date: '2026-10-12',
     title: 'Spare Insights loads again for the whole year',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'FIXED: Spare Insights showed "canceling statement due to statement timeout" for a long window such as this year. The database now works out the figures with the dates you chose, in under a second, instead of with a guess that took more than 25 seconds. The figures are unchanged.',
     ],
@@ -986,6 +1053,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.170',
     date: '2026-10-12',
     title: 'Objective: Recent Failure measured as of today, and every % to 2 decimals',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Recent Failure Rate objectives now count every failing call registered up to today, not only those known at the end of that month. Each month still averages its own twelve commissioning months. No cut-off date applies to them.',
       'Press Re-Calculate on the Objective page to update the figures already shown. Earlier months will change where failures were registered after the month ended.',
@@ -1352,6 +1421,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.131',
     date: '2026-10-06',
     title: 'Objective: editing an objective saves again',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'OBJECTIVE: Save on an objective\'s definition (✏️) failed with “column id can only be updated to DEFAULT”. It now saves only what the window edits — the name, process, targets, frequency, responsible, status, calculation and parameters.',
     ],
@@ -1360,6 +1431,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.130',
     date: '2026-10-06',
     title: 'Objective: failure rate from the DCCR, by month of commissioning',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'OBJECTIVE → FAILURE RATE (DCCR): a new tab with your WRR table for each product — one row per month of commissioning, its Parc, and the failures before 3, 6, 12, 24, 36 and 60 months with their rates. ⭳ Download gives the table, the failing calls and the months averaged.',
       'A failure is a Field call whose DCCR Spare / Consumable / Correction / Calibration is SPARE, or whose Any Potential Effect is YES. Every call counts, as in the sheet, so a rate can pass 100%. A month younger than the window is blank.',
@@ -1370,6 +1443,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.129',
     date: '2026-10-06',
     title: 'Objective: a Status for each objective, and the five deleted ones restored',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'OBJECTIVE: every objective now has a Status — Active, Not Working or Do Not Use — set with ✏️ on the objective. Not Working and Do Not Use are hidden; tick “Show hidden” to see and change them. Hiding is all it does: they are still edited and re-calculated as before.',
       'The five objectives that had been deleted — Recent Failure Rate of CPXcare, Extend (Indian), Orion-G, VEGA and Failure Rate of MT60 — are restored as Not Working, with the January–July figures they were first loaded with and the same calculation as MT75. Press Re-calculate to bring their computed months up to date.',
@@ -1645,6 +1720,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.100',
     date: '2026-10-05',
     title: 'Pre-Delivery Quality Check numbers; an MRN import is a Defective Spare',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Every Pre-Delivery Quality Check now has a number, PDQC/26/0001, restarting each year. It is shown in the list, on the check and on the printed sheet; checks already recorded were numbered in the order they were saved.',
     ],
@@ -1663,6 +1740,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.99',
     date: '2026-10-05',
     title: 'Pre-Delivery Quality Check — a register of its own under Indoor Service',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'New page Indoor Service → Pre-Delivery Quality Check, for imported machines in the godown checked before billing.',
       'The form is R/SER/QC/007: product (from the Product Master), SL. No, date, measuring equipment ID, software version, HV, HT, checks 1–5 OK / NOT OK, and the CMV/ACMV and PCMV readings at FiO2 21, 60 and 100%.',
@@ -1702,6 +1781,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.95',
     date: '2026-10-04',
     title: 'Indoor intake: Field Return, Demo and New Device as three separate options',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'RECEIVE EQUIPMENT now has three options: Field Return, Demo and New Device (Demo / new device is split in two).',
       'Each fixes what is being done: Field Return → Troubleshooting, Demo → Demo, New Device → Troubleshooting.',
@@ -1712,6 +1793,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.94',
     date: '2026-10-04',
     title: 'Indoor job: a plain summary beside the Create Indoor DC form',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'DC / DISPATCHED page: while the Create Indoor DC form is open on the right, the left side shows only a read-only summary of the unit — customer, product and serial, the call and its Call Status, job status, report number, and any accessories still to go back. The DC number, DC date and Remarks boxes no longer sit beside the form.',
     ],
@@ -1720,6 +1803,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.93',
     date: '2026-10-04',
     title: 'Indoor job: Call Status and Call Pending Reason at the top of the Repair page; MIRN removed from the DC',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'REPAIR PAGE: the Workshop record is now at the top. For a job with a call, the Status box is replaced by Call Status and Call Pending Reason, with the same choices and rules as the Visit Entry — the reason is required while Unsolved, reads Report Pending for a pending report, and a completed report has none.',
       'They are the visit’s values: the visit filed when the Indoor DC is approved carries what you chose (no longer always Unsolved / Return to Field). An Unsolved job with no reason cannot have its DC approved.',
@@ -1732,6 +1817,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.92',
     date: '2026-10-04',
     title: 'Indoor job: the Checks table is removed',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'INDOOR SERVICE job: the “Checks · expected against measured” table is removed. The Quality Check (4.5.6) stays, and a Repair, Rework or Troubleshooting job still cannot leave until its quality check is recorded.',
     ],
@@ -1740,6 +1827,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.91',
     date: '2026-10-04',
     title: 'Indoor intake: Field Return is Troubleshooting; tags are Yes / No; no accessory serial; numeric WI revision',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'RECEIVE EQUIPMENT → Field Return: “What is being done to it?” is fixed to Troubleshooting. A Troubleshooting job follows the Repair rule — it cannot be dispatched or closed until its quality check is recorded.',
       'IDENTIFICATION TAG: pick Yes, Identified or Not Identified — for the unit and for each accessory, on the intake and on the job. A tag typed on an older job stays as it was.',
@@ -1751,6 +1840,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.90',
     date: '2026-10-04',
     title: 'Indoor Service intake: “From a call” is now “Field Return”',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'INDOOR SERVICE → Receive equipment: the first option is renamed from “From a call” to “Field Return”. It works exactly as before — the unit comes in on its call.',
     ],
@@ -1759,6 +1850,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.89',
     date: '2026-10-04',
     title: 'Objective Re-Calculate no longer times out; Frequent Failure and Technical Support on SLA / Objective Configuration',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0],
+    auditTitle: "Frequent Failure and Technical Support on SLA / Objective Configuration",
     changes: [
       'OBJECTIVE: Re-calculate stopped with "canceling statement due to statement timeout" after the new Product Failure rule. The failure rate is now worked out in one pass and Re-calculate finishes well inside the limit — same rule, same figures.',
       'SLA / OBJECTIVE CONFIGURATION now also holds the FREQUENT FAILURE rule Review 2 applies (moved from Admin Config). Nothing about the rule itself changed.',
@@ -1782,6 +1876,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.87',
     date: '2026-10-04',
     title: 'SLA / Objective Configuration — Product Failure is a failure within 3 months, over a rolling 12 months',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [3],
     changes: [
       'NEW PAGE under Administration: SLA / OBJECTIVE CONFIGURATION. The SLA Targets moved here from Admin Config, beside the new Product Failure Rate setting.',
       'PRODUCT FAILURE RATE: a machine counts as failed when a field call on it is registered within 3 months of its installation (warranty start). The rate is over the machines of that product installed in the last 12 months (rolling, up to each month\u2019s cut-off). A machine with several calls in its window counts once.',
@@ -1857,6 +1953,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.80',
     date: '2026-10-04',
     title: 'Objective: type over a calculated figure and Re-calculate keeps it, or asks',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'OBJECTIVE: you can type over a month of a calculated (ƒ) objective. It becomes a manual override, marked ✎ — hover it to see who typed it, when, and what the calculation had said.',
       'Re-calculate no longer overwrites those months without asking. When there are manual overrides it lists them and asks: Keep them (the default — they stay exactly as typed, on every run) or Discard them (those months are recalculated and the ✎ goes).',
@@ -1867,6 +1965,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.79',
     date: '2026-10-04',
     title: 'Review fixes: search, transfers, masters, Indoor DCs and feedback speed',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [6],
+    auditTitle: "Review fixes: search, transfers, masters and feedback speed",
     changes: [
       'SEARCH (top of the screen): a group that has more than the five shown now says so, instead of looking complete.',
       'STOCK TRANSFER: a transfer with a reason on some lines only is now saved; before, it was refused.',
@@ -1931,6 +2032,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.72',
     date: '2026-10-03',
     title: 'Twelve High-rated defects fixed: hand stock, spare approvals, calls, reviews, masters, Indoor',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [4,  5],
+    auditTitle: "High-rated defects fixed: hand stock, spare approvals, calls, reviews, masters",
     changes: [
       'HAND STOCK: the stock limit now applies on every route. Marking a booking, transfer or return as "imported" no longer gets round it -- only Bulk Uploads and the Data Import panel load history. A recorded transfer cannot be re-pointed or back-dated (record a transfer back instead). A return must be your own stock unless you may return for others. Stores cannot cut an issued quantity or remove an opening balance below what the engineer has used -- correct it with Adjust stock.',
       'SPARE REQUESTS: once the RM has approved or rejected a spare, its part and quantity are fixed -- raise a new request for something else. A request moves to another engineer only through Change engineer. Item Status is always the call\'s.',
@@ -1964,6 +2068,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.69',
     date: '2026-10-04',
     title: 'Indoor Service emptied for a fresh start; new CallReg address',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0],
+    auditTitle: "New CallReg address",
     changes: [
       'INDOOR SERVICE: all the test data was removed — every job, accessory, harvested part, check, pre-delivery test and Indoor DC — together with the visits and spares that Indoor DC approvals had filed on calls (each call goes back to its previous visit). The next job and the next Indoor DC start from number 1 again. Report files already in Drive are left there.',
       'The CallReg (Google Apps Script) address was updated to the new deployment; every device switches to it automatically on the next load.',
@@ -2045,6 +2152,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.61',
     date: '2026-10-03',
     title: 'Indoor DC: authorised and approved as the User Master says',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'AUTHORISED BY on an Indoor DC now comes only from the User Master: your Reporting Manager, your Regional Manager, and as NSM the Reporting Manager on your Regional Manager’s own row. It no longer lists every NSM, and you can never name yourself.',
       'THE PERSON NAMED APPROVES WHATEVER THEIR ROLE. They see the DCs that name them on My Workload (Indoor DCs — Awaiting my approval); if their role cannot open Indoor Service, the card opens a page listing just those DCs, and the DC print opens for them.',
@@ -2140,6 +2249,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.51',
     date: '2026-10-03',
     title: 'Indoor Service: the Workshop view uses the standard table',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'WORKSHOP VIEW: the job list now uses the standard table, as the R/SER/07 register does. You can drag column widths, drag headings to reorder, wrap text, and pick columns. The DC tick box for choosing units stays as the first column.',
     ],
@@ -2148,6 +2259,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.50',
     date: '2026-10-03',
     title: 'Indoor Service: a pop-up job window, the DC side by side, delete, and the standard table',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'THE JOB OPENS AS A POP-UP WINDOW instead of a side panel. Esc or × closes it.',
       'CREATE DC splits the window: the job on the left, the DC details on the right. Drag the divider to set the widths; the split is remembered on this device. The DC no longer opens behind the job.',
@@ -2162,6 +2275,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.49',
     date: '2026-10-03',
     title: 'Indoor Service: one page per stage, and a cleaner form',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'INDOOR JOB IN PAGES: Intake → Cleaning → Repair → DC, one page at a time, with Back and Next. A job opens on its current stage. Stages already done can be opened from the marker at the top; later ones unlock in order, as before.',
       'REPAIR IS THE SERVICE REPORT: the report number, the file, the visit details (spares consumed included) and Request spare are all on the Repair page, finished with one button: Upload service report. Upload no longer opens a second window.',
@@ -2173,6 +2288,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.48',
     date: '2026-10-02',
     title: 'Indoor Service in stages, and the Indoor DC approved',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'INDOOR SERVICE WORKS IN STAGES: Intake → Cleaning → Repair → Report → DC. A marker at the top of each job shows where it is, and only that stage\'s fields (and those already done) are shown. Cleaning comes before the report upload, and the upload before the DC.',
       'INTAKE: "Receive equipment" opens an intake form. Pick the product and serial to see that machine\'s open calls, or type the UCN. RITHI fills in the UCN, customer, place, the allotted engineer, the machine\'s item status, product, serial and the complaint. The received accessories are an add-item list with quantities.',
@@ -2222,6 +2339,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.43',
     date: '2026-10-02',
     title: 'Indoor_DC, and the MTN and MRN printed',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0,  1,  2],
+    auditTitle: "The MTN and MRN printed",
     changes: [
       'NEW: INDOOR_DC. On the Indoor Service register, tick the Ready units going to the same customer and choose Create Indoor DC.',
       'The DC is numbered IDC-YYMM-NNNN by the system. It lists each machine (product code, name and Sl.No) and its accessories, with a Purpose on each line. "To" is filled from the Party Master and can be edited. It also takes the MIRN / customer reference and date, and the mode of despatch.',
@@ -2235,6 +2355,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.42',
     date: '2026-10-02',
     title: 'Indoor Service: the R/SER/07 register and Pre-Delivery Testing (R/SER/QC/007)',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'INDOOR SERVICE KEEPS THE PAPER REGISTER\'S COLUMNS: Field Service Report No, Engineer Name, Customer Place, Problem Reported, Indoor Service Report No, DC date and Remarks. It also records the machine\'s cover (WGP / OGP / CMC / AMC), looked up from the Product Database by model and serial and editable. Engineer, place and customer are filled from the call when a UCN is given; a demo device defaults to "Indoor Service".',
       'VERIFIED BY: a supervisor verifies a completed register entry once the unit is dispatched. It records their name and the time, and needs the new "Verify an Indoor Service register entry" permission. No role holds that permission yet; tick it on Roles & Permissions for the supervisor.',
@@ -2247,6 +2369,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.41',
     date: '2026-10-02',
     title: 'Installation calls mapped to their machines, and a list of the machines without one',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [1],
+    auditTitle: "Installation calls mapped to their machines",
     changes: [
       'ONE-TIME MAPPING: every warranty machine without an installation call in INST Call was matched to one, using installation calls only. It tried, in order, the call number WI-<Product>-<Serial>, then Product + Serial + Party Name, then Product + Serial. A machine was mapped only where exactly one call fitted. Nothing that was already mapped was changed, and every change is logged with the rule that made it. It ran once and cannot run again.',
       'NEW (administrators only): REPORTS → MACHINES WITHOUT AN INSTALLATION CALL. Every warranty machine that still has no installation call, with the reason (no call found, the call is on another machine line, one match not mapped, or several to choose from) and the candidate calls with their parties. Filter by reason and export to Excel or CSV. It changes nothing: map the call from the Warranty Register and the machine leaves the list. Give it to other roles on Roles & Permissions.',
@@ -2426,6 +2551,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.24',
     date: '2026-10-02',
     title: 'Screens that showed less, or more, than they said',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [1],
     changes: [
       'MY WORKLOAD: the Any Potential Effect card now opens the calls it counts, not the whole review register.',
       'SPARE INSIGHTS opens on 1 January of the current year (it was fixed to 2026), and This year follows the year.',
@@ -2667,6 +2794,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.3',
     date: '2026-09-30',
     title: 'People and training: profiles, Roles & Responsibilities, a Training module, Department, and the QMS Master List upload',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [4,  5,  7],
+    auditTitle: "People: profiles, Roles & Responsibilities, Department, and the QMS Master List upload",
     changes: [
       'USER MASTER — DEPARTMENT: a new field, chosen from Masters → Department (add your departments there first).',
       'PROFILE: open a person on User Master for Employee Code, Joining Date, Department, Designation, both managers, Mail ID, their Roles & Responsibilities and their training. Employee Code and Joining Date are seen only by the person, their managers, User Master administrators and whoever manages training.',
@@ -2741,6 +2871,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.398',
     date: '2026-09-30',
     title: 'Spare Insights counts India\'s days, and the half-hourly refresh no longer fights Load more',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'SPARE INSIGHTS: the date window and the month chart now follow India time. A spare booked between midnight and 5:30 am was counted in the previous day, and on the 1st of a month in the previous month. That no longer happens, whatever the database\'s own clock is set to. Applies itself once merged; nothing to run.',
       'EVERY REGISTER THAT REFRESHES ITSELF EVERY 30 MINUTES (Spare Requests, Spare Consumption, Hand Stock, Customer Feedback, Material Returns, the Call Registers, Party, Part and Product Masters, the Warranty and Contract Registers, Reports, Audit Log and the rest): if the refresh fell due while you were pressing Load more, the two could overwrite each other and a page could go missing or come back twice, with nothing on screen to say so. The refresh now waits until Load more has finished.',
@@ -2942,6 +3074,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.380',
     date: '2026-09-26',
     title: 'Counts and lists that could quietly miss or double a row',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [2,  3],
     changes: [
       'CALL REQUEST: A REQUEST CAN NO LONGER BE FILED AGAINST TWO CUSTOMERS. When serials were typed rather than picked, each was looked up on its own at submit and the customers were never compared. Now the request is refused and the message says which call belongs to whom — raise a separate request for the other machine.',
       'DAILY COMPLAINT REVIEW: switching tabs while a long worklist was still loading could leave the first tab’s calls under the second tab’s heading and count. Only the latest load is shown now.',
@@ -3532,6 +3666,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.335',
     date: '2026-09-22',
     title: 'New report \u2014 Feedback Without a Report',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'Reports \u2192 Feedback Without a Report. ADMINISTRATORS ONLY. If a customer gave feedback on a call, somebody went and did the work \u2014 so there should be a visit reading "Solved - Report Completed" behind it. This lists the ones where there is not.',
       'IT NAMES WHICH OF FOUR THINGS IS MISSING, because each needs a different fix: the feedback records no UCN \u00b7 no call carries that UCN \u00b7 the call has no visit at all \u00b7 the call has visits and none of them is the completed one.',
@@ -3740,6 +3876,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.318',
     date: '2026-09-20',
     title: 'Product Database 2.0 keeps itself up to date \u2014 no more Rebuild button to remember',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'YOU ASKED WHETHER YOU HAVE TO REBUILD IT EVERY TIME. You do not, and now you do not have to at all: the five registers tell it when they have changed, and it rebuilds itself within five minutes. The button is still there for when you want it now rather than soon.',
       'The screen says which it is \u2014 \u201cLive as of \u2026\u201d, or \u201cA register has changed since \u2026 \u2014 updating within 5 minutes\u201d. A time on its own could not tell you whether you were looking at the current picture or one waiting on an update, and those read the same while meaning opposite things.',
@@ -3752,6 +3890,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.317',
     date: '2026-09-20',
     title: 'Click a machine in Product Database 2.0 \u2014 and click straight through to its documents',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'CLICK ANY ROW and the whole record opens in a drawer: the machine, whose it is and what decided that, the warranty, the contract, the ownership transfer, and which registers named it \u2014 thirty-three fields rather than the ten the table has room for.',
       'EVERY REFERENCE ON IT IS A LINK. The SA number opens the Warranty Register on that sale. The contract number opens the Contract Register on that contract. The transfer reference opens Ownership Transfer on it. The installation call opens the Installation Calls register on that UCN. And the serial opens the machine\u2019s full history.',
@@ -3764,6 +3904,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.316',
     date: '2026-09-20',
     title: 'Product Database 2.0 refused everybody \u2014 including you. Fixed, and the gate is gone',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       '\u201cYour role does not have permission to read this\u201d as a SUPER ADMIN was not a permission decision. It was a bug in yesterday\u2019s speed fix: the screen\u2019s view was set to read AS THE PERSON ASKING, while the stored table underneath it had deliberately been closed to everyone. Those two things contradict each other, so it refused EVERY reader \u2014 administrators included. No role was missing anything.',
       'AND THE PERMISSION CHECK IS GONE RATHER THAN REPAIRED. 2.0 was the only screen of its kind carrying a permission rule of its own, and that rule is what broke. It is gated the same way every other screen is now \u2014 by whether your role can open Product Database 2.0 at all.',
@@ -3775,6 +3917,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.315',
     date: '2026-09-20',
     title: 'Product Database 2.0 was timing out \u2014 it is built once now, not on every page',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'THE REAL REASON IT WAS EMPTY, and it was not the one I gave you: \u201cLoad failed: canceling statement due to statement timeout\u201d. The screen was not being refused and the registers were not blank \u2014 the query never finished.',
       'WHY. The page worked the whole machine list out from five registers EVERY TIME it was asked, and it asks once per page of results. Measured on a database loaded to your order of magnitude: one page took 2.9 SECONDS, and the screen needs ten of them. The single worst part was reading the installation call \u2014 24 ms on its own, 1,255 ms once per-person visibility rules were applied to it.',
@@ -3811,6 +3955,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.312',
     date: '2026-09-20',
     title: 'Product Database 2.0 now says why it is empty, on the screen',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'AN EMPTY 2.0 USED TO SAY \u201cNo machine appears in the warranty sale register, the contract register or the additional entries yet\u201d. That was the one thing it could not know. The screen now COUNTS the three registers when it has nothing to show \u2014 rows, how many record no serial, how many record no model \u2014 and prints what it found, so you do not have to run SQL to find out.',
       'AND IT ONLY CLAIMS WHAT IT MEASURED. It says \u201cevery row records no model\u201d only when every counted row really does; where some rows carry both a model and a serial it says so and points at the probe, and where a register could not be counted at all it says THAT rather than showing a zero \u2014 a zero there would read as \u201cthis register is empty\u201d, which is a different claim.',
@@ -3821,6 +3967,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.311',
     date: '2026-09-20',
     title: 'A file that says WHY Product Database 2.0 is empty',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'IF 2.0 IS EMPTY, RUN _why_is_product_database_2_empty.sql \u2014 it answers with your own numbers instead of a guess. It counts, for each of the three registers, how many rows carry a SERIAL, how many carry a PRODUCT NAME, and how many carry BOTH. Only rows with both can be listed.',
       'WHY BOTH ARE NEEDED: a machine is its model AND its serial. Serials repeat across models \u2014 there are eleven machines numbered 219 \u2014 so a register row with a serial and no model cannot be identified as a machine, and is left out rather than guessed at. That is also why 2.0 can legitimately show fewer machines than the older cover view, which needs only a serial and merges the ones that share one.',
@@ -3844,6 +3992,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.309',
     date: '2026-09-20',
     title: 'The SQL now tells you what to run first, instead of failing on a function name',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0],
     changes: [
       'PRODUCT DATABASE 2.0\u2019s SQL FAILED WITH \u201cfunction public.imported_ts(jsonb, unknown) does not exist\u201d. It needs two things other bundles install, and said so only by dying part-way through. It now stops at the top with the list: run performance.sql first, then this.',
       'AND THE FILE IT TOLD YOU TO RUN FOR THAT WAS WRONG. _status.sql row 167 named HandStock_X.sql, which does not contain that migration at all \u2014 so the row went on reading NO however many times you ran what it named. It says performance.sql now.',
@@ -3856,6 +4006,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.308',
     date: '2026-09-20',
     title: 'Product Database 2.0, and the cover requirements behind it',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0,  1,  2,  3,  4,  5,  7],
+    auditTitle: "The cover requirements, written down",
     changes: [
       'PRODUCT DATABASE 2.0 \u2014 a new screen beside the one you have, which is untouched. One row per MACHINE (model AND serial), worked out from the warranty sale register, the contract register, the additional entries, the ownership transfer and the installation call. Run both and compare before trusting either.',
       'EVERY ANSWER SAYS WHERE IT CAME FROM. Party from, Because, and the warranty and contract source columns name the register that decided each value \u2014 a row assembled from five places that cannot show its evidence is one nobody can check.',
@@ -4307,6 +4460,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.271',
     date: '2026-09-15',
     title: 'The filter chips above a register can be put away',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [2],
     changes: [
       'Every row of filter chips now has a heading you can click to fold it away — Engineer on the call registers and Spare Requests, Status / Activity / Kind on Indoor Service, Product / Region on KPI.',
       'A LONG ROW STARTS FOLDED, a short one starts open. A row is crowded exactly when it has more names than fit, so that is what decides it — and it follows the data rather than being set once.',
@@ -4588,6 +4743,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.248',
     date: '2026-09-14',
     title: 'Contract and Warranty open on 2,000 rows',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [1],
     changes: [
       'The Contract and Warranty Registers now fetch two full pages before showing anything, so they open on 2,000 rows instead of 1,000. Each request stays at 1,000 — the most the database hands over at once — and the register simply makes two of them.',
       'On the Objective page, asking to see the reports behind the Field Failure count now explains itself if you are not allowed to read that register: the figure is yours to see, the reports behind it are not, and it names the right to ask for. It used to show a bare error that read as a broken page — seven of the twelve roles that can open Objective would have hit it.',
@@ -4608,6 +4765,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.246',
     date: '2026-09-14',
     title: 'Feedback loads, the FFR count works itself out, and the register has a year',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [2],
     changes: [
       'The feedback upload stopping at row 24,093 with “Your role does not have permission” is fixed. 24,092 rows had gone in and then one repeated a call that was already there — correcting a row needs a different permission from adding one, and nobody had it. Whoever may file a feedback may now correct one.',
       'The Stock Transfer Register had exactly the same fault waiting. It would have stopped the same way on the first re-load; it will not now. The quantities were never affected — those are on the lines, which are added and never rewritten.',
@@ -4830,6 +4989,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.226',
     date: '2026-09-12',
     title: 'A tidier visit pane, and the buttons where you reach for them',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [4],
     changes: [
       'The visit details beside a report no longer show the form’s own answers — Add Consumption?, Maintenance Done?, Recomended Filter Changed?, Update Visit Work Details? — nor Call Type, Standard Complaint, Complaint Observation or Visit Entry Date, which the report already carries or the Visit Date already says.',
       'What is left is the work: Job Done, the report link, software version, visit date and hour meter.',
@@ -5116,6 +5277,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.202',
     date: '2026-09-11',
     title: 'Call Review — a second look at the report on a closed call',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'A NEW SCREEN, separate from the Daily Call Review. The DCCR asks what the failure WAS; this asks whether the report the engineer filed actually stands.',
       'It lists SOLVED CALLS ONLY, in the same three-pane layout: the calls on the left, the call in the middle, and what actually happened on it — visit work details and every spare consumed — on the right. The panes are draggable and the widths are remembered.',
@@ -5340,6 +5503,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.182',
     date: '2026-09-09',
     title: 'Indoor Service — a register for equipment in the workshop',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'THERE IS NOW AN INDOOR SERVICE REGISTER, for every piece of equipment that comes into the workshop — the machine an engineer could not fix on site, a unit being reworked, one being stripped for usable parts, a new unit checked before it ships, and a demo unit going out to a customer.',
       'IT RECORDS TWO DIFFERENT THINGS SEPARATELY, and they are separate on purpose: WHOSE the equipment is (a customer’s machine, which the company has a duty of care over, or the company’s own demo stock) and WHAT IS BEING DONE to it. A demo unit that comes in for repair is still a demo unit.',
@@ -5585,6 +5750,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.160',
     date: '2026-09-09',
     title: 'Roles & Permissions carries every page again',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [1],
     changes: [
       'TWO PAGES WERE IN THE MENU AND NOT ON THIS SCREEN AT ALL — PM Bulk Upload and Software Validation. Neither could be granted, withheld, or even seen in the matrix. They are there now, under the same headings the menu uses.',
       'SPARE INSIGHTS WAS VISIBLE TO NOBODY BUT AN ADMINISTRATOR. That was my omission when it shipped: a new page needs its key added to the stored roles, not just to the code. It now goes to every role that can already see consumption — ten of them.',
@@ -5609,6 +5776,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.158',
     date: '2026-09-08',
     title: 'The Engineer filter is a dropdown, and the Tracker catches up',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0],
     changes: [
       'ON THE NOT CONSUMED REPORT, the Engineer filter is a dropdown — built from the engineers actually IN the report, so every option returns something. A list of every engineer on the system would mostly return an empty screen.',
       'THE TRACKER NOW CARRIES WHAT THE BACKLOG DOES: the three decisions you parked, and the findings from the 13485 review. Eight items added; nothing already on your list is closed, renamed or touched.',
@@ -5620,6 +5789,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.157',
     date: '2026-09-08',
     title: 'Spare Insights',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0,  1,  3,  4,  5],
+    auditTitle: "The Part Master carries the Item Master in full",
     changes: [
       'A NEW DASHBOARD, right below Dashboard: what is being consumed, under which cover, into which products, and how much of it is consumable rather than spare. The window defaults to 1 Jan 2026 \u2192 today and is selectable.',
       'THE BIGGEST CONSUMERS, the cover each part was fitted under, the products they went into, the consumable/spare split, and the shape month by month — all computed in the database in one call, so every figure agrees with the rows beneath it.',
@@ -5634,6 +5806,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.156',
     date: '2026-09-08',
     title: 'Not Consumed Against this Call — renamed, and now catches short quantities',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'THE REPORT IS NOW CALLED “Not Consumed Against this Call”, on the menu, on the screen, on the call and in the downloaded file.',
       'IT CATCHES A SHORT QUANTITY, not just a part nobody booked at all. Two sent and one used is now a finding — “Short 1 of 2” — and the row says which of the two it is: NOT USED where none of it was booked, SHORT where some was.',
@@ -5805,6 +5979,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.143',
     date: '2026-09-08',
     title: 'Reports is its own screen, and every export collects there',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [4],
     changes: [
       'THERE IS NOW A SCREEN CALLED REPORTS, under Quality & Analytics, holding CONSUMPTION REPORT and KPI EXPORT on tabs — with room for the ones still to come.',
       'Until now an export lived on whichever screen prompted it: the KPI workbook was on KPI & Failure Analysis, then on Objective, and the consumption report had been put on Visit Reports. Finding one meant remembering which conversation it came out of. They collect in one place now.',
@@ -5872,6 +6048,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.138',
     date: '2026-09-07',
     title: 'A call closes on the day it was visited, and the cut-off is set at Re-Calculate',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [5],
     changes: [
       'A CALL NOW COUNTS AS CLOSED ON THE DATE IT WAS VISITED, not the date somebody typed the report up. A visit on 30 May written up on 3 June is closed in MAY. THIS MOVES FIGURES — deliberately, and every call it moves is one the export was already flagging.',
       'Where a solving report carries NO visit date, the date it was entered is used instead, and the export says so on that row. Treating a blank as “never solved” would push a closed call into the open column for a missing keystroke — the figure would get worse because of a data-entry lapse.',
@@ -5960,6 +6138,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.132',
     date: '2026-09-07',
     title: 'Objectives that work themselves out, and can show you how',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'RE-CALCULATE — a button on the Objective page. It reads the register and fills in the objectives that can be computed, and it says what it is about to do before it does it.',
       'IT NEVER TOUCHES A FIGURE SOMEBODY TYPED. Objectives nobody computes keep exactly what was entered, and stay editable. A row that works itself out is marked \u0192 so you can tell the two apart at a glance.',
@@ -5975,6 +6155,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.131',
     date: '2026-09-07',
     title: 'The KPI export now carries the computed columns too',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [6],
     changes: [
       'ATTENDED IN DAYS, SOLVED IN DAYS, TTA, TTS and FAILURE MONTH — columns AC to AG — are now computed and exported, by the workbook’s own formulas. The file still drops straight into the tab.',
       'The day counts run from the LATER of the Complaint Date and the Registration Date, and are never negative — a call complained about on the 30th, registered on the 3rd and attended on the 30th is 0 days, not \u22124. Checked against the workbook’s own answers.',
@@ -6004,6 +6186,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.129',
     date: '2026-09-07',
     title: 'Objective — a page of its own for the quality objectives',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'A new page, OBJECTIVE, under Quality & Analytics. It carries the ALMS-INDIA Quality & Business Objectives for the year — all twelve, with their yearly target, how often each is measured, who is responsible, and the month-by-month actual, exactly as the workbook has them.',
       'A figure that MEETS its target reads green; one that misses it is called out. A target of “To Monitor” has no line to pass or fail, so it is coloured neither way.',
@@ -6032,6 +6216,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.127',
     date: '2026-09-07',
     title: 'The KPI workbook’s Field_INST tab, exported from the register',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0],
     changes: [
       'KPI & Failure Analysis has a new EXPORT: the workbook’s own Field_INST tab, columns A to AB, the same fields in the same order under the same headings — the file drops straight in. Field and Installation calls; PM keeps its own tab.',
       'CALL ATTENDED ON is the EARLIER of the first visit and the first spare request. A spare raised before anyone visits is still somebody attending to the call, and on a fault that needs a part it is usually the first thing that happens.',
@@ -6712,6 +6898,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.70',
     date: '2026-09-04',
     title: 'KPIs from the record: failure rate per machine, spares by cover and by region',
+    // NAR-014..NAR-025 (2026-11-18): hidden in Audit Mode.
+    auditHiddenChanges: [0,  1,  2,  3,  6],
+    auditTitle: "The Dashboard's call lists open the call; DCCR upload fixed",
     changes: [
       'FAILURE RATE, properly. Not a count of calls — a product with 1,200 machines in the field SHOULD generate more calls than one with 40, so a bare count ranks the popular product as the unreliable one. KPI & Failure Analysis divides calls in the last twelve months by the machines of that product in the Product Register and shows calls per 100 machines. A product with no machines on record shows a dash: there is nothing to divide by, and a rate invented from a missing denominator is worse than none.',
       'SPARE USE BY COVER — warranty, CMC, AMC and out of guarantee. The cover is a fact about the call and the parts are on the consumption, so the join is the whole answer: what we carry, and what is billed.',

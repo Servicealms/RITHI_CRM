@@ -16,6 +16,7 @@ import { watchMachineRegister } from '../../lib/machinestore';
 import { clearMasterCache } from '../../lib/masters';
 import { supabaseConfigured, globalSearchKind } from '../../lib/supabase';
 import { useAuditMode } from '../../lib/auditMode';
+import { isAuditHiddenPath } from '../../lib/auditHidden';
 import { HIT_GROUPS, MIN_CHARS, PER_KIND, searchTerm, shownHits, type HitKind, type SearchHit } from '../../lib/globalSearch';
 
 interface NavItem {
@@ -331,7 +332,7 @@ export const NAV: NavGroup[] = [
 // it at the route guard already; without this a role given Bulk Uploads could
 // reach it only by typing the address.
 const navItemVisible = (it: NavItem, can: (a: string) => boolean, auditOn = false): boolean =>
-  !(it.hideInAudit && auditOn) && (!!it.alwaysOpen
+  !((it.hideInAudit || isAuditHiddenPath(it.to)) && auditOn) && (!!it.alwaysOpen
   || (it.adminOnly
     ? (USER_ADMIN_KEYS.some((k) => can(k)) || can('admin.view') || can(it.perm ?? actionForPath(it.to)))
     : can(it.perm ?? actionForPath(it.to))));

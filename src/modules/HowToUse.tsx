@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ui/ui';
 import { useAuth } from '../lib/auth';
 import { actionForPath } from '../lib/rbac';
+import { useAuditMode } from '../lib/auditMode';
+import { isAuditHiddenPath } from '../lib/auditHidden';
 import { fmtLongDate } from '../lib/format';
 import { fileToDataUrl } from '../lib/image';
 import { htmlToText } from '../lib/sanitizeHtml';
@@ -490,7 +492,23 @@ export function HowToUse() {
 
   // A task's "Open …" targets the signed-in role may actually reach (admins see
   // all); `always` targets (a personal screen) are shown to everyone.
-  const openable = (go?: GoTo[]) => (go ?? []).filter((g) => g.always || isAdmin || can(actionForPath(g.to)));
+  // A NON-AUDITABLE SCREEN (auditHidden.ts) is not offered while Audit Mode is
+  // on, and a task that is ONLY about such screens is left out, its group
+  // heading passed to the next task and the tasks numbered without the gap.
+  const auditOn = useAuditMode().on;
+  const openable = (go?: GoTo[]) => (go ?? []).filter((g) => (g.always || isAdmin || can(actionForPath(g.to)))
+    && !(auditOn && isAuditHiddenPath(g.to)));
+  const sections = useMemo(() => {
+    if (!auditOn) return SECTIONS;
+    const out: Sec[] = [];
+    let carry: string | undefined;
+    for (const sec of SECTIONS) {
+      if (sec.go?.length && sec.go.every((g) => isAuditHiddenPath(g.to))) { carry = carry ?? sec.group; continue; }
+      out.push({ ...sec, group: sec.group ?? carry, n: String(out.length + 1) });
+      carry = undefined;
+    }
+    return out;
+  }, [auditOn]);
 
   // Scroll to a guide section. `block: 'start'` with a little room above, so
   // the heading is not tucked under the sticky header; `smooth` because a page
@@ -575,7 +593,7 @@ export function HowToUse() {
           task carries the heading it OPENS, so the order of the array is still
           the order on the page and nothing had to be re-nested. */}
       <div className="kb-jump">
-        {SECTIONS.map((s) => (
+        {sections.map((s) => (
           <span key={s.id} className="kb-jump-item">
             {s.group && <span className="kb-jump-group">{s.group}</span>}
             <button type="button" onClick={() => jumpTo(s.id)} title={`Jump to “${s.title}”`}>
@@ -585,7 +603,7 @@ export function HowToUse() {
         ))}
       </div>
 
-      {SECTIONS.map((s) => (
+      {sections.map((s) => (
         <section className="kb-sec" id={`kb-${s.id}`} key={s.id}>
           {s.group && <div className="kb-group">{s.group}</div>}
           <div className="kb-sec-head"><span className="kb-num">{s.n}</span><h2>{s.title}</h2></div>

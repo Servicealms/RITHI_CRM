@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { PageHeader, SectionCard } from '../components/ui/ui';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useAuth } from '../lib/auth';
+import { isAuditHiddenPath } from '../lib/auditHidden';
 import { ACTIONS, ROLES, PERM_TREE, AUDIT_HIDDEN_ACTIONS, permsForRole, moduleAction, masterAction, masterListActions, dynamicActionLabel, PERM_PARENTS,
   roleKeyFrom, roleProblem, type RoleDef,
   type PermHeader, type PermPage } from '../lib/rbac';
@@ -113,8 +114,10 @@ export function RolePermissions() {
 
   // The pages a header actually shows: its own, plus one per master value list
   // where the header carries them.
+  // A non-auditable SCREEN (auditHidden.ts) is not shown, nor exported, while
+  // Audit Mode is on -- its row and its keys; what a role holds is unchanged.
   const pagesFor = (head: PermHeader): PermPage[] => [
-    ...head.pages,
+    ...head.pages.filter((p) => !(auditOn && p.path && isAuditHiddenPath(p.path))),
     // Each value list sits directly under Master, as its own page — not nested
     // inside All Masters. Add / edit and delete are grantable per list; both
     // still come free with the global "Edit masters".
@@ -491,6 +494,7 @@ export function RolePermissions() {
               {PERM_TREE.map((head) => {
                 const headOpen = openHeads.has(head.title);
                 const pages = pagesFor(head);
+                if (!pages.length) return null;
                 return (
                   <Fragment key={head.title}>
                     <tr className="rbac-group rbac-head-row" onClick={() => setOpenHeads((s) => toggleIn(s, head.title))}>

@@ -10,6 +10,8 @@ import {
   materialReturnsSection, stockTransferSection, reviewSection, commercialInstallSection, indoorDcSection,
   type WorkloadSection,
 } from '../lib/workload';
+import { useAuditMode } from '../lib/auditMode';
+import { isAuditHiddenPath } from '../lib/auditHidden';
 import './workload.css';
 
 // ===========================================================================
@@ -34,6 +36,7 @@ export function Workload() {
   const navigate = useNavigate();
   const { user, can } = useAuth();
   const scope = useAccessScope();
+  const auditOn = useAuditMode().on;
   const [sections, setSections] = useState<WorkloadSection[]>([]);
   const [busy, setBusy] = useState(0);
   const [err, setErr] = useState<string[]>([]);
@@ -76,7 +79,10 @@ export function Workload() {
       // shows them only those DCs, and with none waiting the section is empty
       // and dropped.
       { needs: 'mod:/indoor', always: true, run: () => indoorDcSection(can('mod:/indoor')) },
-    ].filter((j) => j.always || can(j.needs));
+    // A NON-AUDITABLE SCREEN'S SECTION (Indoor DCs, NAR-019) is not shown
+    // while Audit Mode is on.
+    ].filter((j) => !(auditOn && isAuditHiddenPath(j.needs.replace('mod:', ''))))
+      .filter((j) => j.always || can(j.needs));
     setSections([]); setErr([]); setBusy(jobs.length); setAt(new Date().toISOString());
     jobs.forEach((j) => {
       j.run()
@@ -91,7 +97,7 @@ export function Workload() {
         .catch((e) => setErr((cur) => [...cur, `${j.needs.replace('mod:', '')}: ${e instanceof Error ? e.message : String(e)}`]))
         .finally(() => setBusy((n) => n - 1));
     });
-  }, [can, email, mayRmApprove]);
+  }, [can, email, mayRmApprove, auditOn]);
 
   // ONCE THE SCOPE HAS ARRIVED, not on the first render. `mayRmApprove` reads
   // the reporting team from useAccessScope(), which starts EMPTY and fills in a
@@ -100,7 +106,7 @@ export function Workload() {
   // the ⚡ chip on Spare Requests. `scope.ready` goes false -> true once on every
   // path through the hook (loadUserMaster() cannot reject; it resolves []).
   // Not `load` in the deps: it is rebuilt whenever the auth context re-renders.
-  useEffect(() => { if (scope.ready) load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [scope.ready]);
+  useEffect(() => { if (scope.ready) load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [scope.ready, auditOn]);
 
   const total = sections.reduce((n, s) => n + s.cards.length, 0);
 
