@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.263',
+    date: '2026-11-18',
+    title: 'Visit Date Check opens on Daily cut-outs; Readings is now "Haiku Read"',
+    changes: [
+      'Visit Date Check now opens on Daily cut-outs, the first tab. The AI tab is second and renamed Haiku Read.',
+      'Haiku only reads when you press Check on Haiku Read — the 06:00 daily job never sends anything to it.',
+    ],
+  },
+  {
     version: '0.10.262',
     date: '2026-11-18',
     title: 'Fewer "No box found" on the daily cut-outs',

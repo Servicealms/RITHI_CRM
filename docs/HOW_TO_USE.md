@@ -1923,11 +1923,15 @@ typed into a form that reads it.
   > the list.
 
 - **Visit Date Check** `/visit-date-check` — **administrators for now**
-  (grant it on Roles & Permissions → Reports → Visit Date Check). For each
-  visit checked: the **Service Visit Date written on the manual report**,
-  read by Claude, beside the **Visit Date in RITHI** — *Matches*, *Differs*,
-  *Unreadable* or *No box found*.
-  > **Check the next visits not yet checked** works through the visits with a
+  (grant it on Roles & Permissions → Reports → Visit Date Check). Two tabs:
+  **Daily cut-outs** (opens first — no AI) and **Haiku Read** (Claude reads
+  the date, only when you press Check).
+  >
+  > **Haiku Read** (the second tab): for each visit checked, the **Service
+  > Visit Date written on the manual report**, read by Claude, beside the
+  > **Visit Date in RITHI** — *Matches*, *Differs*, *Unreadable* or *No box
+  > found*. Haiku is never run on its own: only **Check the next visits not
+  > yet checked** works through the visits with a
   > manual report, newest first. The report is opened and cropped **on your
   > device**; only the cut-out of the date box is sent. Claude **Haiku** reads
   > it; **Sonnet** only when Haiku fails (an error, a refusal or no date). A
@@ -1940,7 +1944,7 @@ typed into a form that reads it.
   > date in the future is refused. The *Differs — to decide* chip lists what is
   > still waiting.
   >
-  > **Daily cut-outs** (the second tab): every morning at 06:00 India time the
+  > **Daily cut-outs** (the first tab, and the one that opens): every morning at 06:00 India time the
   > Service Visit Date box is cut out of each manual report entered the day
   > before — **no AI, no cost** — and shown here by day (yesterday by
   > default): UCN, engineer, Visit Date in RITHI and the cut-out side by side,
