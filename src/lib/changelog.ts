@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.266',
+    date: '2026-11-18',
+    title: 'Haiku Read: choose the day or the UCNs; correct counts',
+    changes: [
+      'Haiku Read now reads what you choose: the visits entered on a day, or the UCNs you type or paste — not "the next 20". It says how many it found and how many were read already (skipped), and asks before it starts, with the estimated cost.',
+      'The All count on Daily cut-outs and Haiku Read is the number of rows again. It was adding "To check" (a part of "Box found") on top, so 53 rows read as 91.',
+    ],
+  },
+  {
     version: '0.10.265',
     date: '2026-11-18',
     title: 'Visit Date Check: Corrected dates report',

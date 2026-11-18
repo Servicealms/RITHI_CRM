@@ -1927,7 +1927,9 @@ typed into a form that reads it.
   **Daily cut-outs** (opens first — no AI) and **Haiku Read** (Claude reads
   the date, only when you press Check).
   >
-  > **Haiku Read** (the second tab): for each visit checked, the **Service
+  > **Haiku Read** (the second tab): choose **Visits entered on a day** or
+  > **UCNs** (typed or pasted), then **▶ Read with Haiku** — visits already read
+  > are skipped and it asks first, with the cost. For each visit checked, the **Service
   > Visit Date written on the manual report**, read by Claude, beside the
   > **Visit Date in RITHI** — *Matches*, *Differs*, *Unreadable* or *No box
   > found*. Haiku is never run on its own: only **Check the next visits not

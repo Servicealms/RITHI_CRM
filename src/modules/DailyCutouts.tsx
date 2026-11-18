@@ -240,7 +240,7 @@ export function DailyCutouts() {
         <button className="btn btn-ghost btn-sm" onClick={() => download('csv')} disabled={!visible.length}>⭳ CSV</button>
       </Toolbar>
       {/* One day is loaded whole, so the counts are exact. */}
-      <FacetChips options={facets} value={status} onChange={setStatus} more={false} />
+      <FacetChips options={facets} value={status} onChange={setStatus} more={false} total={rows.length} />
       {busy ? <div className="muted" style={{ padding: 12 }}>Loading…</div>
         : !visible.length ? (
           <div className="sheet-banner sheet-banner-ok"><span>

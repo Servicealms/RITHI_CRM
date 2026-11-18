@@ -5991,6 +5991,43 @@ export async function lastReportCropAt(): Promise<string | null> {
   return (data?.created_at as string | undefined) ?? null;
 }
 
+/** THE VISITS ASKED FOR, for Haiku Read (the user, 2026-11-18: "Allow the User
+ *  to Select Date / UCN and then Run it instead of Random 20 or 30 counts"):
+ *  every visit with a manual report ENTERED on `day` (India time), or of the
+ *  UCNs given -- split into those still to read and how many are already read
+ *  (a visit is read once). */
+export async function manualReportsFor(sel: { day?: string; ucns?: string[] }): Promise<{ todo: { uid: string; ucn: string; visit_at: string; manual_report: string }[]; alreadyRead: number; found: number }> {
+  const c = must();
+  let rows: Record<string, unknown>[] = [];
+  if (sel.day) {
+    const from = new Date(`${sel.day}T00:00:00+05:30`).toISOString();
+    const to = new Date(new Date(`${sel.day}T00:00:00+05:30`).getTime() + 86400000).toISOString();
+    rows = await allRows<Record<string, unknown>>((a, b) => c.from('reports').select('uid,ucn,visit_at,manual_report')
+      .neq('manual_report', '').not('manual_report', 'is', null)
+      .gte('updated_at', from).lt('updated_at', to)
+      .order('updated_at', { ascending: true }).order('id', { ascending: true }).range(a, b));
+  } else if (sel.ucns?.length) {
+    const list = [...new Set(sel.ucns.map((u) => u.trim().toUpperCase()).filter(Boolean))].slice(0, 500);
+    for (let i = 0; i < list.length; i += 100) {
+      const part = list.slice(i, i + 100);
+      rows.push(...await allRows<Record<string, unknown>>((a, b) => c.from('reports').select('uid,ucn,visit_at,manual_report')
+        .in('ucn', part).neq('manual_report', '').not('manual_report', 'is', null)
+        .order('updated_at', { ascending: true }).order('id', { ascending: true }).range(a, b)));
+    }
+  }
+  const visits = rows.map((r) => ({ uid: String(r.uid ?? ''), ucn: String(r.ucn ?? ''), visit_at: String(r.visit_at ?? ''), manual_report: String(r.manual_report ?? '') }))
+    .filter((v) => v.uid);
+  if (!visits.length) return { todo: [], alreadyRead: 0, found: 0 };
+  const read = new Set<string>();
+  for (let i = 0; i < visits.length; i += 100) {
+    const { data, error } = await c.from('visit_date_reads').select('report_uid').in('report_uid', visits.slice(i, i + 100).map((v) => v.uid));
+    if (error) throw new Error(errMsg(error));
+    (data ?? []).forEach((d) => read.add(String(d.report_uid)));
+  }
+  const todo = visits.filter((v) => !read.has(v.uid));
+  return { todo, alreadyRead: visits.length - todo.length, found: visits.length };
+}
+
 /** The latest visits with a manual report that have NOT been checked yet --
  *  "The same records need not be re-run". Pages back through the visits until
  *  `n` are found or 5,000 have been looked at. */

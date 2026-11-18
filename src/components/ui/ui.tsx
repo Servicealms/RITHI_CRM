@@ -337,9 +337,13 @@ export function SectionCard({
 // ---------------------------------------------------------------------------
 export function FacetChips({
   options, value, onChange, allLabel = 'All', max = 12, blankLabel = '— none —', more = false,
-  title, storeKey,
+  title, storeKey, total: totalGiven,
 }: {
   options: { key: string; count: number }[];
+  /** THE NUMBER OF ROWS, when the chips OVERLAP -- e.g. "To check" is a part of
+   *  "Box found" -- and so cannot be summed (the user, 2026-11-18: "These Counts
+   *  are not in-line with What is listed": All read 91 for 53 rows). */
+  total?: number;
   value: string;
   onChange: (next: string) => void;
   allLabel?: string;
@@ -390,7 +394,7 @@ export function FacetChips({
     if (pick) shown.push(pick);
   }
   const hidden = sorted.length - shown.length;
-  const total = options.reduce((n, o) => n + o.count, 0);
+  const total = totalGiven ?? options.reduce((n, o) => n + o.count, 0);
   const isOpen = open ?? sorted.length <= max;
   const picked = value ? sorted.find((o) => o.key === value) : undefined;
 
