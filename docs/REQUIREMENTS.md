@@ -10535,12 +10535,156 @@ questions for a person.
 
 ---
 
-**191** user requirements · **291** system requirements · **33** call-request · **44** servicing · **321** tests · **13** recorded as non-auditable · **589** of 191 user requirements tied to a module.
+**191** user requirements · **291** system requirements · **33** call-request · **44** servicing · **321** tests · **25** recorded as non-auditable · **589** of 191 user requirements tied to a module.
 ---
 
 ## Non-auditable requirements
 
 Recorded here because a feature absent from the specification is the thing an assessor finds. Each is classified by PROVENANCE: it is not derived from a regulatory clause and is not offered as evidence against one. That is a statement about where the requirement came from, NOT a statement that its use goes unrecorded.
+
+### NAR-025 — Signature view and upload for administrators -- their permission ticks hidden in Audit Mode too
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-025.1 While Audit Mode is on, the permissions users.signature.view and users.signature.upload shall not be shown on Roles & Permissions, User Master -> Access or My Profile, and Version History shall leave out what it says about them. Seeing and uploading another person's signature on User Master were already hidden in Audit Mode (NAR-011, NAR-012). Saving your own signature is unaffected.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 ("Signature Edit / Add option for Admins"): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog".
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/modules/RolePermissions.tsx · src/modules/UserMasterView.tsx
+
+### NAR-024 — Machines Without an Installation Call -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-024.1 While Audit Mode is on, the Machines Without an Installation Call report shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Machines Without an Installation Call): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-023 — Report: Visit Date Check -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-023.1 While Audit Mode is on, Visit Date Check with its tabs Daily cut-outs, Haiku Read and Corrected dates shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Report: Visit Date Check): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-022 — Report: Feedback Without a Report -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-022.1 While Audit Mode is on, the Feedback Without a Report report shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Report: Feedback Without a Report): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-021 — Report: Not Consumed Against this Call -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-021.1 While Audit Mode is on, the Not Consumed Against this Call report shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Report: Not Consumed Against this Call): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-020 — Call Review -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-020.1 While Audit Mode is on, Call Review (the Daily Complaint Review Register is unaffected) shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Call Review): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-019 — Indoor Service and everything under it -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-019.1 While Audit Mode is on, Indoor Service -- the Indoor Service Register, Spare Recycling, the Pre-Delivery Quality Check, the Indoor DC approvals page and the Indoor print pages shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; the workshop data flow and the Indoor DCs section of My Workload shall not be shown; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Indoor Service and everything under it): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-018 — Product Database 2.0 -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-018.1 While Audit Mode is on, Product Database 2.0 (the original Product Database is unaffected) shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its step in the sale, installation and PM data flows shall be taken out; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Product Database 2.0): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-017 — Training -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-017.1 While Audit Mode is on, the Training screen shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its step in the Documents and training data flow shall be taken out; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Training): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-016 — Spare Insights -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-016.1 While Audit Mode is on, Spare Insights shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Spare Insights): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-015 — Objective -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-015.1 While Audit Mode is on, the Objective page shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its step in the Quality data flow shall be taken out; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (Objective): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
+
+### NAR-014 — KPI & Failure Analysis -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden with its screen while Audit Mode is on* · risk: **Low** · *v0.10.268 · 18-Nov-2026*
+
+NAR-014.1 While Audit Mode is on, KPI & Failure Analysis shall not be on the menu, in the global search, in the Module Guide or in How to Use; an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions, User Master -> Access or My Profile; and Version History shall leave out what it says about it. Nothing a role holds, and no record, shall change with Audit Mode; switched off, everything shows as before.
+
+**Why it is classified this way.** Named by the system owner on 2026-11-18 (KPI & Failure Analysis): "I am going to be giving you a List of Items that needs to be Moved into Non Auditable Requirement - So when Audit Mode is Enabled all these should be Hidden." Acted on with "Act on Non Auditable Backlog". Hiding is a view decision only: who holds what, and every record, is unchanged.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** docs/NON_AUDITABLE_BACKLOG.md · src/lib/auditHidden.ts · src/App.tsx · src/components/layout/Layout.tsx · src/lib/changelog.ts
 
 ### NAR-013 — Auto Review: Review 2 answered No each morning while an authorised person has switched it on -- non-auditable, hidden in Audit Mode
 

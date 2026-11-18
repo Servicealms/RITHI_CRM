@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { isAuditHiddenPath } from '../../lib/auditHidden';
 import { Link } from 'react-router-dom';
 import { NAV } from '../layout/Layout';
 import { MODULE_GUIDE } from '../../lib/moduleGuide';
@@ -44,7 +45,7 @@ export function ModuleGuide({ onOpenFlow }: { onOpenFlow: (flowId: string) => vo
   const groups = NAV.map((g) => ({
     title: g.title,
     items: g.items.filter((it) => {
-      if (it.hideInAudit && auditOn) return false;
+      if ((it.hideInAudit || isAuditHiddenPath(it.to)) && auditOn) return false;
       if (!words.length) return true;
       const e = byRoute.get(it.to);
       const hay = [g.title, it.label, e?.purpose, ...(e?.does ?? []), ...(auditOn ? [] : e?.notAudited ?? []), ...(e?.rules ?? []), ...(e?.records ?? [])].join(' ').toLowerCase();

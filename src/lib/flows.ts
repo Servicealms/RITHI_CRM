@@ -603,6 +603,8 @@ export const FLOWS: Flow[] = [
   {
     id: 'indoor',
     title: 'The workshop — Indoor Service Register',
+    // NAR-019 (2026-11-18): Indoor Service is hidden in Audit Mode.
+    auditHidden: true,
     purpose: 'Equipment taken onto the premises: whose it is and how it arrived, cleaned to a named revision before anything is recovered from it, the job its kind requires, a quality check held as its own record and right, and either dispatch or a condemnation that credits no stock.',
     steps: [
       { id: 'recv', label: 'Unit received into the workshop', route: '/indoor', area: 'quality',
@@ -893,3 +895,22 @@ export const FLOWS: Flow[] = [
     ],
   },
 ];
+
+/** A FLOW WITH ITS NON-AUDITABLE STEPS TAKEN OUT (NAR-014..NAR-025): a step on
+ *  a screen hidden in Audit Mode is dropped, and each arrow into it is joined
+ *  to each arrow out of it, so the steps either side stay connected. */
+export function withoutHiddenSteps(f: Flow, hidden: (route: string) => boolean): Flow {
+  const gone = new Set(f.steps.filter((st) => st.route && hidden(st.route)).map((st) => st.id));
+  if (!gone.size) return f;
+  let edges = f.edges.slice();
+  for (const id of gone) {
+    const ins = edges.filter((e) => e.to === id && e.from !== id);
+    const outs = edges.filter((e) => e.from === id && e.to !== id);
+    edges = edges.filter((e) => e.from !== id && e.to !== id);
+    for (const a of ins) for (const b of outs) {
+      if (a.from === b.to || edges.some((e) => e.from === a.from && e.to === b.to)) continue;
+      edges.push({ from: a.from, to: b.to, label: b.label, loop: a.loop || b.loop, optional: a.optional || b.optional });
+    }
+  }
+  return { ...f, steps: f.steps.filter((st) => !gone.has(st.id)), edges };
+}

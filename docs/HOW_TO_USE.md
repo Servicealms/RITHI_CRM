@@ -62,6 +62,15 @@ is recorded in the Audit Log.
 **You see what your role allows.** Two people can open the same screen and see
 different totals. An empty register usually means access, not emptiness.
 
+**Audit Mode hides the non-auditable screens.** While an administrator has
+Audit Mode on, these are not on the menu, in search or in this guide, and a
+link to one goes to the home screen: KPI & Failure Analysis, Objective, Spare
+Insights, Training, Product Database 2.0, all of Indoor Service (with Spare
+Recycling and the Pre-Delivery Quality Check), Call Review, Not Consumed Against
+this Call, Feedback Without a Report, Visit Date Check and Machines Without an
+Installation Call. Their permissions and Version History entries are hidden too.
+Nothing is taken away: switch Audit Mode off and they are back.
+
 ---
 
 ## Overview & search

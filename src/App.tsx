@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { MODULES, actionForPath } from './lib/rbac';
+import { useAuditMode } from './lib/auditMode';
+import { isAuditHiddenPath } from './lib/auditHidden';
 import { AuthProvider, useAuth } from './lib/auth';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { clearDemoData } from './lib/seed';
@@ -93,6 +95,7 @@ import { CustomerFeedback } from './modules/CustomerFeedback';
 function Shell() {
   const { user, booting, can, recovering } = useAuth();
   const location = useLocation();
+  const audit = useAuditMode();
   useEffect(() => {
     if (user) clearDemoData(); // live data only — no dummy records
   }, [user]);
@@ -108,6 +111,11 @@ function Shell() {
   // permission here or in the database (0300), so the app would be a menu of
   // locked doors; this tells them the one thing they can act on.
   if (user.unresolved) return <UnresolvedLogin />;
+  // A NON-AUDITABLE SCREEN IS NOT OPENED WHILE AUDIT MODE IS ON (the user,
+  // 2026-11-18, "Act on Non Auditable Backlog"; NAR-014..NAR-024): an open one,
+  // or a link or a typed address to one, returns to the home screen, the way
+  // Spare Recycling always has (NAR-008.15).
+  if (audit.on && audit.known && isAuditHiddenPath(location.pathname)) return <Navigate to="/" replace />;
 
   // The challan and the declaration print on their own: no sidebar, no header,
   // nothing that would land on the paper. Their rows are RLS-scoped, so a stock

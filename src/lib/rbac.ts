@@ -1,4 +1,5 @@
 import { callFamily } from './calltype';
+import { isAuditHiddenKey } from './auditHidden';
 // ---------------------------------------------------------------------------
 // Role-Based Access Control (RBAC).
 // Roles, the canonical action list (functional actions + one per module), and
@@ -706,7 +707,9 @@ export interface PermHeader extends PermHeaderOpts { title: string; pages: PermP
  *  Auditable"; asked: "Hide on screen only"). Hidden on Roles & Permissions,
  *  User Master -> Access and My Profile; who holds it is unchanged, and a save
  *  made while it is hidden keeps it as it was. */
-export const AUDIT_HIDDEN_ACTIONS: ReadonlySet<string> = new Set(['review.auto']);
+// Since 2026-11-18 the list lives in auditHidden.ts with the hidden SCREENS
+// (NAR-014..NAR-025), and a hidden screen's module key is hidden with it.
+export const AUDIT_HIDDEN_ACTIONS: { has(key: string): boolean } = { has: isAuditHiddenKey };
 
 export const PERM_TREE: PermHeader[] = [
   // THE HEADERS AND THEIR ORDER FOLLOW THE MENU (2026-09-12). The matrix is

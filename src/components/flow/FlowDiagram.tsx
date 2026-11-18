@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { FLOWS as ALL_FLOWS, layoutFlow, type Flow, type FlowStep } from '../../lib/flows';
+import { FLOWS as ALL_FLOWS, layoutFlow, withoutHiddenSteps, type Flow, type FlowStep } from '../../lib/flows';
+import { isAuditHiddenPath } from '../../lib/auditHidden';
 import { useAuditMode } from '../../lib/auditMode';
 import { URS, FRS, TESTS } from '../../lib/validation';
 import { MODULES } from '../../lib/rbac';
@@ -205,8 +206,9 @@ export function FlowGallery({ printAll = false, pick }: { printAll?: boolean; pi
   // A non-auditable flow (auditHidden) is left out while Audit Mode is on.
   const auditOn = useAuditMode().on;
   // A step's auditDetail replaces its detail then (NAR-013).
+  // A step on a non-auditable screen is taken out then (withoutHiddenSteps).
   const FLOWS = ALL_FLOWS.filter((f) => !(f.auditHidden && auditOn))
-    .map((f) => (auditOn ? { ...f, steps: f.steps.map((s) => (s.auditDetail ? { ...s, detail: s.auditDetail } : s)) } : f));
+    .map((f) => (auditOn ? withoutHiddenSteps({ ...f, steps: f.steps.map((s) => (s.auditDetail ? { ...s, detail: s.auditDetail } : s)) }, isAuditHiddenPath) : f));
   const [id, setId] = useState<string>(pick && FLOWS.some((f) => f.id === pick) ? pick : (FLOWS[0]?.id ?? ''));
   // Opened from elsewhere on a named flow (the module guide's "Part of" chips).
   useEffect(() => { if (pick && FLOWS.some((f) => f.id === pick)) setId(pick); }, [pick]);
