@@ -5970,6 +5970,19 @@ export async function reviewVisitCrop(id: number, date: string | null): Promise<
   if (error) throw new Error(errMsg(error));
   return String(data ?? '');
 }
+/** One Visit Date corrected through Visit Date Check (0489). */
+export interface VisitDateCorrection {
+  source: 'Daily cut-out' | 'Haiku Read'; source_id: number; corrected_at: string | null; corrected_by_name: string | null;
+  report_uid: string; ucn: string; engineer: string | null; was_visit_at: string | null; set_to_visit_at: string | null;
+  now_visit_at: string | null; still_as_set: boolean; manual_report: string | null;
+}
+/** Every correction, newest first. */
+export async function listVisitDateCorrections(): Promise<VisitDateCorrection[]> {
+  const c = must();
+  return allRows<VisitDateCorrection>((from, to) => c.from('visit_date_corrections').select('*')
+    .order('corrected_at', { ascending: false, nullsFirst: false }).order('source', { ascending: true })
+    .order('source_id', { ascending: false }).range(from, to));
+}
 /** When the daily job last stored a cut-out, or null. */
 export async function lastReportCropAt(): Promise<string | null> {
   const { data, error } = await must().from('visit_report_crops').select('created_at')

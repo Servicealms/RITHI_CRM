@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.265',
+    date: '2026-11-18',
+    title: 'Visit Date Check: Corrected dates report',
+    changes: [
+      'New tab Corrected dates on Visit Date Check: every Visit Date changed from a Daily cut-out or a Haiku Read — when it was corrected, who did it, what the date was, what it was set to, and what it is now. A visit changed again since is flagged. Filter, search and export to Excel or CSV.',
+    ],
+  },
+  {
     version: '0.10.264',
     date: '2026-11-18',
     title: 'Daily cut-outs: decide many, save once; re-crop a day',

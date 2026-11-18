@@ -2431,7 +2431,10 @@ with checks(sort_order, bundle, provides, present) as (
         and not exists (select 1 from pg_policy where polrelid = coalesce(to_regclass('public.visit_report_crops'), 0::regclass) and polcmd in ('a', 'w', 'd', '*'))),
     (395, 'Visit Date corrected from a daily cut-out', 'visit_report_crops.review + review_visit_report_crop() (0488). NO means the Daily cut-outs rows have no "RITHI is right" / "Change to" and the visit cannot be corrected from them. Restore: reports.sql (0488)',
         exists (select 1 from pg_attribute where attrelid = coalesce(to_regclass('public.visit_report_crops'), 0::regclass) and attname = 'review' and not attisdropped)
-        and to_regprocedure('public.review_visit_report_crop(bigint,date)') is not null)
+        and to_regprocedure('public.review_visit_report_crop(bigint,date)') is not null),
+    (396, 'Corrected Visit Dates report', 'visit_date_corrections, with security_invoker (0489). NO means Visit Date Check -> Corrected dates errors or reads past row-level security. Restore: reports.sql (0489)',
+        to_regclass('public.visit_date_corrections') is not null
+        and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.visit_date_corrections')), false))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,
