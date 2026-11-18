@@ -82,7 +82,11 @@ export function VisitDateCheck() {
   const mayFix = can('visitdate.fix');
   // Two views (0487): the model's readings, and the daily cut-outs for a
   // person to compare by eye.
-  const [view, setView] = useState<'readings' | 'daily'>('readings');
+  // DAILY CUT-OUTS FIRST (the user, 2026-11-18: "Make Daily Cuts as Primary
+  // View and Move Readings to Secondary Tab and also re-name it as 'Haiku
+  // Read'"; and "Dont add Haiku to loop unless i trigger it" -- Haiku reads
+  // only when somebody presses Check on that tab, never on the 06:00 run).
+  const [view, setView] = useState<'readings' | 'daily'>('daily');
 
   const load = async () => {
     if (!supabaseConfigured()) return;
@@ -251,8 +255,8 @@ export function VisitDateCheck() {
 
   const tabs = (
     <div className="dccr-tabs" role="tablist" style={{ marginBottom: 8 }}>
-      <button role="tab" aria-selected={view === 'readings'} className={`dccr-tab${view === 'readings' ? ' is-on' : ''}`} onClick={() => setView('readings')}>📅 Readings</button>
       <button role="tab" aria-selected={view === 'daily'} className={`dccr-tab${view === 'daily' ? ' is-on' : ''}`} onClick={() => setView('daily')}>🖼️ Daily cut-outs</button>
+      <button role="tab" aria-selected={view === 'readings'} className={`dccr-tab${view === 'readings' ? ' is-on' : ''}`} onClick={() => setView('readings')}>🤖 Haiku Read</button>
     </div>
   );
   if (view === 'daily') {

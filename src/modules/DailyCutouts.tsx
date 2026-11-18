@@ -59,7 +59,7 @@ export function DailyCutouts() {
   // CORRECT THE VISIT FROM A CUT-OUT (0488; the user, 2026-11-18: "And how to
   // update the actual entry? Visit Entry??? I dont see any edit Provision."):
   // "RITHI is right", or change the visit's Visit Date to the date on the
-  // report -- the day only. Same key as on Readings: visitdate.fix.
+  // report -- the day only. Same key as on Haiku Read: visitdate.fix.
   const mayFix = can('visitdate.fix');
   const [fixDate, setFixDate] = useState<Record<number, string>>({});
   const [deciding, setDeciding] = useState<number | null>(null);
