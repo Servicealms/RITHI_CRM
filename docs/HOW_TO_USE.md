@@ -1945,7 +1945,14 @@ typed into a form that reads it.
   > before — **no AI, no cost** — and shown here by day (yesterday by
   > default): UCN, engineer, Visit Date in RITHI and the cut-out side by side,
   > to compare by eye. A visit is cropped once; a report that could not be
-  > opened is tried again the next morning.
+  > opened is tried again the next morning. **▶ Crop this day now** crops the
+  > day picked straight away (those already cropped are skipped); the runs are
+  > listed under it and the day reloads when its run finishes. Each cut-out
+  > runs from the label to the **right edge of the page**, so the whole
+  > handwritten value is in it. **Decision** on each row: **✓ RITHI is
+  > right**, or set the date to what the report says and press **Change** —
+  > the visit's Visit Date moves to that day (its time and Visit Entry Date
+  > stay); decided once, with who and when. *To check* lists what is waiting.
 - **Feedback Without a Report** `/feedback-without-report` — **administrators
   only.** The customer gave feedback on a visit; the visit was never written up.
   > Feedback is collected **after** a visit, so its existence is evidence the

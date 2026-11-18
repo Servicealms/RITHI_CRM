@@ -15,6 +15,9 @@
 #
 # Needs the repository secret SUPABASE_DB_URL (the same one the migrations use).
 name: Daily Visit Date cut-outs
+# The run's title names the day it was asked for, so RITHI can show the run
+# it started (run-daily-crops reads it back).
+run-name: "Daily cut-outs ${{ github.event.inputs.date || 'scheduled' }}"
 
 on:
   schedule:
@@ -25,6 +28,10 @@ on:
         description: 'Look back this many days (up to yesterday). Default 3.'
         required: false
         default: '3'
+      date:
+        description: 'Or crop ONE day: visits entered on this date (YYYY-MM-DD). Leave blank for the look-back.'
+        required: false
+        default: ''
 
 concurrency:
   group: daily-report-crops
@@ -37,6 +44,7 @@ jobs:
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       DAYS: ${{ github.event.inputs.days || '3' }}
+      DATE: ${{ github.event.inputs.date || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -5937,13 +5937,38 @@ export async function resolveVisitDateRead(id: number, apply: boolean): Promise<
 export interface ReportCrop {
   id: number; report_uid: string; ucn: string; engineer: string; visit_at: string | null; entry_at: string | null;
   entry_day: string; manual_report: string; status: 'found' | 'no_box'; method: string; note: string; crop_jpeg: string;
+  review: 'confirmed' | 'corrected' | null; reviewed_at: string | null; old_visit_at: string | null; new_visit_at: string | null;
 }
 /** The cut-outs of the visits entered on one India-time day. */
 export async function listReportCrops(day: string): Promise<ReportCrop[]> {
   const c = must();
   return allRows<ReportCrop>((from, to) => c.from('visit_report_crops')
-    .select('id,report_uid,ucn,engineer,visit_at,entry_at,entry_day,manual_report,status,method,note,crop_jpeg')
+    .select('id,report_uid,ucn,engineer,visit_at,entry_at,entry_day,manual_report,status,method,note,crop_jpeg,review,reviewed_at,old_visit_at,new_visit_at')
     .eq('entry_day', day).order('entry_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
+}
+/** A run of the daily cut-outs job, as GitHub reports it (run-daily-crops). */
+export interface CropRun { id: number; title: string; event: string; status: string; conclusion: string | null; created_at: string; updated_at: string; url: string }
+/** Start the daily cut-outs for the visits entered on one day, or list the
+ *  latest runs. Through the Edge Function run-daily-crops, which holds the
+ *  GitHub token and checks visitdate.check. */
+export async function dailyCropsRun(action: 'run' | 'status', date?: string): Promise<{ started?: boolean; runs?: CropRun[] }> {
+  const { data, error } = await must().functions.invoke('run-daily-crops', { body: { action, date } });
+  if (error) {
+    let msg = error.message;
+    try {
+      const b = await (error as { context?: Response }).context?.json();
+      if (b?.error) msg = String(b.error);
+    } catch { /* keep the client's message */ }
+    throw new Error(msg);
+  }
+  return data as { started?: boolean; runs?: CropRun[] };
+}
+/** A person's decision on a cut-out (0488): `date` null = RITHI is right;
+ *  a date = change the visit's Visit Date to it (the day only). */
+export async function reviewVisitCrop(id: number, date: string | null): Promise<string> {
+  const { data, error } = await must().rpc('review_visit_report_crop', { p_id: id, p_date: date });
+  if (error) throw new Error(errMsg(error));
+  return String(data ?? '');
 }
 /** When the daily job last stored a cut-out, or null. */
 export async function lastReportCropAt(): Promise<string | null> {

@@ -15,6 +15,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/read-report-box/**'
+      - 'supabase/functions/run-daily-crops/**'
       - '.github/workflows/deploy-functions.yml'
   workflow_dispatch:
 
@@ -45,3 +46,5 @@ jobs:
         # --yes: the CLI asks for confirmation and a workflow cannot answer;
         # --remote replaces the deprecated --project-ref.
         run: supabase functions deploy read-report-box --remote="$PROJECT_REF" --yes
+      - name: Deploy run-daily-crops (JWT verification ON)
+        run: supabase functions deploy run-daily-crops --remote="$PROJECT_REF" --yes

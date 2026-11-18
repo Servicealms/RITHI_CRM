@@ -12,7 +12,7 @@ worse than none — somebody plans around it. Reading 156 migration files to
 describe a default is the method that has produced wrong answers in this
 project before.
 
-**122 tables · 47 views · 3577 columns · 274 policies · 70 foreign keys.**
+**122 tables · 47 views · 3582 columns · 274 policies · 70 foreign keys.**
 
 ## How to read this
 
@@ -5395,6 +5395,11 @@ _RLS is ON and there is no policy — **nothing is permitted** to a normal role.
 | 17 | `sys_created_on` | timestamp with time zone | yes |  |  |
 | 18 | `sys_updated_by` | uuid | yes |  |  |
 | 19 | `sys_updated_on` | timestamp with time zone | yes |  |  |
+| 20 | `review` | text | yes |  | confirmed · corrected |
+| 21 | `reviewed_by` | uuid | yes |  |  |
+| 22 | `reviewed_at` | timestamp with time zone | yes |  |  |
+| 23 | `old_visit_at` | timestamp with time zone | yes |  |  |
+| 24 | `new_visit_at` | timestamp with time zone | yes |  |  |
 
 **Unique:** `report_uid` _(visit_report_crops_report_uid)_ · `sys_id` _(visit_report_crops_sys_id_key)_
 
