@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.267',
+    date: '2026-11-18',
+    title: 'Hand Stock: Last counted and Last movement filters; negative-stock notifications open the line',
+    changes: [
+      'Hand Stock has two filters on its toolbar: Last counted (Any, Never counted, or Counted between two dates) and Last movement (from and to). The counts, the chips and the CSV follow them.',
+      'Clicking a "Hand stock gone negative" notification now opens that engineer\'s part on Hand Stock with its movements, instead of just the page — the ones already sent too.',
+      'A notification you open leaves the bell list. "Show read" brings the opened ones back.',
+    ],
+  },
+  {
     version: '0.10.266',
     date: '2026-11-18',
     title: 'Haiku Read: choose the day or the UCNs; correct counts',

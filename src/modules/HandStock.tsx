@@ -1,7 +1,7 @@
 import { isMissingTable } from '../lib/dberror';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectPicker } from '../components/ui/SelectPicker';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Drawer, Toolbar, SearchBox } from '../components/ui/ui';
 import { csvExport, fmtLongDate, timeAgo } from '../lib/format';
@@ -23,7 +23,7 @@ import {
 } from '../lib/handstock';
 import './fieldcalls.css';
 import { partial, searchScope } from '../lib/exportscope';
-import { formatDay, formatDayTime, todayLocal } from '../lib/dates';
+import { formatDay, formatDayTime, todayLocal, localIsoDate } from '../lib/dates';
 import { xlsxDownload, xlsxCell, xlsxText } from '../lib/xlsx';
 import { COMPLETE, cappedAt } from '../lib/exportscope';
 
@@ -202,6 +202,18 @@ export function HandStock() {
   );
   const [search, setSearch] = useState('');
   const [engineerFilter, setEngineerFilter] = useState('');
+  // LAST COUNTED / LAST MOVEMENT FILTERS, always on the toolbar (the user,
+  // 2026-11-18: "Add Default Filters for Last Counted, Last Movement").
+  // Days are compared in India time (localIsoDate); an empty bound is open.
+  const [countedMode, setCountedMode] = useState<'' | 'never' | 'between'>('');
+  const [cntFrom, setCntFrom] = useState('');
+  const [cntTo, setCntTo] = useState('');
+  const [movedFrom, setMovedFrom] = useState('');
+  const [movedTo, setMovedTo] = useState('');
+  // OPENED FROM A NOTIFICATION (the user, 2026-11-18: "When the Notification is
+  // clicked, the Respective record should be opened directly"): ?engineer=&part=
+  // opens that line's movements once the register is loaded.
+  const [searchParams, setSearchParams] = useSearchParams();
   const [holding, setHolding] = useState<Holding>('held');
   // ARRIVING FROM MY WORKLOAD — the Short card opens the short lines.
   useArrivingFilter<Holding>('holding', setHolding);
@@ -304,12 +316,28 @@ export function HandStock() {
     const base = hits ?? rows;
     return base.filter((r) => {
       if (engineerFilter && r.engineer_key !== engineerFilter) return false;
+      const counted = r.reconciled_at ? localIsoDate(r.reconciled_at) ?? '' : '';
+      if (countedMode === 'never' && counted) return false;
+      if (countedMode === 'between' && (!counted || (cntFrom && counted < cntFrom) || (cntTo && counted > cntTo))) return false;
+      const moved = r.last_movement ? localIsoDate(r.last_movement) ?? '' : '';
+      if ((movedFrom || movedTo) && (!moved || (movedFrom && moved < movedFrom) || (movedTo && moved > movedTo))) return false;
       if (holding === 'held' && r.on_hand <= 0) return false;
       if (holding === 'short' && r.on_hand >= 0) return false;
       if (holding === 'settled' && r.on_hand !== 0) return false;
       return true;
     });
-  }, [rows, hits, engineerFilter, holding]);
+  }, [rows, hits, engineerFilter, holding, countedMode, cntFrom, cntTo, movedFrom, movedTo]);
+  useEffect(() => {
+    const eng = (searchParams.get('engineer') ?? '').trim().toLowerCase();
+    const part = (searchParams.get('part') ?? '').trim().toLowerCase();
+    if (!eng || !part || !allRows.length) return;
+    const code = part.split('|')[0].trim();
+    const hit = allRows.find((r) => (r.engineer_key === eng || r.engineer.trim().toLowerCase() === eng)
+      && (r.part.trim().toLowerCase() === part || r.part_code.trim().toLowerCase() === code));
+    if (hit) setDetail(hit);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, allRows]);
   // REGION (2026-11-13): the engineer's CURRENT User Master region, on the
   // screen and in its export alike -- read when shown, never stored.
   const visible = useMemo(() => visibleBase.map((r) => ({ ...r, region: regionFor(regionOf, r.engineer) })), [visibleBase, regionOf]);
@@ -528,6 +556,21 @@ export function HandStock() {
                     value: e.engineer_key,
                     label: `${e.engineer}${e.onHand === undefined ? '' : ` (${e.onHand})`}`,
                   }))} />
+                <span className="muted" style={{ fontSize: 12 }}>Last counted</span>
+                <SelectPicker value={countedMode} onChange={(v) => setCountedMode(v as '' | 'never' | 'between')}
+                  options={[{ value: '', label: 'Any' }, { value: 'never', label: 'Never counted' }, { value: 'between', label: 'Counted between' }]} />
+                {countedMode === 'between' && (
+                  <>
+                    <input className="input" type="date" style={{ width: 140 }} value={cntFrom} onChange={(e) => setCntFrom(e.target.value)} title="Counted on or after" />
+                    <input className="input" type="date" style={{ width: 140 }} value={cntTo} onChange={(e) => setCntTo(e.target.value)} title="Counted on or before" />
+                  </>
+                )}
+                <span className="muted" style={{ fontSize: 12 }}>Last movement</span>
+                <input className="input" type="date" style={{ width: 140 }} value={movedFrom} onChange={(e) => setMovedFrom(e.target.value)} title="Last movement on or after" />
+                <input className="input" type="date" style={{ width: 140 }} value={movedTo} onChange={(e) => setMovedTo(e.target.value)} title="Last movement on or before" />
+                {(countedMode || movedFrom || movedTo) && (
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setCountedMode(''); setCntFrom(''); setCntTo(''); setMovedFrom(''); setMovedTo(''); }}>Clear dates</button>
+                )}
                 <div className="spacer" />
                 {/* WHILE A SEARCH SHOWS, THE FILE IS THE SEARCH, and it is
                     complete unless the list itself is (a cut cache). */}
