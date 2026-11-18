@@ -6,7 +6,7 @@ import { xlsxDownload, xlsxCell, xlsxText } from '../lib/xlsx';
 import { logAudit } from '../lib/audit';
 import { formatDay, formatDayTime, todayLocal, localIsoDate } from '../lib/dates';
 import {
-  listVisitDateChecks, resolveVisitDateRead, uncheckedManualReports, supabaseConfigured,
+  listVisitDateChecks, resolveVisitDateRead, manualReportsFor, supabaseConfigured,
   type VisitDateReading,
 } from '../lib/supabase';
 import { loadFailure } from '../lib/dberror';
@@ -74,7 +74,16 @@ export function VisitDateCheck() {
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [outcome, setOutcome] = useState('');
-  const [count, setCount] = useState('20');
+  // WHAT TO READ (the user, 2026-11-18: "Allow the User to Select Date / UCN and
+  // then Run it instead of Random 20 or 30 counts"): the visits entered on a
+  // day, or those of the UCNs typed.
+  const [pickBy, setPickBy] = useState<'day' | 'ucn'>('day');
+  const [pickDay, setPickDay] = useState(() => {
+    const [y, m, d] = todayLocal().split('-').map(Number);
+    const t = new Date(y, m - 1, d - 1);
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  });
+  const [pickUcns, setPickUcns] = useState('');
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState('');
   const [deciding, setDeciding] = useState<number | null>(null);
@@ -106,7 +115,9 @@ export function VisitDateCheck() {
   useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
   const run = async () => {
-    const n = Math.max(1, Math.min(200, Math.floor(Number(count) || 20)));
+    const ucns = pickUcns.split(/[\s,;]+/).map((u) => u.trim()).filter(Boolean);
+    if (pickBy === 'day' && !pickDay) { setErr('Pick the day the visits were entered.'); return; }
+    if (pickBy === 'ucn' && !ucns.length) { setErr('Type or paste one or more UCNs.'); return; }
     setRunning(true); stop.current = false; setErr(null);
     const tally = { read: 0, differ: 0, noBox: 0, notOpened: 0, failed: 0 };
     const say = (i: number, total: number) => setProgress(
@@ -114,9 +125,13 @@ export function VisitDateCheck() {
       + `${tally.noBox ? ` · no box ${tally.noBox}` : ''}${tally.notOpened ? ` · could not open ${tally.notOpened}` : ''}`
       + `${tally.failed ? ` · failed ${tally.failed}` : ''}`);
     try {
-      setProgress('Finding visits not yet checked…');
-      const todo = await uncheckedManualReports(n);
-      if (!todo.length) { setProgress('Every visit with a manual report has been checked.'); return; }
+      setProgress('Finding the visits…');
+      const sel = pickBy === 'day' ? { day: pickDay } : { ucns };
+      const { todo, alreadyRead, found } = await manualReportsFor(sel);
+      const what = pickBy === 'day' ? `entered on ${formatDay(pickDay)}` : `of ${ucns.length} UCN${ucns.length === 1 ? '' : 's'}`;
+      if (!found) { setProgress(`No visit with a manual report ${what}.`); return; }
+      if (!todo.length) { setProgress(`All ${found} visit${found === 1 ? '' : 's'} ${what} have been read already.`); return; }
+      if (!window.confirm(`Read ${todo.length} visit${todo.length === 1 ? '' : 's'} ${what} with Haiku?${alreadyRead ? `\n\n${alreadyRead} already read are skipped.` : ''}\n\nAbout $${(todo.length * 0.0004).toFixed(3)} with Haiku (more where Sonnet is needed). Only the cut-out of the date box is sent.`)) { setProgress(''); return; }
       for (let i = 0; i < todo.length; i++) {
         if (stop.current) break;
         say(i, todo.length);
@@ -127,7 +142,7 @@ export function VisitDateCheck() {
         else if (r.status === 'failed') { tally.failed++; if (tally.failed === 1) setErr(`Reading failed: ${r.note}`); }
       }
       say(todo.length, todo.length);
-      logAudit({ action: 'report.visit_date_check.run', meta: { asked: n, ...tally } });
+      logAudit({ action: 'report.visit_date_check.run', meta: { by: pickBy, day: pickBy === 'day' ? pickDay : undefined, ucns: pickBy === 'ucn' ? ucns.length : undefined, ...tally } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -296,15 +311,25 @@ export function VisitDateCheck() {
 
       {mayRun && (
         <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap', margin: '4px 0 10px' }}>
-          <label className="field" style={{ width: 150 }}><span className="field-label">Visits to check</span>
-            <input className="input" inputMode="numeric" value={count} disabled={running}
-                   onChange={(e) => setCount(e.target.value.replace(/\D/g, ''))} /></label>
+          <div className="field" style={{ minWidth: 220 }}><span className="field-label">Read</span>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', height: 34 }}>
+              <label style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 13 }}>
+                <input type="radio" checked={pickBy === 'day'} disabled={running} onChange={() => setPickBy('day')} /> Visits entered on a day</label>
+              <label style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 13 }}>
+                <input type="radio" checked={pickBy === 'ucn'} disabled={running} onChange={() => setPickBy('ucn')} /> UCNs</label>
+            </div></div>
+          {pickBy === 'day'
+            ? <label className="field" style={{ width: 170 }}><span className="field-label">Entered on</span>
+                <input className="input" type="date" value={pickDay} max={todayLocal()} disabled={running} onChange={(e) => setPickDay(e.target.value)} /></label>
+            : <label className="field" style={{ minWidth: 320, flex: 1 }}><span className="field-label">UCNs (comma, space or one per line)</span>
+                <textarea className="input" rows={2} value={pickUcns} disabled={running} placeholder="26K13F0017, 26J13F0069"
+                  onChange={(e) => setPickUcns(e.target.value)} /></label>}
           <button className="btn btn-primary" disabled={running} onClick={() => void run()}>
-            {running ? 'Checking…' : '▶ Check the next visits not yet checked'}
+            {running ? 'Reading…' : '▶ Read with Haiku'}
           </button>
           {running && <button className="btn" onClick={() => { stop.current = true; }}>Stop</button>}
           <span className="muted" style={{ fontSize: 12.5 }}>
-            {progress || 'Newest first. A visit already checked is never checked again. Only the cut-out of the date box leaves this device.'}
+            {progress || 'A visit already read is skipped. Only the cut-out of the date box leaves this device.'}
           </span>
         </div>
       )}
@@ -320,7 +345,7 @@ export function VisitDateCheck() {
       </Toolbar>
 
       {/* Every row is loaded (paged to the end), so the counts are exact. */}
-      <FacetChips options={facets} value={outcome} onChange={setOutcome} more={false} />
+      <FacetChips options={facets} value={outcome} onChange={setOutcome} more={false} total={rows.length} />
 
       <DataTable<Row>
         columns={columns} rows={visible} getRowId={(r) => r.key}
