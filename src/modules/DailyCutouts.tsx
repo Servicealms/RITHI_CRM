@@ -4,7 +4,8 @@ import { csvExport, fmtLongDate } from '../lib/format';
 import { xlsxDownload, xlsxCell, xlsxText } from '../lib/xlsx';
 import { logAudit } from '../lib/audit';
 import { formatDay, formatDayTime, todayLocal } from '../lib/dates';
-import { listReportCrops, lastReportCropAt, supabaseConfigured, type ReportCrop } from '../lib/supabase';
+import { listReportCrops, lastReportCropAt, dailyCropsRun, supabaseConfigured, type ReportCrop, type CropRun } from '../lib/supabase';
+import { useAuth } from '../lib/auth';
 import { loadFailure } from '../lib/dberror';
 import { Ucn } from '../lib/callstate';
 import { COMPLETE } from '../lib/exportscope';
@@ -45,6 +46,16 @@ const EXPORT: { key: string; header: string }[] = [
 ];
 
 export function DailyCutouts() {
+  const { can } = useAuth();
+  // RUN IT FOR A CHOSEN DAY (the user, 2026-11-18): starts the GitHub job for
+  // the visits entered on the day picked, through run-daily-crops; visits
+  // already cropped are skipped by the job, so a re-run only adds what is
+  // missing. Same key as sending reports to be read.
+  const mayRun = can('visitdate.check');
+  const [runs, setRuns] = useState<CropRun[]>([]);
+  const [runMsg, setRunMsg] = useState('');
+  const [starting, setStarting] = useState(false);
+  const [tick, setTick] = useState(0);
   const [day, setDay] = useState(yesterday());
   const [rows, setRows] = useState<ReportCrop[]>([]);
   const [busy, setBusy] = useState(false);
@@ -62,7 +73,41 @@ export function DailyCutouts() {
       .catch((e) => { if (alive) setErr(loadFailure(e, { tables: ['visit_report_crops'], hint: 'Daily cut-outs are not on the project yet -- migration 0487 (supabase/apply/reports.sql).' })); })
       .finally(() => { if (alive) setBusy(false); });
     return () => { alive = false; };
-  }, [day]);
+  }, [day, tick]);
+
+  // The runs GitHub reports; while one is queued or running, look again every
+  // 30 seconds and reload the day when it ends.
+  const active = runs.some((r) => r.status !== 'completed');
+  useEffect(() => {
+    if (!mayRun || !supabaseConfigured()) return;
+    let alive = true;
+    const look = () => dailyCropsRun('status')
+      .then((r) => { if (!alive) return; setRuns((prev) => {
+        const next = r.runs ?? [];
+        if (prev.some((p) => p.status !== 'completed') && next.every((n) => n.status === 'completed')) setTick((t) => t + 1);
+        return next;
+      }); })
+      .catch((e) => { if (alive) setRunMsg(e instanceof Error ? e.message : String(e)); });
+    void look();
+    const t = active ? setInterval(look, 30000) : undefined;
+    return () => { alive = false; if (t) clearInterval(t); };
+  }, [mayRun, active]);
+
+  const runDay = async () => {
+    if (!window.confirm(`Crop the manual reports of the visits entered on ${formatDay(day)} now?\n\nVisits already cropped are skipped. The reports are opened on GitHub's runner; only the cut-outs are kept.`)) return;
+    setStarting(true); setRunMsg('');
+    try {
+      await dailyCropsRun('run', day);
+      setRunMsg(`Started for ${formatDay(day)}. It appears below in a few seconds; this page reloads the day when it finishes.`);
+      logAudit({ action: 'report.daily_cutouts.run', meta: { day } });
+      setTimeout(() => { void dailyCropsRun('status').then((r) => setRuns(r.runs ?? [])).catch(() => undefined); }, 5000);
+    } catch (e) {
+      setRunMsg(e instanceof Error ? e.message : String(e));
+    } finally { setStarting(false); }
+  };
+  const runWords = (r: CropRun) => r.status === 'completed'
+    ? (r.conclusion === 'success' ? 'finished' : `ended: ${r.conclusion ?? 'unknown'}`)
+    : r.status === 'queued' ? 'waiting to start' : 'running';
 
   const facets = useMemo(() => {
     const m = new Map<string, number>();
@@ -112,7 +157,25 @@ export function DailyCutouts() {
           <input className="input" type="date" value={day} max={todayLocal()} onChange={(e) => setDay(e.target.value)} />
         </label>
         <span className="muted" style={{ fontSize: 12.5 }}>{formatDay(day)}</span>
+        {mayRun && (
+          <button className="btn btn-primary btn-sm" disabled={starting || !day} onClick={() => void runDay()}
+            title="Crop the manual reports of the visits entered on this day now (those already cropped are skipped)">
+            {starting ? 'Starting…' : '▶ Crop this day now'}
+          </button>
+        )}
       </div>
+      {mayRun && (runMsg || runs.length > 0) && (
+        <div className="muted" style={{ fontSize: 12.5, margin: '0 0 8px' }}>
+          {runMsg && <div>{runMsg}</div>}
+          {runs.slice(0, 3).map((r) => (
+            <div key={r.id}>
+              {r.title.replace('Daily cut-outs ', '') === 'scheduled' ? 'Scheduled run' : `Run for ${r.title.replace('Daily cut-outs ', '')}`}
+              {' · '}{formatDayTime(r.created_at)} · <b>{runWords(r)}</b>
+              {safeUrl(r.url) && <> · <a href={safeUrl(r.url)} target="_blank" rel="noreferrer">details</a></>}
+            </div>
+          ))}
+        </div>
+      )}
       {err && <div className="sheet-banner sheet-banner-error"><span>{err}</span></div>}
       <Toolbar>
         <SearchBox value={q} onChange={setQ} placeholder="UCN, engineer or visit UID" />

@@ -1945,7 +1945,9 @@ typed into a form that reads it.
   > before — **no AI, no cost** — and shown here by day (yesterday by
   > default): UCN, engineer, Visit Date in RITHI and the cut-out side by side,
   > to compare by eye. A visit is cropped once; a report that could not be
-  > opened is tried again the next morning.
+  > opened is tried again the next morning. **▶ Crop this day now** crops the
+  > day picked straight away (those already cropped are skipped); the runs are
+  > listed under it and the day reloads when its run finishes.
 - **Feedback Without a Report** `/feedback-without-report` — **administrators
   only.** The customer gave feedback on a visit; the visit was never written up.
   > Feedback is collected **after** a visit, so its existence is evidence the

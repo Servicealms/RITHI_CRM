@@ -273,7 +273,7 @@ on testing the old shape. **When a migration replaces a definition, move the
   the two are separate documents and must not be merged.
   Shareable copy: <https://claude.ai/code/artifact/3696155c-2394-43ad-b017-a614f69c3219>
 - **EDGE FUNCTIONS DEPLOY FROM `.github/workflows/deploy-functions.yml`** —
-  and ONLY the ones it names (`read-report-box` so far). It needs the GitHub
+  and ONLY the ones it names (`read-report-box`, `run-daily-crops`). It needs the GitHub
   secret `SUPABASE_ACCESS_TOKEN`; a function's own secrets live in Supabase.
   `daily-digest` and `scheduled-export` are deliberately NOT on the list: they
   send mail on a timer and going live is a decision, not a side effect.

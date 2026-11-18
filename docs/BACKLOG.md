@@ -191,6 +191,11 @@ up)_
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
   Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
   route A (GitHub) chosen.
+- v0.10.261 Daily cut-outs for a chosen day (the user, 2026-11-18): workflow
+  input `date`; Edge Function run-daily-crops (visitdate.check; starts the
+  workflow for a day, lists runs); "Crop this day now" on Daily cut-outs.
+  **PENDING: the user adds Supabase secret GITHUB_DISPATCH_TOKEN** (fine-grained
+  GitHub token, this repository only, Actions: Read and write).
 - v0.10.260 Daily Visit Date cut-outs (the user: "Scheduled task ... read
   report and crop and present this as Data on a daily basis ... without
   involving Haiku ... report updated yesterday"; chosen: GitHub workflow,

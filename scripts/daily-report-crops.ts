@@ -36,6 +36,11 @@ import { driveFileId } from '../src/lib/drive';
 
 const TARGET = 2600;              // the long side the app reads at (reportOcr.ts)
 const DAYS = Math.max(1, Math.min(31, Number(process.env.DAYS || 3)));
+// ONE CHOSEN DAY (the user, 2026-11-18: "Add a provision to run it manually for
+// a choosen date"): DATE=YYYY-MM-DD crops the visits ENTERED on that India-time
+// day instead of the look-back window. Anything else is refused, not guessed.
+const DATE = (process.env.DATE ?? '').trim();
+if (DATE && !/^\d{4}-\d{2}-\d{2}$/.test(DATE)) { console.log('::error::DATE must be YYYY-MM-DD'); process.exit(1); }
 const DB = process.env.SUPABASE_DB_URL ?? '';
 const work = mkdtempSync(join(tmpdir(), 'crops-'));
 
@@ -195,7 +200,8 @@ async function main() {
              (r.updated_at at time zone 'Asia/Kolkata')::date as entry_day, r.manual_report
         from public.reports r
        where coalesce(r.manual_report, '') <> '' and coalesce(r.uid, '') <> ''
-         and (r.updated_at at time zone 'Asia/Kolkata')::date between ${today} - ${DAYS} and ${today} - 1
+         and ${DATE ? `(r.updated_at at time zone 'Asia/Kolkata')::date = date '${DATE}'`
+                    : `(r.updated_at at time zone 'Asia/Kolkata')::date between ${today} - ${DAYS} and ${today} - 1`}
          and not exists (select 1 from public.visit_report_crops c where c.report_uid = r.uid)
        order by r.updated_at, r.id
        limit 3000) t;`).trim() || '[]');
@@ -222,7 +228,7 @@ async function main() {
                       manual_report text, status text, method text, note text, crop_jpeg text, ms integer)
           on conflict (report_uid) do nothing;`);
   }
-  const line = `Visits entered in the last ${DAYS} day(s) up to yesterday, not yet cropped: ${tally.visits} · box found ${tally.found} (lines ${tally.lines}, label ${tally.label}) · no box ${tally.noBox} · could not open ${tally.notOpened} (tried again next run) · same report reused ${tally.reused}`;
+  const line = `${DATE ? `Visits entered on ${DATE}` : `Visits entered in the last ${DAYS} day(s) up to yesterday`}, not yet cropped: ${tally.visits} · box found ${tally.found} (lines ${tally.lines}, label ${tally.label}) · no box ${tally.noBox} · could not open ${tally.notOpened} (tried again next run) · same report reused ${tally.reused}`;
   console.log(line);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Daily Visit Date cut-outs\n\n${line}\n`);
 }

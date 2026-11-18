@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.261',
+    date: '2026-11-18',
+    title: 'Daily cut-outs: crop any chosen day now',
+    changes: [
+      'On Visit Date Check → Daily cut-outs, pick a day and press ▶ Crop this day now: the cut-outs for the visits entered on that day are made straight away instead of waiting for 06:00. Visits already cropped are skipped, so running a day again only fills in what is missing.',
+      'The latest runs are listed under the button — waiting, running or finished — and the day reloads by itself when its run finishes.',
+    ],
+  },
+  {
     version: '0.10.260',
     date: '2026-11-17',
     title: 'Daily Visit Date cut-outs',

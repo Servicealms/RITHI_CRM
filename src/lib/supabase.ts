@@ -5945,6 +5945,23 @@ export async function listReportCrops(day: string): Promise<ReportCrop[]> {
     .select('id,report_uid,ucn,engineer,visit_at,entry_at,entry_day,manual_report,status,method,note,crop_jpeg')
     .eq('entry_day', day).order('entry_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
 }
+/** A run of the daily cut-outs job, as GitHub reports it (run-daily-crops). */
+export interface CropRun { id: number; title: string; event: string; status: string; conclusion: string | null; created_at: string; updated_at: string; url: string }
+/** Start the daily cut-outs for the visits entered on one day, or list the
+ *  latest runs. Through the Edge Function run-daily-crops, which holds the
+ *  GitHub token and checks visitdate.check. */
+export async function dailyCropsRun(action: 'run' | 'status', date?: string): Promise<{ started?: boolean; runs?: CropRun[] }> {
+  const { data, error } = await must().functions.invoke('run-daily-crops', { body: { action, date } });
+  if (error) {
+    let msg = error.message;
+    try {
+      const b = await (error as { context?: Response }).context?.json();
+      if (b?.error) msg = String(b.error);
+    } catch { /* keep the client's message */ }
+    throw new Error(msg);
+  }
+  return data as { started?: boolean; runs?: CropRun[] };
+}
 /** When the daily job last stored a cut-out, or null. */
 export async function lastReportCropAt(): Promise<string | null> {
   const { data, error } = await must().from('visit_report_crops').select('created_at')
