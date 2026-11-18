@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.262',
+    date: '2026-11-18',
+    title: 'Fewer "No box found" on the daily cut-outs',
+    changes: [
+      'When the box is not found, the page is searched again zoomed into the area where the form\'s lines are — a whole sheet photographed on a desk leaves the form small in the frame, its rows too short and its labels too small to read.',
+      'A photo tilted up to 8° is now straightened (it was 4°), and a form small in the frame no longer has its rows dismissed as too short.',
+      'A "No box found" now says what was seen: the page size, the tilt measured, how many ruled tables and words were found, and whether the zoomed search was tried.',
+    ],
+  },
+  {
     version: '0.10.261',
     date: '2026-11-18',
     title: 'Daily cut-outs: correct the Visit Date, crop any day now, full-width cut-outs',

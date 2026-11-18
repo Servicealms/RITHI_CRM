@@ -11,7 +11,7 @@
 // the box, so it can be checked before any reading service exists.
 // ===========================================================================
 import { findReportBox, type CropBox, type OcrLine } from './reportCrop';
-import { findBoxByLines, gridLines, snapToRules, inkMask, estimateSkew, labelCells, labelsConfirm, type Cell } from './reportGrid';
+import { findBoxByLines, gridLines, snapToRules, inkMask, estimateSkew, labelCells, labelsConfirm, formRegion, type Cell } from './reportGrid';
 
 type TesseractWorker = {
   recognize: (img: HTMLCanvasElement, opts?: object, out?: object) => Promise<{ data: { blocks?: Array<{ paragraphs: Array<{ lines: Array<{ words: Array<{ text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }> }> }> }> | null } }>;
@@ -201,8 +201,13 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
   // (snapToRules): the PM form's rows are not the Field form's, and a box
   // sized from the label took in too many rows and cut the UC Nos short.
   let tried = 0, firstWhy = '';
+  // A SECOND PASS ZOOMED INTO THE FORM (v0.10.262): a whole sheet photographed
+  // with the form small in the frame -- the same as the daily job.
+  const passes: { base: HTMLCanvasElement; zoomed: boolean }[] = [{ base: upright, zoomed: false }];
+  for (let pi = 0; pi < passes.length; pi++) {
+  const base = passes[pi].base;
   for (const deg of [0, 180, 90, 270] as const) {
-    let c = deg === 0 ? upright : rotated(upright, deg);
+    let c = deg === 0 ? base : rotated(base, deg);
     let g = greyBytes(c);
     const skew = estimateSkew(inkMask(g, c.width, c.height), c.width, c.height);
     if (Math.abs(skew) >= 0.2) { c = tilted(c, -skew); g = greyBytes(c); }
@@ -223,9 +228,23 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
     }
     if (!firstWhy) firstWhy = why;
   }
+  if (pi === 0) {
+    let lc = upright; let lg = greyBytes(lc);
+    const sk = estimateSkew(inkMask(lg, lc.width, lc.height), lc.width, lc.height);
+    if (Math.abs(sk) >= 0.2) { lc = tilted(lc, -sk); lg = greyBytes(lc); }
+    const reg = formRegion(lg, lc.width, lc.height);
+    if (reg) {
+      const k = TARGET / Math.max(reg.w, reg.h);
+      const z = document.createElement('canvas');
+      z.width = Math.round(reg.w * k); z.height = Math.round(reg.h * k);
+      z.getContext('2d')!.drawImage(lc, reg.x, reg.y, reg.w, reg.h, 0, 0, z.width, z.height);
+      passes.push({ base: z, zoomed: true });
+    }
+  }
+  }
   const linesWhy = tried
     ? `the lines gave ${tried} table${tried === 1 ? '' : 's'} of even rows, but none had the Call No/UC No or Service Visit Date label`
     : 'no ruled label column was found';
-  return { box: null, why: `${linesWhy}; and by the printed words: ${firstWhy} (tried upright and turned 180, 90 and 270 degrees)`, crop: '',
+  return { box: null, why: `${linesWhy}; and by the printed words: ${firstWhy} (tried upright and turned 180, 90 and 270 degrees${passes.length > 1 ? ', and again zoomed into the form' : ''})`, crop: '',
            thumb: canvasJpeg(upright, undefined, 360), ms: Math.round(performance.now() - t0), turned: 0, source, method: '', skew: 0 };
 }
