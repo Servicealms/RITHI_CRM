@@ -1956,7 +1956,11 @@ typed into a form that reads it.
   > handwritten value is in it. **Mark, then Save all**: mark rows as *RITHI is
   > right* or pick a date, then press **Save all** once (one confirmation lists
   > them). **↻ Re-crop this day** crops the day again, replacing the cut-outs
-  > not yet decided; decided ones stay. **Decision** on each row: **✓ RITHI is
+  > not yet decided; decided ones stay.
+  >
+  > **Corrected dates** (the third tab): every Visit Date changed here — when,
+  > who, what it was, what it was set to and what it is now (*Changed again
+  > since* if it no longer matches). Exports to Excel or CSV. **Decision** on each row: **✓ RITHI is
   > right**, or set the date to what the report says and press **Change** —
   > the visit's Visit Date moves to that day (its time and Visit Entry Date
   > stay); decided once, with who and when. *To check* lists what is waiting.

@@ -191,6 +191,10 @@ up)_
 - **API key ready (the user, 2026-11-17).** Phase B: key goes in Supabase →
   Edge Functions → Secrets as ANTHROPIC_API_KEY (DONE by the user); deploy
   route A (GitHub) chosen.
+- v0.10.265 Corrected dates report (0489, visit_date_corrections) as a tab of
+  Visit Date Check. NON-AUDITABLE: hiding Visit Date Check + this report in
+  Audit Mode is held in `docs/NON_AUDITABLE_BACKLOG.md` (item 1) until the
+  user says "Act on Non Auditable Backlog".
 - v0.10.262 "No box found" (first run: 165 visits -- 81 found, 57 no box, 27
   not opened): tilt to 8°, row floor 0.6%, a second pass zoomed into the form
   area (formRegion), diagnostics on every no-box. Reproduced with the user's

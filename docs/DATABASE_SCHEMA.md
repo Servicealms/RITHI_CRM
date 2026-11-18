@@ -12,7 +12,7 @@ worse than none — somebody plans around it. Reading 156 migration files to
 describe a default is the method that has produced wrong answers in this
 project before.
 
-**122 tables · 47 views · 3582 columns · 274 policies · 70 foreign keys.**
+**122 tables · 48 views · 3595 columns · 274 policies · 70 foreign keys.**
 
 ## How to read this
 
@@ -5467,6 +5467,7 @@ silently, with no error. `npm run check:views` fails any that lacks it.
 | `training_status` | **on** | 19 |
 | `unused_spare_report` | **on** | 25 |
 | `visit_date_check` | **on** | 25 |
+| `visit_date_corrections` | **on** | 13 |
 | `warranty_sale_details` | **on** | 46 |
 
 **`call_dates`** — Per call: First Attended (earlier of first visit and first spare request), Last Visit and Solved (visit date of the standing Solved - Report Completed entry), all India dates (0424); the Call Pending Reason of the latest visit entry while the call is open (0433); and the engineer of that latest entry, for the Region (0479). security_invoker: one row per call the reader may see.
@@ -5498,6 +5499,8 @@ silently, with no error. `npm run check:views` fails any that lacks it.
 **`stores_dispatch_report`** — Stores Dispatch Report (0385, 0387, 0388): one row per spare line dispatched, in the AppSheet Stores format -- live dispatches, plus the historical stock outs from 1 January 2025 not already dispatched in RITHI (Source = Historical). Final approval = latest of RM / Commercial / NSM for a live line, the file's Request Final Approval Date for a historical one; blank where none, band "No approval date"; days to dispatch exact to one decimal, banded 00-03D ... >60D; Year / Month / YY - MM of the dispatch in India time.
 
 **`unused_spare_report`** — Not Consumed Against this Call (the report's name; this view keeps its own): two findings -- NOT USED (nothing of that part booked on the call) and SHORT (less booked than was sent). Aggregated per call and part, never per line: a part sent twice on one call would otherwise flag both lines as short whenever the engineer booked the total once. DISPATCHED counts as reached, because acknowledging a delivery is not mandatory and requiring it would empty the report. Spare lines dispatched or received against a call whose part code never appears in that call's consumption. Refused and dropped lines are excluded -- nothing arrived, so nothing could be fitted. Matched on the part CODE because both sides store CODE\|Description and the description drifts. security_invoker, so a reader sees only the calls their role allows.
+
+**`visit_date_corrections`** — Visit Dates corrected through Visit Date Check (0489): when, who, what was present, what it was set to, what is there now. Non-auditable (docs/NON_AUDITABLE_BACKLOG.md).
 
 ---
 

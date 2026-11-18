@@ -16,6 +16,7 @@ import { COMPLETE } from '../lib/exportscope';
 import { safeUrl } from '../lib/safeUrl';
 import { checkOneVisit, modelWords, OUTCOME_WORDS } from '../lib/visitDateRun';
 import { DailyCutouts } from './DailyCutouts';
+import { CorrectedDates } from './CorrectedDates';
 
 // ===========================================================================
 // VISIT DATE CHECK -- Reports (the user, 2026-11-17: "have a Mechanism to
@@ -86,7 +87,7 @@ export function VisitDateCheck() {
   // View and Move Readings to Secondary Tab and also re-name it as 'Haiku
   // Read'"; and "Dont add Haiku to loop unless i trigger it" -- Haiku reads
   // only when somebody presses Check on that tab, never on the 06:00 run).
-  const [view, setView] = useState<'readings' | 'daily'>('daily');
+  const [view, setView] = useState<'readings' | 'daily' | 'corrected'>('daily');
 
   const load = async () => {
     if (!supabaseConfigured()) return;
@@ -257,8 +258,22 @@ export function VisitDateCheck() {
     <div className="dccr-tabs" role="tablist" style={{ marginBottom: 8 }}>
       <button role="tab" aria-selected={view === 'daily'} className={`dccr-tab${view === 'daily' ? ' is-on' : ''}`} onClick={() => setView('daily')}>🖼️ Daily cut-outs</button>
       <button role="tab" aria-selected={view === 'readings'} className={`dccr-tab${view === 'readings' ? ' is-on' : ''}`} onClick={() => setView('readings')}>🤖 Haiku Read</button>
+      <button role="tab" aria-selected={view === 'corrected'} className={`dccr-tab${view === 'corrected' ? ' is-on' : ''}`} onClick={() => setView('corrected')}>✏️ Corrected dates</button>
     </div>
   );
+  // CORRECTED DATES (0489): every Visit Date changed through this screen --
+  // when, who, before, set to, now. A tab here so that hiding Visit Date Check
+  // (non-auditable) hides it too.
+  if (view === 'corrected') {
+    return (
+      <div>
+        <PageHeader title="Visit Date Check" icon="📅"
+          subtitle="Every Visit Date corrected here: when, who, what it was, what it was set to, and what it is now." />
+        {tabs}
+        <CorrectedDates />
+      </div>
+    );
+  }
   if (view === 'daily') {
     return (
       <div>

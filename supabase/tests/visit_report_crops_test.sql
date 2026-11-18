@@ -97,3 +97,25 @@ begin; set local role authenticated;
   select public.review_visit_report_crop((select id from public.visit_report_crops where report_uid = 'VRC-2'), null);
 commit;
 select to_char(visit_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as visit from public.reports where uid = 'VRC-2';
+
+\echo '--- 11. the corrections report: one row for the change, none for the confirmation ---'
+\echo 'expect: Daily cut-out | VRC0001 | 2026-11-10 10:30 | 2026-11-09 10:30 | 2026-11-09 10:30 | t | VRC Admin'
+call public.be('vrc_admin@x.com');
+begin; set local role authenticated;
+  select source, ucn,
+         to_char(was_visit_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as was,
+         to_char(set_to_visit_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as set_to,
+         to_char(now_visit_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as now_is,
+         still_as_set, corrected_by_name
+    from public.visit_date_corrections where ucn like 'VRC%';
+commit;
+\echo 'expect: the visit changed again later reads still_as_set false'
+update public.reports set visit_at = '2026-11-08 10:30:00+05:30' where uid = 'VRC-1';
+begin; set local role authenticated;
+  select still_as_set from public.visit_date_corrections where ucn = 'VRC0001';
+commit;
+\echo 'expect: engineer sees no corrections (0)'
+call public.be('vrc_eng@x.com');
+begin; set local role authenticated;
+  select count(*) as engineer_sees from public.visit_date_corrections where ucn like 'VRC%';
+commit;
