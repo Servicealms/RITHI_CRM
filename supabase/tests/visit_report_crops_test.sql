@@ -16,6 +16,10 @@ insert into public.profiles (id,email,full_name,role) values
  ('ec487000-0000-0000-0000-000000000002','vrc_eng@x.com','VRC Engineer','engineer')
 on conflict (id) do update set role = excluded.role, full_name = excluded.full_name;
 
+-- Two visits: 10-Nov-2026 10:30 India time, entered 12-Nov.
+insert into public.reports (ucn, uid, visit_at, updated_at, engineer) values
+ ('VRC0001', 'VRC-1', '2026-11-10 10:30:00+05:30', '2026-11-12 09:00:00+05:30', 'VRC Engineer'),
+ ('VRC0002', 'VRC-2', '2026-11-10 10:30:00+05:30', '2026-11-12 09:00:00+05:30', 'VRC Engineer');
 -- As the daily job writes them (database owner).
 insert into public.visit_report_crops (report_uid, ucn, entry_day, status, method, crop_jpeg) values
  ('VRC-1', 'VRC0001', current_date - 1, 'found', 'lines', 'data:image/jpeg;base64,AAAA'),
@@ -56,3 +60,40 @@ commit;
 begin; set local role anon; select set_config('request.jwt.claim.role', 'anon', true);
   select count(*) from public.visit_report_crops;
 commit;
+
+\echo '--- 6. an engineer cannot correct from a cut-out ---'
+call public.be('vrc_eng@x.com');
+\echo 'expect ERROR: Only an administrator may correct a Visit Date from a report cut-out'
+begin; set local role authenticated;
+  select public.review_visit_report_crop((select id from public.visit_report_crops where report_uid = 'VRC-1'), date '2026-11-09');
+commit;
+
+\echo '--- 7. CHANGE: the day moves to 9-Nov, 10:30 kept, Visit Entry Date untouched ---'
+call public.be('vrc_admin@x.com');
+\echo 'expect: corrected'
+begin; set local role authenticated;
+  select public.review_visit_report_crop((select id from public.visit_report_crops where report_uid = 'VRC-1'), date '2026-11-09');
+commit;
+\echo 'expect: 2026-11-09 10:30 | entry 2026-11-12 09:00'
+select to_char(visit_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as visit,
+       to_char(updated_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as entry
+  from public.reports where uid = 'VRC-1';
+
+\echo '--- 8. decided once ---'
+\echo 'expect ERROR: This cut-out was already used to change the Visit Date'
+begin; set local role authenticated;
+  select public.review_visit_report_crop((select id from public.visit_report_crops where report_uid = 'VRC-1'), null);
+commit;
+
+\echo '--- 9. a future day is refused ---'
+\echo 'expect ERROR: is in the future -- not changed'
+begin; set local role authenticated;
+  select public.review_visit_report_crop((select id from public.visit_report_crops where report_uid = 'VRC-2'), current_date + 5);
+commit;
+
+\echo '--- 10. RITHI IS RIGHT: the visit stays ---'
+\echo 'expect: confirmed | 2026-11-10 10:30'
+begin; set local role authenticated;
+  select public.review_visit_report_crop((select id from public.visit_report_crops where report_uid = 'VRC-2'), null);
+commit;
+select to_char(visit_at at time zone 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI') as visit from public.reports where uid = 'VRC-2';

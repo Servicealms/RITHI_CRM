@@ -5937,12 +5937,13 @@ export async function resolveVisitDateRead(id: number, apply: boolean): Promise<
 export interface ReportCrop {
   id: number; report_uid: string; ucn: string; engineer: string; visit_at: string | null; entry_at: string | null;
   entry_day: string; manual_report: string; status: 'found' | 'no_box'; method: string; note: string; crop_jpeg: string;
+  review: 'confirmed' | 'corrected' | null; reviewed_at: string | null; old_visit_at: string | null; new_visit_at: string | null;
 }
 /** The cut-outs of the visits entered on one India-time day. */
 export async function listReportCrops(day: string): Promise<ReportCrop[]> {
   const c = must();
   return allRows<ReportCrop>((from, to) => c.from('visit_report_crops')
-    .select('id,report_uid,ucn,engineer,visit_at,entry_at,entry_day,manual_report,status,method,note,crop_jpeg')
+    .select('id,report_uid,ucn,engineer,visit_at,entry_at,entry_day,manual_report,status,method,note,crop_jpeg,review,reviewed_at,old_visit_at,new_visit_at')
     .eq('entry_day', day).order('entry_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
 }
 /** A run of the daily cut-outs job, as GitHub reports it (run-daily-crops). */
@@ -5961,6 +5962,13 @@ export async function dailyCropsRun(action: 'run' | 'status', date?: string): Pr
     throw new Error(msg);
   }
   return data as { started?: boolean; runs?: CropRun[] };
+}
+/** A person's decision on a cut-out (0488): `date` null = RITHI is right;
+ *  a date = change the visit's Visit Date to it (the day only). */
+export async function reviewVisitCrop(id: number, date: string | null): Promise<string> {
+  const { data, error } = await must().rpc('review_visit_report_crop', { p_id: id, p_date: date });
+  if (error) throw new Error(errMsg(error));
+  return String(data ?? '');
 }
 /** When the daily job last stored a cut-out, or null. */
 export async function lastReportCropAt(): Promise<string | null> {

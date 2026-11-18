@@ -131,7 +131,10 @@ async function cropReport(src: Buffer): Promise<Found> {
 
 async function jpeg(p: Page, b: { x: number; y: number; w: number; h: number }): Promise<string> {
   const x = Math.max(0, Math.round(b.x)), y = Math.max(0, Math.round(b.y));
-  const w = Math.min(p.w - x, Math.round(b.w)), h = Math.min(p.h - y, Math.round(b.h));
+  // To the page's right edge, whatever width the box found (the user,
+  // 2026-11-18: "Keep only the starting point on the left, go till end of the
+  // width") -- the app does the same (reportOcr.ts).
+  const w = p.w - x, h = Math.min(p.h - y, Math.round(b.h));
   const out = await sharp(p.png).extract({ left: x, top: y, width: w, height: h })
     .resize({ width: 900, height: 900, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 72 }).toBuffer();
   return `data:image/jpeg;base64,${out.toString('base64')}`;

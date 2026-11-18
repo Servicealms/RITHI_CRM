@@ -180,8 +180,14 @@ export async function cropReportBox(src: Blob): Promise<CropResult> {
   const isPdf = /pdf/i.test(src.type);
   const source = isPdf ? 'pdf' as const : 'photo' as const;
   const upright = isPdf ? await pdfCanvas(src) : await photoCanvas(src);
-  const done = (c: HTMLCanvasElement, box: CropBox, turned: number, method: CropResult['method'], skew: number): CropResult =>
-    ({ box, why: '', crop: canvasJpeg(c, box, 1400), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew });
+  // THE CUT RUNS TO THE PAGE'S RIGHT EDGE (the user, 2026-11-18: "Keep only
+  // the starting point on the left, go till end of the width"): the box found
+  // gives the left edge and the two rows; the width is the rest of the page,
+  // so a value cell cut short by a wrongly-placed right rule is never lost.
+  const done = (c: HTMLCanvasElement, found: CropBox, turned: number, method: CropResult['method'], skew: number): CropResult => {
+    const box = { ...found, w: c.width - found.x };
+    return { box, why: '', crop: canvasJpeg(c, box, 1400), thumb: canvasJpeg(c, undefined, 360), ms: Math.round(performance.now() - t0), turned, source, method, skew };
+  };
 
   // Each turn of the page is tried both ways before the next: by the ruled
   // lines, then by the printed label -- an upright page (most PDFs) is

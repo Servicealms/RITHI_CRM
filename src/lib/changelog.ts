@@ -22,8 +22,10 @@ export const CHANGELOG: ChangeEntry[] = [
   {
     version: '0.10.261',
     date: '2026-11-18',
-    title: 'Daily cut-outs: crop any chosen day now',
+    title: 'Daily cut-outs: correct the Visit Date, crop any day now, full-width cut-outs',
     changes: [
+      'Each daily cut-out now has a Decision: ✓ RITHI is right, or set the date to what the report says and press Change — the visit\'s Visit Date moves to that day (its time and its Visit Entry Date stay). Decided once, with who and when; a future date is refused. The "To check" chip lists what is still waiting. Administrators for now (key "Change the Visit Date").',
+      'Every cut-out now keeps its left edge and its two rows but runs to the right edge of the page, so the handwritten date is never cut off where a line was taken for the end of the box (the daily job and the Report reader trial alike).',
       'On Visit Date Check → Daily cut-outs, pick a day and press ▶ Crop this day now: the cut-outs for the visits entered on that day are made straight away instead of waiting for 06:00. Visits already cropped are skipped, so running a day again only fills in what is missing.',
       'The latest runs are listed under the button — waiting, running or finished — and the day reloads by itself when its run finishes.',
     ],

@@ -196,6 +196,10 @@ up)_
   workflow for a day, lists runs); "Crop this day now" on Daily cut-outs.
   **PENDING: the user adds Supabase secret GITHUB_DISPATCH_TOKEN** (fine-grained
   GitHub token, this repository only, Actions: Read and write).
+  Cut-outs now run to the page's right edge; the narrow ones from the first run
+  are cleared with `supabase/apply/_redo_daily_cutouts.sql` then re-cropped.
+  0488: "RITHI is right" / Change the Visit Date from a cut-out
+  (review_visit_report_crop, visitdate.fix).
 - v0.10.260 Daily Visit Date cut-outs (the user: "Scheduled task ... read
   report and crop and present this as Data on a daily basis ... without
   involving Haiku ... report updated yesterday"; chosen: GitHub workflow,

@@ -3,8 +3,8 @@ import { Toolbar, SearchBox, FacetChips } from '../components/ui/ui';
 import { csvExport, fmtLongDate } from '../lib/format';
 import { xlsxDownload, xlsxCell, xlsxText } from '../lib/xlsx';
 import { logAudit } from '../lib/audit';
-import { formatDay, formatDayTime, todayLocal } from '../lib/dates';
-import { listReportCrops, lastReportCropAt, dailyCropsRun, supabaseConfigured, type ReportCrop, type CropRun } from '../lib/supabase';
+import { formatDay, formatDayTime, todayLocal, localIsoDate } from '../lib/dates';
+import { listReportCrops, lastReportCropAt, dailyCropsRun, reviewVisitCrop, supabaseConfigured, type ReportCrop, type CropRun } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { loadFailure } from '../lib/dberror';
 import { Ucn } from '../lib/callstate';
@@ -26,6 +26,8 @@ import { safeUrl } from '../lib/safeUrl';
 // ===========================================================================
 
 const STATUS_WORDS: Record<ReportCrop['status'], string> = { found: 'Box found', no_box: 'No box found' };
+// The chip for what is still waiting for a person (0488).
+const TO_CHECK = 'To check';
 
 const yesterday = () => {
   const [y, m, d] = todayLocal().split('-').map(Number);
@@ -41,6 +43,8 @@ const EXPORT: { key: string; header: string }[] = [
   { key: 'entry_at', header: 'Visit Entry Date' },
   { key: 'status_words', header: 'Result' },
   { key: 'note', header: 'How it was found' },
+  { key: 'review_words', header: 'Decision' },
+  { key: 'new_visit_at', header: 'Visit Date after the decision' },
   { key: 'manual_report', header: 'Manual report' },
   { key: 'report_uid', header: 'Visit UID' },
 ];
@@ -52,6 +56,23 @@ export function DailyCutouts() {
   // already cropped are skipped by the job, so a re-run only adds what is
   // missing. Same key as sending reports to be read.
   const mayRun = can('visitdate.check');
+  // CORRECT THE VISIT FROM A CUT-OUT (0488; the user, 2026-11-18: "And how to
+  // update the actual entry? Visit Entry??? I dont see any edit Provision."):
+  // "RITHI is right", or change the visit's Visit Date to the date on the
+  // report -- the day only. Same key as on Readings: visitdate.fix.
+  const mayFix = can('visitdate.fix');
+  const [fixDate, setFixDate] = useState<Record<number, string>>({});
+  const [deciding, setDeciding] = useState<number | null>(null);
+  const decide = async (r: ReportCrop, date: string | null) => {
+    const ask = date
+      ? `Change the Visit Date of ${r.ucn} from ${r.visit_at ? formatDay(r.visit_at) : '(none)'} to ${formatDay(date)}?\n\nOnly the day changes: the time of the visit and its Visit Entry Date stay. This cannot be undone here.`
+      : `Mark ${r.ucn} as checked: the Visit Date in RITHI (${r.visit_at ? formatDay(r.visit_at) : 'none'}) matches the report?`;
+    if (!window.confirm(ask)) return;
+    setDeciding(r.id); setErr(null);
+    try { await reviewVisitCrop(r.id, date); setTick((t) => t + 1); }
+    catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+    finally { setDeciding(null); }
+  };
   const [runs, setRuns] = useState<CropRun[]>([]);
   const [runMsg, setRunMsg] = useState('');
   const [starting, setStarting] = useState(false);
@@ -112,19 +133,22 @@ export function DailyCutouts() {
   const facets = useMemo(() => {
     const m = new Map<string, number>();
     rows.forEach((r) => m.set(STATUS_WORDS[r.status], (m.get(STATUS_WORDS[r.status]) ?? 0) + 1));
-    return [...m.entries()].map(([key, count]) => ({ key, count }));
+    const toCheck = rows.filter((r) => r.status === 'found' && !r.review).length;
+    const out = [...m.entries()].map(([key, count]) => ({ key, count }));
+    return toCheck ? [{ key: TO_CHECK, count: toCheck }, ...out] : out;
   }, [rows]);
 
   const visible = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return rows.filter((r) => (!status || STATUS_WORDS[r.status] === status)
+    return rows.filter((r) => (!status || (status === TO_CHECK ? r.status === 'found' && !r.review : STATUS_WORDS[r.status] === status))
       && (!s || `${r.ucn} ${r.engineer} ${r.report_uid}`.toLowerCase().includes(s)));
   }, [rows, q, status]);
 
   const download = (kind: 'xlsx' | 'csv') => {
     if (!visible.length) return;
     const name = `daily-cutouts-${day}`;
-    const shaped = visible.map((r) => ({ ...r, status_words: STATUS_WORDS[r.status] })) as unknown as Record<string, unknown>[];
+    const shaped = visible.map((r) => ({ ...r, status_words: STATUS_WORDS[r.status],
+      review_words: r.review === 'corrected' ? 'Changed' : r.review === 'confirmed' ? 'RITHI is right' : r.status === 'found' ? 'To check' : '' })) as unknown as Record<string, unknown>[];
     const scope = [`entered on ${formatDay(day)}`, status ? `result: ${status}` : '', q.trim() ? `search: ${q.trim()}` : ''].filter(Boolean).join(' · ');
     if (kind === 'csv') {
       csvExport(`${name}.csv`, EXPORT, shaped.map((r) => Object.fromEntries(EXPORT.map((c) => [c.key, xlsxText(r[c.key])]))), COMPLETE);
@@ -192,7 +216,7 @@ export function DailyCutouts() {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="assoc-table" style={{ minWidth: 820 }}>
-              <thead><tr><th>#</th><th>UCN</th><th>Engineer</th><th>Visit Date in RITHI</th><th>Cut-out from the report</th><th>How</th><th>Report</th></tr></thead>
+              <thead><tr><th>#</th><th>UCN</th><th>Engineer</th><th>Visit Date in RITHI</th><th>Cut-out from the report</th><th>Decision</th><th>How</th><th>Report</th></tr></thead>
               <tbody>
                 {visible.map((r, i) => (
                   <tr key={r.id}>
@@ -204,6 +228,27 @@ export function DailyCutouts() {
                     <td>{r.crop_jpeg
                       ? <img src={r.crop_jpeg} alt={`Service Visit Date box for ${r.ucn}`} style={{ maxWidth: 420, maxHeight: 140, border: '1px solid var(--border, #ccc)' }} />
                       : <span className="muted">{STATUS_WORDS[r.status]}</span>}</td>
+                    <td style={{ minWidth: 190 }}>{r.review === 'corrected'
+                      ? <span style={{ fontSize: 12.5 }}><b>Changed to {formatDay(r.new_visit_at)}</b><div className="muted" style={{ fontSize: 11 }}>was {r.old_visit_at ? formatDay(r.old_visit_at) : 'none'} · {r.reviewed_at ? formatDayTime(r.reviewed_at) : ''}</div></span>
+                      : r.review === 'confirmed'
+                        ? <span style={{ fontSize: 12.5 }}><b>✓ RITHI is right</b><div className="muted" style={{ fontSize: 11 }}>{r.reviewed_at ? formatDayTime(r.reviewed_at) : ''}</div></span>
+                        : !mayFix || r.status !== 'found' ? <span className="muted">—</span>
+                          : (() => {
+                            const cur = localIsoDate(r.visit_at ?? '') ?? '';
+                            const pick = fixDate[r.id] ?? cur;
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <button className="btn btn-sm" disabled={deciding === r.id} onClick={() => void decide(r, null)}>✓ RITHI is right</button>
+                                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                  <input className="input" type="date" style={{ width: 140 }} value={pick} max={todayLocal()}
+                                    onChange={(e) => setFixDate((m) => ({ ...m, [r.id]: e.target.value }))} />
+                                  <button className="btn btn-primary btn-sm" disabled={deciding === r.id || !pick || pick === cur}
+                                    title="Set the visit's Visit Date to this day (the time of the visit and the Visit Entry Date stay)"
+                                    onClick={() => void decide(r, pick)}>Change</button>
+                                </div>
+                              </div>
+                            );
+                          })()}</td>
                     <td className="muted" style={{ fontSize: 11.5, maxWidth: 200 }}>{r.note}</td>
                     <td>{safeUrl(r.manual_report) ? <a href={safeUrl(r.manual_report)} target="_blank" rel="noreferrer">Open</a> : ''}</td>
                   </tr>

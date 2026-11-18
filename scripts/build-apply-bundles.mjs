@@ -1147,7 +1147,9 @@ const MODULES = {
             // Date, kept, and resolve_visit_date_read() to correct the visit.
             '0486_visit_date_reads.sql',
             // Daily cut-outs (0487): the 06:00 workflow's crops, no model.
-            '0487_visit_report_crops.sql'],
+            '0487_visit_report_crops.sql',
+            // Checked / corrected from a cut-out (0488).
+            '0488_visit_report_crop_review.sql'],
   },
   handstock: {
     // Written to the repo root as HandStock_X.sql, alongside Spare_1.sql — it
