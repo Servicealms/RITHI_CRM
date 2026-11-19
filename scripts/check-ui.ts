@@ -53,7 +53,7 @@ import { UPLOADS, shapeUpload } from '../src/lib/uploads';
 import { manualReportLink } from '../src/lib/reports';
 import { drivePreviewUrl } from '../src/lib/drive';
 import { callAging, agingTone, callDays } from '../src/lib/aging';
-import { currentItemStatus, coverEndingIn, endOfNextMonth, monthBounds } from '../src/lib/coverToday';
+import { currentItemStatus, itemStatusToday, coverEndingIn, endOfNextMonth, monthBounds } from '../src/lib/coverToday';
 import { isMissedPm } from '../src/lib/missedPm';
 import { pmBatchTimes, pmCallNumber, shapePmDueRows } from '../src/lib/pmImport';
 import { parseRef as parseRefForCheck } from '../src/lib/reportMapping';
@@ -2809,6 +2809,13 @@ console.log('\n-- cover today, and what is about to lapse --');
   const m = (o: Record<string, string>) => o;
   eq('an active contract is its type',
     currentItemStatus(m({ 'Contract End Date': '2027-01-01', 'Contract Type': 'AMC', 'Warranty End Date': '2027-06-01' }), T), 'AMC');
+  // ACTIVE = STARTED (the user, 2026-11-19): a contract that has not begun is not running.
+  eq('a contract that has not started does not count',
+    currentItemStatus(m({ 'Contract Start Date': '2027-03-01', 'Contract End Date': '2028-02-27', 'Contract Type': 'CMC', 'Warranty End Date': '2027-03-01' }), T), 'WGP');
+  eq('...nor in the Product Database rule',
+    itemStatusToday(m({ 'Contract Start Date': '2028-03-16', 'Contract End Date': '2029-03-15', 'Contract Type': 'CMC', 'Warranty Start Date': '2026-03-16', 'Warranty End Date': '2028-03-15' }), T), 'WGP');
+  eq('...and a warranty that has not started does not count either',
+    itemStatusToday(m({ 'Warranty Start Date': '2030-01-01', 'Warranty End Date': '2031-01-01' }), T), 'OGP');
   eq('else an active warranty is WGP', currentItemStatus(m({ 'Warranty End Date': T, 'Item Status': 'OGP' }), T), 'WGP');
   eq('both lapsed is OGP, whatever was stored', currentItemStatus(m({ 'Warranty End Date': '2026-10-14', 'Item Status': 'WGP' }), T), 'OGP');
   eq('no cover on record keeps the stored status', currentItemStatus(m({ 'Item Status': 'WGP' }), T), 'WGP');

@@ -2437,7 +2437,14 @@ with checks(sort_order, bundle, provides, present) as (
         and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.visit_date_corrections')), false)),
     (397, 'Product Database status refreshed nightly', 'refresh_product_item_status(), not executable by the API roles (0490); scheduled at 00:05 IST where pg_cron is on. NO means a contract or warranty that ran out keeps its old Item Status on the machine. Restore: product_database_2.sql (0490)',
         to_regprocedure('public.refresh_product_item_status()') is not null
-        and not has_function_privilege('authenticated', coalesce(to_regprocedure('public.refresh_product_item_status()'), 'now()'::regprocedure), 'execute'))
+        and not has_function_privilege('authenticated', coalesce(to_regprocedure('public.refresh_product_item_status()'), 'now()'::regprocedure), 'execute')),
+    (398, 'Cover active from its start date (saved status, Machine History)', 'sync_product_machine() and machine_cover count a warranty or contract as running only once it has STARTED (0491). NO means a contract entered ahead -- starting next year -- is read as running and the saved status says CMC during the warranty. Restore: sales_contracts.sql (0491)',
+        position('coalesce(c.cs, a.contract_start, ''-infinity''::date) <= current_date' in coalesce(pg_get_functiondef(to_regprocedure('public.sync_product_machine(text,text)')), '')) > 0
+        and position('COALESCE(c.contract_start, ''-infinity''::date) <= CURRENT_DATE' in coalesce(pg_get_viewdef(to_regclass('public.machine_cover')), '')) > 0),
+    (399, 'Cover active from its start date (Product Database, 2.0)', 'product_database and product_database_v2 count a warranty or contract as running only once it has STARTED (0492). NO means the Product Database, a new call and the nightly refresh read a contract that has not begun as running. Restore: product_database_2.sql (0492)',
+        position('COALESCE(p.warranty_start, ''-infinity''::date) <= CURRENT_DATE' in coalesce(pg_get_viewdef(to_regclass('public.product_database')), '')) > 0
+        and (to_regclass('public.product_database_v2') is null
+             or position('COALESCE(m.contract_start, ''-infinity''::date) <= CURRENT_DATE' in coalesce(pg_get_viewdef(to_regclass('public.product_database_v2')), '')) > 0))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

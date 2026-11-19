@@ -27,15 +27,21 @@ const day = (v: string) => (/^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : '');
 export const warrantyEnd = (r: Sheet) => day(s(r, 'Warranty End Date'));
 export const contractEnd = (r: Sheet) => day(s(r, 'Contract End Date'));
 
+export const warrantyStart = (r: Sheet) => day(s(r, 'Warranty Start Date'));
+export const contractStart = (r: Sheet) => day(s(r, 'Contract Start Date'));
+
+// IN FORCE MEANS STARTED AND NOT YET ENDED (the user, 2026-11-19: a contract
+// entered in advance, starting next year, was being read as running). A blank
+// start counts as started -- the database's rule (0491 / 0492).
 /** The warranty is in force today. */
 export function warrantyActive(r: Sheet, today: string): boolean {
-  const e = warrantyEnd(r);
-  return !!e && e >= today;
+  const e = warrantyEnd(r), st = warrantyStart(r);
+  return !!e && e >= today && (!st || st <= today);
 }
 /** The contract is in force today. */
 export function contractActive(r: Sheet, today: string): boolean {
-  const e = contractEnd(r);
-  return !!e && e >= today;
+  const e = contractEnd(r), st = contractStart(r);
+  return !!e && e >= today && (!st || st <= today);
 }
 
 /** The cover a machine has TODAY: CMC / AMC / WGP / OGP, else as stored. */
