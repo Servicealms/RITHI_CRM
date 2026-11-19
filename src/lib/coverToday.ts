@@ -47,6 +47,33 @@ export function currentItemStatus(r: Sheet, today: string): string {
   return coverCode(s(r, 'Item Status'));
 }
 
+/** contract_cover_code() (0218), the client copy: a contract TYPE as its
+ *  cover code -- labour AMC, comprehensive CMC, anything else through the cover
+ *  vocabulary and otherwise unchanged; blank is ''. */
+export function contractCoverCode(v: unknown): string {
+  const raw = String(v ?? '').trim();
+  if (!raw) return '';
+  const k = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['labour', 'labor', 'labourcontract', 'laborcontract', 'amc', 'annualmaintenancecontract', 'underamc', 'labouramc', 'laboramc'].includes(k)) return 'AMC';
+  if (['comprehensive', 'comprehensivecontract', 'cmc', 'comprehensivemaintenancecontract', 'undercmc'].includes(k)) return 'CMC';
+  return coverCode(raw);
+}
+
+/** THE PRODUCT DATABASE'S ITEM STATUS FOR TODAY -- the server view's rule
+ *  (public.product_database, 0235/0239), on the device copy (the user,
+ *  2026-11-19: "Contract Expired Yesterday, but still the Status shows as CMC
+ *  in Product Database"; "It needs to reflect in Product Database - which is
+ *  called for during Call Registeration"). The copy holds the STORED status,
+ *  written only when a machine's records change, so a contract that ran out
+ *  went on reading CMC -- and a call registered on it was CMC too. WARRANTY
+ *  FIRST, then the contract (its type, or CONTRACT (TYPE NOT RECORDED)), else
+ *  OGP -- the view's words exactly, so the device and the server agree. */
+export function itemStatusToday(r: Sheet, today: string): string {
+  if (warrantyActive(r, today)) return 'WGP';
+  if (contractActive(r, today)) return contractCoverCode(s(r, 'Contract Type')) || 'CONTRACT (TYPE NOT RECORDED)';
+  return 'OGP';
+}
+
 // THE MONTH WINDOWS (the user, 2026-10-15: "Both Expiring this month, expiring
 // next month ... All, Expiring this month, expiring next month, OGP"; asked:
 // this month is the WHOLE month, the 1st to the last day, so cover that already

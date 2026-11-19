@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.269',
+    date: '2026-11-19',
+    title: 'Product Database shows today\'s cover, and so does a new call',
+    changes: [
+      'A contract or warranty that ran out no longer goes on reading CMC, AMC or WGP. The Product Database works each machine\'s Item Status out for today when you look at it: warranty first, then the contract (its type), otherwise OGP — the same rule the server uses.',
+      'Registering a call fills Item Status from that same Product Database answer, so a new call on a machine whose contract ended yesterday is OGP, not CMC. Calls already registered keep their status; select them and use 🛡️ Update Product Details to correct them.',
+      'Every night at 00:05 India time the saved Item Status of every machine is brought up to today too, so everything else that reads it agrees.',
+    ],
+  },
+  {
     version: '0.10.268',
     date: '2026-11-18',
     title: 'Audit Mode hides the non-auditable screens',

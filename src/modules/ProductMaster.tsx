@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
+import { itemStatusToday } from '../lib/coverToday';
+import { todayLocal } from '../lib/dates';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useNavigate } from 'react-router-dom';
 import { DataTable, type Column } from '../components/table/DataTable';
@@ -81,7 +83,9 @@ export function ProductMaster() {
   // "did I get a full page?" test would then read FALSE and hide the Load more
   // button, announcing the end of a register with thousands left.
   const PAGE = 1000;
-  const [rows, setRows] = useState<Row[]>(cached?.rows ?? []);
+  // A SAVED PAGE FROM AN EARLIER DAY shows today's Item Status, not the one it
+  // was saved with (2026-11-19, a contract that ran out still read CMC).
+  const [rows, setRows] = useState<Row[]>(() => (cached?.rows ?? []).map((r) => ({ ...r, 'Item Status': itemStatusToday(r, todayLocal()) })));
   const [lastSync, setLastSync] = useState(cached?.at ?? '');
   const [offset, setOffset] = useState(cached?.rows.length ?? 0);
   const [more, setMore] = useState((cached?.rows.length ?? 0) >= PAGE);

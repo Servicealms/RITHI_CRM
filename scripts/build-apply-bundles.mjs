@@ -1619,7 +1619,10 @@ const MODULES = {
             // F-10 (re-scan 2026-11-07): the copy is granted to nobody and read
             // through a gate that answers only a caller with a profile. AFTER
             // 0337, which grants the copy again on a re-run.
-            '0465_product_database_2_needs_a_profile.sql'],
+            '0465_product_database_2_needs_a_profile.sql',
+            // The stored Item Status copied from product_database (0239, above)
+            // every night at 00:05 IST (the user, 2026-11-19).
+            '0490_product_status_refreshed_daily.sql'],
   },
   feedback_checks: {
     title: 'Feedback Without a Report',

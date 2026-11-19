@@ -1176,6 +1176,12 @@ set to zero.
 
 - **Product Database** `/product-database` (menu: Contracts & Warranty) — every machine by model and serial, with its
   warranty, contract and current owner. This is where a call reads cover from.
+  **Item Status is the cover TODAY**: warranty first, then the contract (its
+  type), otherwise OGP — so a contract that ended yesterday reads OGP today,
+  and a call registered on it now is OGP. The saved status is also brought up
+  to date every night at 00:05. A call already registered keeps the status it
+  was registered with; **🛡️ Update Product Details** on the call register
+  re-reads it as on the call's date.
   It keeps **all 32 columns** of the ProdMaster file — Item Code, the address,
   the PO, PM Visits, the installation fields and the rest. Eleven of them are on
   screen when it opens; **⚙ Columns** offers the other twenty-one, and

@@ -2434,7 +2434,10 @@ with checks(sort_order, bundle, provides, present) as (
         and to_regprocedure('public.review_visit_report_crop(bigint,date)') is not null),
     (396, 'Corrected Visit Dates report', 'visit_date_corrections, with security_invoker (0489). NO means Visit Date Check -> Corrected dates errors or reads past row-level security. Restore: reports.sql (0489)',
         to_regclass('public.visit_date_corrections') is not null
-        and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.visit_date_corrections')), false))
+        and coalesce((select 'security_invoker=on' = any (reloptions) from pg_class where oid = to_regclass('public.visit_date_corrections')), false)),
+    (397, 'Product Database status refreshed nightly', 'refresh_product_item_status(), not executable by the API roles (0490); scheduled at 00:05 IST where pg_cron is on. NO means a contract or warranty that ran out keeps its old Item Status on the machine. Restore: product_database_2.sql (0490)',
+        to_regprocedure('public.refresh_product_item_status()') is not null
+        and not has_function_privilege('authenticated', coalesce(to_regprocedure('public.refresh_product_item_status()'), 'now()'::regprocedure), 'execute'))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,
