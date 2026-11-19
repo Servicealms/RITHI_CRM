@@ -30,6 +30,22 @@
 //     reads, so it can only offer more, never less.
 // ===========================================================================
 import { rankSerialHits } from './callrequest';
+import { itemStatusToday } from './coverToday';
+
+// THE STATUS IS WORKED OUT WHEN READ, NOT WHEN DOWNLOADED (2026-11-19): the copy
+// is kept for hours and a date passes while it is held, so each machine served
+// from it -- to the Product Database screen and to the call form's prefill --
+// carries its Item Status for TODAY (itemStatusToday, the server view's rule).
+// India's today, from the device clock (dates.ts todayLocal's reading).
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const todayHere = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+/** The machine's Item Status today. */
+export const statusToday = (m: CachedMachine, today = todayHere()): string => itemStatusToday(m.sheet, today);
+/** The machine's sheet as a screen receives it, its Item Status for today. */
+export function sheetToday(m: CachedMachine, today = todayHere()): Record<string, unknown> {
+  const st = statusToday(m, today);
+  return st === m.sheet['Item Status'] ? m.sheet : { ...m.sheet, 'Item Status': st };
+}
 
 export interface CachedMachine {
   id: number;
@@ -37,7 +53,7 @@ export interface CachedMachine {
   itemName: string;       // AS STORED -- matched exactly
   serial: string;         // as stored
   party: string;          // as stored
-  itemStatus: string;     // the view's worked-out cover
+  itemStatus: string;     // AS STORED -- read statusToday() for today's cover
   serialKey: string;      // lower(btrim(serial))
   machineKey: string;     // lower(btrim(item)) | lower(btrim(serial)) -- as the DB stores it
   sheet: Record<string, unknown>;   // productRowToSheet(row): what every screen receives
@@ -92,7 +108,7 @@ export function partyProducts(ms: CachedMachine[], party: string): string[] {
 export function partyItems(ms: CachedMachine[], party: string, product = ''): Record<string, unknown>[] {
   const want = low(party);
   return ms.filter((m) => low(m.party) === want && (!product || m.itemName === product))
-    .sort((a, b) => a.id - b.id).map((m) => m.sheet);
+    .sort((a, b) => a.id - b.id).map((m) => sheetToday(m));
 }
 
 // ---- one machine: sbProductBySerial ---------------------------------------
@@ -105,11 +121,11 @@ export function bySerial(ms: CachedMachine[], serial: string, product = ''): Rec
   if (String(product ?? '').trim()) {
     const mk = dbMachineKey(product, serial);
     const hit = ms.find((m) => m.machineKey === mk);
-    return hit ? hit.sheet : undefined;
+    return hit ? sheetToday(hit) : undefined;
   }
   const hits = ms.filter((m) => m.serialKey === key);
   if (hits.length === 0) return undefined;
-  return hits.length === 1 ? hits[0].sheet : null;
+  return hits.length === 1 ? sheetToday(hits[0]) : null;
 }
 
 // ---- the serial picker: sbSearchMachines ----------------------------------
@@ -144,12 +160,13 @@ export function searchProductParties(ms: CachedMachine[], query: string, limit =
 export interface ProductFilters { q?: string; party?: string; product?: string; serial?: string; status?: string; exact?: boolean }
 export function searchProducts(ms: CachedMachine[], f: ProductFilters, limit = 100, offset = 0): Record<string, unknown>[] {
   const has = (v: string, n: string) => v.toLowerCase().includes(n.toLowerCase());
+  const today = todayHere();
   const rows = ms.filter((m) => {
     if (f.serial && !(f.exact ? m.serialKey === low(f.serial) : has(m.serial, f.serial))) return false;
     if (f.party && !has(m.party, f.party)) return false;
     if (f.product && !(f.exact ? m.itemName === f.product : has(m.itemName, f.product))) return false;
     if (f.q && !(has(m.serial, f.q) || has(m.itemName, f.q) || has(m.party, f.q))) return false;
-    if (f.status && m.itemStatus !== f.status.trim().toUpperCase()) return false;
+    if (f.status && statusToday(m, today) !== f.status.trim().toUpperCase()) return false;
     return true;
   });
   // NEWEST FIRST, nulls last, id as the tiebreak -- the server's own order.
@@ -162,7 +179,7 @@ export function searchProducts(ms: CachedMachine[], f: ProductFilters, limit = 1
     if (ta !== null && tb !== null && ta !== tb) return tb - ta;
     return b.id - a.id;
   });
-  return rows.slice(offset, offset + limit).map((m) => m.sheet);
+  return rows.slice(offset, offset + limit).map((m) => sheetToday(m, today));
 }
 
 // ===========================================================================
