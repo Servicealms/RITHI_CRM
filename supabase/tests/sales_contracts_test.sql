@@ -52,7 +52,7 @@ update public.sale_items set warranty_end=null where uid='SA100|ORION-G|5289';
 select uid, warranty_end, coalesce(array_length(overridden,1),0) as pinned
   from public.warranty_sale_details where sa_number='SA100' order by uid;
 
-\echo '--- 6. a contract on one of those machines does NOT outrank its running warranty (0491, warranty first): 430 reads WGP ---'
+\echo '--- 6. a contract on one of those machines outranks its warranty ---'
 insert into public.contract_entries
   (mc_number, party_name, contract_type, contract_start, contract_end, contract_years,
    contract_months, pm_visits_total, payment_schedule, bill_generate_at, status)
