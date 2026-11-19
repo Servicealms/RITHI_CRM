@@ -2807,9 +2807,11 @@ console.log('\n-- cover today, and what is about to lapse --');
   eq('...across a year end', endOfNextMonth('2026-12-03'), '2027-01-31');
   eq('...into a leap February', endOfNextMonth('2028-01-31'), '2028-02-29');
   const m = (o: Record<string, string>) => o;
-  eq('an active contract is its type',
-    currentItemStatus(m({ 'Contract End Date': '2027-01-01', 'Contract Type': 'AMC', 'Warranty End Date': '2027-06-01' }), T), 'AMC');
-  eq('else an active warranty is WGP', currentItemStatus(m({ 'Warranty End Date': T, 'Item Status': 'OGP' }), T), 'WGP');
+  // WARRANTY FIRST (the user, 2026-11-19: "Warranty first everywhere").
+  eq('an active warranty is WGP, even with a contract running',
+    currentItemStatus(m({ 'Contract End Date': '2027-01-01', 'Contract Type': 'AMC', 'Warranty End Date': '2027-06-01' }), T), 'WGP');
+  eq('else an active contract is its type', currentItemStatus(m({ 'Contract End Date': '2027-01-01', 'Contract Type': 'AMC', 'Warranty End Date': '2026-01-01' }), T), 'AMC');
+  eq('an active warranty is WGP', currentItemStatus(m({ 'Warranty End Date': T, 'Item Status': 'OGP' }), T), 'WGP');
   eq('both lapsed is OGP, whatever was stored', currentItemStatus(m({ 'Warranty End Date': '2026-10-14', 'Item Status': 'WGP' }), T), 'OGP');
   eq('no cover on record keeps the stored status', currentItemStatus(m({ 'Item Status': 'WGP' }), T), 'WGP');
   // THE MONTH WINDOWS (the user, 2026-10-15): this month is the WHOLE month.

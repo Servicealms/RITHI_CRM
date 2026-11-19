@@ -7,8 +7,8 @@
 //
 // Settled with the user the same day:
 //   * the CURRENT status is worked out for TODAY from the dates, by the
-//     database's own rule (sync_product_machine, 0391): a contract active
-//     today is its type (CMC / AMC); else a warranty active today is WGP; else
+//     database's own rule (sync_product_machine, 0491): a warranty active
+//     today is WGP; else a contract active today is its type (CMC / AMC); else
 //     a machine with any warranty or contract on record is OGP; one with none
 //     keeps the status it was stored with. The stored status is only worked
 //     out when a machine's records change, so it can be days out of date;
@@ -39,9 +39,12 @@ export function contractActive(r: Sheet, today: string): boolean {
 }
 
 /** The cover a machine has TODAY: CMC / AMC / WGP / OGP, else as stored. */
+// WARRANTY FIRST (the user, 2026-11-19: "Warranty first everywhere"): until
+// then this asked the contract first, the order the stored status had; the
+// Product Database view and the database's stored status (0491) now agree.
 export function currentItemStatus(r: Sheet, today: string): string {
-  if (contractActive(r, today)) return coverCode(s(r, 'Contract Type')) || 'CMC';
   if (warrantyActive(r, today)) return 'WGP';
+  if (contractActive(r, today)) return coverCode(s(r, 'Contract Type')) || 'CMC';
   const onRecord = warrantyEnd(r) || contractEnd(r) || s(r, 'Warranty Number') || s(r, 'Contract Number');
   if (onRecord) return 'OGP';
   return coverCode(s(r, 'Item Status'));
