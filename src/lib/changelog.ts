@@ -20,16 +20,6 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
-    version: '0.10.270',
-    date: '2026-11-19',
-    title: 'Warranty first, everywhere',
-    changes: [
-      'Where a machine has both a warranty and a contract running, its Item Status is WGP on every screen — Product Database, Product & Party Search, Machine History and a new call — and in what the database saves. Before, Product & Party Search, Machine History and the saved status put the contract first.',
-      'Once the warranty ends, the contract decides (CMC or AMC), and with neither it is OGP — unchanged.',
-      'Machines already saved with the contract first are corrected by the nightly refresh at 00:05, or at once by running the refresh by hand.',
-    ],
-  },
-  {
     version: '0.10.269',
     date: '2026-11-19',
     title: 'Product Database shows today\'s cover, and so does a new call',

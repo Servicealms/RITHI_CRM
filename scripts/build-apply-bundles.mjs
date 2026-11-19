@@ -1456,11 +1456,7 @@ const MODULES = {
             '0446_pm_due_latest_call.sql',
             // The month's next PM call-number sequence (0447), so a call made
             // from PM Due continues <YY>PM<MON><NNNN>-<letter>-<product>-<serial>.
-            '0447_pm_due_next_call_seq.sql',
-            // WARRANTY FIRST EVERYWHERE (the user, 2026-11-19): the stored Item
-            // Status (sync_product_machine, from 0391) and machine_cover (0036)
-            // ask the warranty before the contract. After 0391 and 0457.
-            '0491_warranty_first_everywhere.sql'],
+            '0447_pm_due_next_call_seq.sql'],
   },
   stock_transfer: {
     title: 'Stock Transfer',
