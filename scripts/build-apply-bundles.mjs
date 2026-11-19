@@ -1456,7 +1456,11 @@ const MODULES = {
             '0446_pm_due_latest_call.sql',
             // The month's next PM call-number sequence (0447), so a call made
             // from PM Due continues <YY>PM<MON><NNNN>-<letter>-<product>-<serial>.
-            '0447_pm_due_next_call_seq.sql'],
+            '0447_pm_due_next_call_seq.sql',
+            // A cover is ACTIVE from its start date, not only until its end
+            // (the user, 2026-11-19): the saved status (sync_product_machine,
+            // from 0391) and machine_cover (0036). After 0391 and 0457.
+            '0491_cover_active_means_started.sql'],
   },
   stock_transfer: {
     title: 'Stock Transfer',
@@ -1622,7 +1626,10 @@ const MODULES = {
             '0465_product_database_2_needs_a_profile.sql',
             // The stored Item Status copied from product_database (0239, above)
             // every night at 00:05 IST (the user, 2026-11-19).
-            '0490_product_status_refreshed_daily.sql'],
+            '0490_product_status_refreshed_daily.sql',
+            // A cover is ACTIVE from its start date, not only until its end
+            // (the user, 2026-11-19): the Product Database view and 2.0.
+            '0492_cover_active_means_started_views.sql'],
   },
   feedback_checks: {
     title: 'Feedback Without a Report',

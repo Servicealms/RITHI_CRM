@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.270',
+    date: '2026-11-19',
+    title: 'A warranty or contract counts only once it has started',
+    changes: [
+      'A contract entered ahead of time — one that starts next year — no longer counts as running before its start date. Before, it did: a machine still inside its warranty could show CMC, and a machine between a warranty that has ended and a contract not yet begun showed as covered.',
+      'This applies to the Product Database, Product & Party Search, Machine History, Product Database 2.0, a new call\'s Item Status and the status the database saves. Which comes first when both really are running is unchanged.',
+      'Reports → the "warranty and contract both active" query now says, for each machine, "Both running now" or "Will overlap from <date>", and no longer lists a contract that starts the day after the warranty ends.',
+    ],
+  },
+  {
     version: '0.10.269',
     date: '2026-11-19',
     title: 'Product Database shows today\'s cover, and so does a new call',
