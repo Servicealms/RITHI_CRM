@@ -5,7 +5,7 @@
 -- Scan all Field Calls from 1 Oct and Tell me if they are correct or Not and
 -- Tell what should be the Status".
 --
--- EVERY field call registered on or after the date below (cancelled calls left
+-- EVERY field call registered on or after the date below -- 01-Sep-2026 (cancelled calls left
 -- out), each with a verdict: Correct, Wrong -- should be X, Blank -- should be
 -- X, Both a warranty and a contract covered the day, or No serial. The rule is
 -- the one in _calls_cover_not_matching.sql: the cover running ON THE
@@ -28,7 +28,7 @@ with c as (
          lower(btrim(coalesce(x.product_name, ''))) || '|' || lower(btrim(coalesce(x.serial, ''))) as k
     from public.field_calls x
    where x.cancelled_at is null
-     and x.reg_date >= date '2026-10-01'      -- <<< FROM: change the date here
+     and x.reg_date >= date '2026-09-01'      -- <<< FROM: change the date here
 
 ),
 w as (   -- every warranty period on record, keyed by machine

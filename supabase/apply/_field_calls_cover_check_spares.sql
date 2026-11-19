@@ -1,20 +1,28 @@
 -- ===========================================================================
--- THE SPARE REQUESTS ON FIELD CALLS WHOSE ITEM STATUS IS WRONG -- read-only.
+-- SPARE REQUESTS RAISED FROM A DATE, ON CALLS WHOSE ITEM STATUS IS WRONG --
+-- read-only.
 --
 -- The user, 2026-11-19: "And Drill down for those CAlls and give me the Spare
--- REquest List as well [only for Mis matches]".
+-- REquest List as well [only for Mis matches]" ... "Run the Spare Request for
+-- all Requests done from 1Sep".
 --
--- The calls are exactly the ones _field_calls_cover_check.sql marks as NOT
--- correct (same rule, same FROM date -- change it on the line marked FROM in
--- BOTH files). One row per spare request LINE on those calls: the call, its
--- verdict and what its cover should be, the request, the cover the request
--- carried, the part, its stage and approvals, and what the wrong cover did to
--- the approval route -- Commercial judges spares on AMC and OGP machines, so a
--- call that read CMC or WGP when it should be OGP sent its spares past
--- Commercial.
+-- EVERY spare request raised on or after the date below (India date), on any
+-- call -- Field, Installation or PM, whenever the call was registered. Its call
+-- is judged by the rule in _field_calls_cover_check.sql (the cover running on
+-- the call's REGISTRATION date, from the registers), and the lines are listed
+-- where the call's Item Status is not correct. HandStock requests have no call
+-- and are not in it.
 --
--- Changes nothing. Paste into the Supabase SQL editor and Run: ONE grid. It
--- names customers and engineers -- SQL editor only.
+-- One row per spare request LINE: the call, its verdict and what its cover
+-- should be, the request, the cover it carried, the part, its stage and
+-- approvals, and what the wrong cover did to the approval route -- Commercial
+-- judges spares on AMC and OGP machines, so a call that read CMC or WGP when it
+-- should be OGP sent its spares past Commercial.
+--
+-- CHANGE THE DATE on BOTH lines marked FROM. Delete the line marked "every
+-- request" to list the correct ones too. Changes nothing. Paste into the
+-- Supabase SQL editor and Run: ONE grid. It names customers and engineers --
+-- SQL editor only.
 -- ===========================================================================
 with c as (
   select row_number() over () as rid,
@@ -22,9 +30,10 @@ with c as (
          x.item_status as on_call,
          coalesce(public.cover_code(nullif(btrim(x.item_status), '')), '') as on_call_code,
          lower(btrim(coalesce(x.product_name, ''))) || '|' || lower(btrim(coalesce(x.serial, ''))) as k
-    from public.field_calls x
+    from public.calls x                     -- Field, Installation and PM calls
    where x.cancelled_at is null
-     and x.reg_date >= date '2026-10-01'      -- <<< FROM: change the date here
+     and x.ucn in (select r0.ucn from public.spare_requests r0
+                    where (r0.created_at at time zone 'Asia/Kolkata')::date >= date '2026-09-01')  -- <<< FROM: requests raised on or after
 
 ),
 w as (   -- every warranty period on record, keyed by machine
@@ -85,6 +94,7 @@ select
   dense_rank() over (order by v.ucn) + dense_rank() over (order by v.ucn desc) - 1 as calls_with_spares,
   count(*) over ()                                                    as spare_lines,
   v.ucn,
+  v.call_type,
   to_char(v.d, 'DD-Mon-YYYY')                                         as registered,
   v.verdict                                                           as call_verdict,
   coalesce(nullif(v.on_call, ''), '(blank)')                          as item_status_on_call,
@@ -113,6 +123,7 @@ select
   end                                                                 as approval_impact
 from judged_calls v
 join public.spare_requests r on r.ucn = v.ucn
+                            and (r.created_at at time zone 'Asia/Kolkata')::date >= date '2026-09-01'  -- <<< FROM (the same date)
 join public.spare_request_lines l on l.request_uid = r.uid
-where v.verdict <> 'Correct'
+where v.verdict <> 'Correct'          -- <<< delete this line to list EVERY request, correct ones too
 order by v.d, v.ucn, r.created_at, l.row_no nulls last, l.id;
