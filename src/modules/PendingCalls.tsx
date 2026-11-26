@@ -4,7 +4,8 @@ import { SelectPicker } from '../components/ui/SelectPicker';
 import { useNavigate } from 'react-router-dom';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Toolbar, SearchBox, FacetChips } from '../components/ui/ui';
-import { listPendingCalls, reallocateCalls, callFamily, supabaseConfigured, type CallState, type CallFamily } from '../lib/supabase';
+import { listPendingCalls, reallocateCalls, callFamily, supabaseConfigured, getPmHideUnsolvedMissed, type CallState, type CallFamily } from '../lib/supabase';
+import { hiddenByMissedPmRule } from '../lib/missedPm';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
 import { allowsAllottee, useAccessScope, useTeamEngineers } from '../lib/access';
 import { csvExport, fmtLongDate, fmtLongSmart, timeAgo } from '../lib/format';
@@ -120,6 +121,19 @@ export function PendingCalls() {
   };
   useEffect(() => { void load(PAGE); /* eslint-disable-next-line */ }, []);
   const moreAvailable = rows.length >= limit;
+  // THE PM HIDE RULE (Admin Config; the user, 2026-11-26: "2. Yes" -- Pending
+  // Calls follows it too): a PM call the PM register hides is not listed or
+  // counted here either, and a line says how many.
+  const [pmRule, setPmRule] = useState(false);
+  useEffect(() => {
+    if (!supabaseConfigured()) return;
+    getPmHideUnsolvedMissed().then(setPmRule).catch(() => { /* unread: nothing hidden */ });
+  }, []);
+  const ruleHides = (r: Row) => pmRule && callFamily(r.callType) === 'pm' && hiddenByMissedPmRule(true, r.regDate, r.addedOn, r.callState ?? r.state);
+  const shown = useMemo(() => (pmRule ? rows.filter((r) => !ruleHides(r)) : rows),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, pmRule]);
+  const hiddenByRule = rows.length - shown.length;
   // ENGINEER WISE, as the Field Call and Spare registers already do it: a chip
   // per name with what they are carrying, and a click to see only theirs. The
   // register grouped by engineer but had no way to pick one.
@@ -128,7 +142,7 @@ export function PendingCalls() {
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return rows.filter((r) =>
+    return shown.filter((r) =>
       (scope.all || allowsAllottee(scope, r.allocatedTo)) &&
       (!type || callFamily(r.callType) === type) &&
       (!engineerFilter || String(r.allocatedTo ?? '').trim() === engineerFilter) &&
@@ -137,7 +151,7 @@ export function PendingCalls() {
         (k) => String(r[k] ?? '').toLowerCase().includes(needle),
       )),
     );
-  }, [rows, type, state, q, scope, engineerFilter]);
+  }, [shown, type, state, q, scope, engineerFilter]);
 
   const saveAllotment = async () => {
     const chosen = visible.filter((r) => picked.has(String(r.id)));
@@ -166,7 +180,7 @@ export function PendingCalls() {
   const engineerCounts = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const c = new Map<string, number>();
-    rows.forEach((r) => {
+    shown.forEach((r) => {
       if (!(scope.all || allowsAllottee(scope, r.allocatedTo))) return;
       if (type && callFamily(r.callType) !== type) return;
       if (state && String(r.state ?? '') !== state) return;
@@ -176,7 +190,7 @@ export function PendingCalls() {
       c.set(n, (c.get(n) ?? 0) + 1);
     });
     return [...c.entries()].map(([key, count]) => ({ key, count }));
-  }, [rows, type, state, q, scope]);
+  }, [shown, type, state, q, scope]);
 
   // Counted with every filter EXCEPT the state itself (D-040): counted after
   // it, choosing one tile set every other tile to 0, so the tiles stopped
@@ -185,7 +199,7 @@ export function PendingCalls() {
   const counts = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const c: Record<string, number> = {};
-    rows.forEach((r) => {
+    shown.forEach((r) => {
       if (!(scope.all || allowsAllottee(scope, r.allocatedTo))) return;
       if (type && callFamily(r.callType) !== type) return;
       if (engineerFilter && String(r.allocatedTo ?? '').trim() !== engineerFilter) return;
@@ -194,7 +208,7 @@ export function PendingCalls() {
       const s = String(r.state ?? ''); c[s] = (c[s] ?? 0) + 1;
     });
     return c;
-  }, [rows, type, engineerFilter, q, scope]);
+  }, [shown, type, engineerFilter, q, scope]);
 
   return (
     <div>
@@ -263,6 +277,12 @@ export function PendingCalls() {
         </p>
       )}
 
+      {hiddenByRule > 0 && (
+        <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
+          {hiddenByRule}{moreAvailable ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden (not solved, or cancelled)
+          by the rule on <b>Admin Config → PM Calls</b>.
+        </p>
+      )}
       <DataTable<Row>
         columns={COLUMNS}
         rows={visible}

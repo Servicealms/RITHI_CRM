@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.277',
+    date: '2026-11-26',
+    title: 'PM Calls: the Missed PM rule hides cancelled calls too, and reaches Pending Calls and search',
+    changes: [
+      'With Admin Config → PM Calls — hide unsolved Missed PM calls on, a cancelled Missed PM call is hidden as well. Only solved ones are shown.',
+      'Pending Calls and the search at the top follow the rule too, and Pending Calls says how many it hides. Only PM calls are affected; the Dashboard shows no PM calls.',
+    ],
+  },
+  {
     version: '0.10.276',
     date: '2026-11-26',
     title: 'PM Calls: a rule to hide unsolved Missed PM calls',

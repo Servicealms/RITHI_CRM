@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { hitFor, searchTerm, MIN_CHARS, PER_KIND, type HitKind, type SearchHit } from './globalSearch';
+import { hiddenByMissedPmRule } from './missedPm';
 import { ffrWritable } from './ffr';
 export { machineKey } from './machine';
 import { machineKey } from './machine';
@@ -2940,10 +2941,16 @@ export async function globalSearchKind(kind: HitKind, raw: string): Promise<Sear
     return (data ?? []) as Record<string, unknown>[];
   };
   switch (kind) {
-    case 'call':
-      return (await rows(c.from('calls').select('ucn,call_number,call_type,party_name,product_name,serial,status,open_state')
+    case 'call': {
+      const found = await rows(c.from('calls').select('ucn,call_number,call_type,party_name,product_name,serial,status,open_state,reg_date,added_on,cancelled_at')
         .or(like(['ucn', 'call_number', 'party_name', 'serial', 'product_name']))
-        .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(n))).map(hitFor.call);
+        .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(n));
+      // THE PM HIDE RULE reaches search too (the user, 2026-11-26: "2. Yes"):
+      // a PM call it hides on the PM register is not offered here either.
+      const ruleOn = await getPmHideUnsolvedMissed().catch(() => false);
+      return found.filter((r) => !(ruleOn && callFamily(r.call_type) === 'pm'
+        && hiddenByMissedPmRule(true, r.reg_date, r.added_on, r.cancelled_at ? 'Cancelled' : r.open_state))).map(hitFor.call);
+    }
     case 'request':
       // PENDING requests only: a registered one is found as its call, and a
       // cancelled one is on no screen to open.
