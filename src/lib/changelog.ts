@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.271',
+    date: '2026-11-26',
+    title: 'Field Failure Report: "No closed in FFR" now reads "CAPA Not Required"',
+    changes: [
+      'CAPA (if reqd) Responsibility offers "CAPA Not Required" where it offered "No closed in FFR", followed by the people tagged CAPA Responsibility as before.',
+      'Every report that said "No closed in FFR" now says "CAPA Not Required" — the change is in each report\'s history, and its last-updated date is left as it was. A file or sheet that still carries the old words is saved with the new ones.',
+    ],
+  },
+  {
     version: '0.10.270',
     date: '2026-11-19',
     title: 'A warranty or contract counts only once it has started',

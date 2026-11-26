@@ -595,7 +595,10 @@ const MODULES = {
             // The 2026 PM catch-up re-run once the Part Master mapping grew (2026-10-06).
             '0399_pm_spare_dccr_rerun.sql',
             // SPARE on a PM review row that is blank; restates 0397's trigger function.
-            '0400_pm_spare_blank_review.sql'],
+            '0400_pm_spare_blank_review.sql',
+            // "No closed in FFR" reads "CAPA Not Required" on every report and
+            // every write (the user, 2026-11-26).
+            '0493_capa_not_required.sql'],
   },
   notifications: {
     title: 'Notifications',

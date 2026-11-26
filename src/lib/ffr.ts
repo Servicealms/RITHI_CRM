@@ -161,9 +161,10 @@ export const FFR_CAPA_STATUS = ['Not required', 'Open', 'In-Progress', 'Closed',
 // THE FIXED PART OF THE CAPA RESPONSIBILITY LIST. The people come from the
 // User Master: everyone ACTIVE tagged "CAPA Responsibility" (0408, the user,
 // 2026-10-10: "I need to add People to list in FFR - CAPA Responsibility",
-// keeping only "No closed in FFR" of the old fixed names). A report already
-// carrying a name no longer on the list still shows it.
-export const FFR_CAPA_RESPONSIBILITY = ['No closed in FFR'];
+// keeping only "No closed in FFR" of the old fixed names -- reworded "CAPA Not
+// Required", the user 2026-11-26, and rewritten on every report by 0493). A
+// report already carrying a name no longer on the list still shows it.
+export const FFR_CAPA_RESPONSIBILITY = ['CAPA Not Required'];
 /** The User Master tag that puts a person on that list. */
 export const CAPA_RESPONSIBILITY_TAG = 'CAPA Responsibility';
 // Likewise: NA / Not Required, or a real CAPA number typed in.
