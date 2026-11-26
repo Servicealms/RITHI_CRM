@@ -10,7 +10,7 @@ import { logAudit } from '../lib/audit';
 import { fmtLongDate, csvExport } from '../lib/format';
 import { Ucn } from '../lib/callstate';
 import { useCallStates, callStateFor } from '../lib/callstates';
-import { listFfrs, addFfr, updateFfr, listFfrHistory, supabaseConfigured, peopleTagged,
+import { listFfrs, addFfr, updateFfr, listFfrHistory, supabaseConfigured, peopleTagged, getFfrCapaNoneLabel,
   type FfrHistoryRow } from '../lib/supabase';
 import {
   FFR_COLUMNS, FFR_LIVE_COLUMNS, FFR_COVER, FFR_CAPA_STATUS, FFR_CAPA_RESPONSIBILITY, CAPA_RESPONSIBILITY_TAG,
@@ -63,14 +63,17 @@ export function FieldFailureReport() {
   // A value already on the report and no longer listed is kept at the top, so
   // an old report still shows who it names.
   const [capaPeople, setCapaPeople] = useState<string[]>([]);
+  // The "no CAPA" words, from Admin Config (0494); "No" until read.
+  const [capaNone, setCapaNone] = useState<string>(FFR_CAPA_RESPONSIBILITY[0]);
   useEffect(() => {
     if (!form || !supabaseConfigured()) return;
     let live = true;
     peopleTagged(CAPA_RESPONSIBILITY_TAG).then((p) => { if (live) setCapaPeople(p); }).catch(() => { /* the fixed choice still shows */ });
+    getFfrCapaNoneLabel().then((w) => { if (live) setCapaNone(w); }).catch(() => { /* the fallback stays */ });
     return () => { live = false; };
   }, [!!form]); // eslint-disable-line react-hooks/exhaustive-deps
   const capaChoices = (current: string): string[] => {
-    const list = [...FFR_CAPA_RESPONSIBILITY, ...capaPeople.filter((p) => !FFR_CAPA_RESPONSIBILITY.includes(p))];
+    const list = [capaNone, ...capaPeople.filter((p) => p.toLowerCase() !== capaNone.toLowerCase())];
     return current.trim() && !list.some((x) => x.toLowerCase() === current.trim().toLowerCase()) ? [current, ...list] : list;
   };
   const [editing, setEditing] = useState<number | null>(null);

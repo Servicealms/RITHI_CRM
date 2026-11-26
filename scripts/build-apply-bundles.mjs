@@ -598,7 +598,10 @@ const MODULES = {
             '0400_pm_spare_blank_review.sql',
             // "No closed in FFR" reads "CAPA Not Required" on every report and
             // every write (the user, 2026-11-26).
-            '0493_capa_not_required.sql'],
+            '0493_capa_not_required.sql',
+            // ...and the words are a setting, "No" by default, changed on Admin
+            // Config and applied to every report (the user, 2026-11-26).
+            '0494_ffr_capa_none_label.sql'],
   },
   notifications: {
     title: 'Notifications',

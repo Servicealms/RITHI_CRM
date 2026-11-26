@@ -762,7 +762,8 @@ against the call it was fitted to.
     as *Yes*. Its **CAPA fields start blank** — responsibility, CAPA No and
     CAPA status are filled in by whoever handles the CAPA, and so are they on a
     report raised with ＋ Raise FFR.
-  - **CAPA (if reqd) Responsibility** lists *CAPA Not Required* and every Active
+  - **CAPA (if reqd) Responsibility** lists *No* (the words are set on Admin
+    Config, and changing them there changes every report) and every Active
     person tagged **CAPA Responsibility** on the User Master — tag somebody
     there to add them. A report that already names someone no longer on the
     list still shows that name.

@@ -2449,7 +2449,15 @@ with checks(sort_order, bundle, provides, present) as (
         exists (select 1 from pg_trigger where tgrelid = coalesce(to_regclass('public.field_failure_reports'), 0::regclass) and tgname = 'zz_ffr_capa_wording')
         and exists (select 1 from pg_trigger where tgrelid = coalesce(to_regclass('public.field_failure_reports'), 0::regclass) and tgname = 'zz_ffr_stamp' and tgenabled <> 'D')
         and not exists (select 1 from public.field_failure_reports f
-                         where lower(regexp_replace(btrim(coalesce(f.capa_responsibility, '')), '[^a-z]', '', 'gi')) = 'noclosedinffr'))
+                         where lower(regexp_replace(btrim(coalesce(f.capa_responsibility, '')), '[^a-z]', '', 'gi')) = 'noclosedinffr')),
+    (401, 'FFR: the "no CAPA" words are a setting, and every report reads them', 'ffr_capa_none_label() and set_ffr_capa_none_label() (not callable by the public key), the setting present, and no report still carrying an earlier wording -- "No closed in FFR", "CAPA Not Required" or a previous setting (0494). NO means Admin Config cannot change the words, or some reports read old ones. Restore: daily_review.sql (0494)',
+        to_regprocedure('public.ffr_capa_none_label()') is not null
+        and to_regprocedure('public.set_ffr_capa_none_label(text)') is not null
+        and not has_function_privilege('anon', coalesce(to_regprocedure('public.set_ffr_capa_none_label(text)'), 'now()'::regprocedure), 'execute')
+        and exists (select 1 from public.app_settings where key = 'ffr.capa_none_label')
+        and (to_regprocedure('public.ffr_capa_none_earlier()') is null
+             or not exists (select 1 from public.field_failure_reports f
+                             where public.ffr_capa_squash(f.capa_responsibility) = any (public.ffr_capa_none_earlier()))))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

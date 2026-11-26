@@ -3678,6 +3678,20 @@ export async function listCallStates(ucns: string[]): Promise<Record<string, str
 export const DCCR_AUTOSAVE_KEY = 'dccr.autosave_default';
 export const DCCR_AUTOSAVE_AT_KEY = 'dccr.autosave_default_at';
 
+/** THE "NO CAPA" WORDS on CAPA (if reqd) Responsibility (0494, the user
+ *  2026-11-26): "No" unless Admin Config changed them. */
+export async function getFfrCapaNoneLabel(): Promise<string> {
+  const { data, error } = await must().rpc('ffr_capa_none_label');
+  if (error) throw new Error(errMsg(error));
+  return String(data ?? '').trim() || 'No';
+}
+/** Store new words and rewrite every report reading the old ones; how many changed. */
+export async function setFfrCapaNoneLabel(label: string): Promise<{ ok: boolean; changed?: number; error?: string }> {
+  const { data, error } = await must().rpc('set_ffr_capa_none_label', { p_label: label });
+  if (error) return { ok: false, error: errMsg(error) };
+  return { ok: true, changed: Number(data ?? 0) };
+}
+
 export async function getDccrAutoSaveDefault(): Promise<{ on: boolean; at: number } | null> {
   const { data, error } = await must().from('app_settings')
     .select('key,value').in('key', [DCCR_AUTOSAVE_KEY, DCCR_AUTOSAVE_AT_KEY]);

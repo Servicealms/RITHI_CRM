@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.275',
+    date: '2026-11-26',
+    title: 'Field Failure Report: "CAPA Not Required" reads "No", and Admin Config can change it',
+    changes: [
+      'CAPA (if reqd) Responsibility offers "No" where it offered "CAPA Not Required", and every report that said "CAPA Not Required" (or "No closed in FFR") now says "No".',
+      'Admin Config → Field Failure Report: change those words and press Save and apply to all reports — every report reading them follows, and you are told how many changed. Each change is in the report\'s history; its last-updated date is left as it was.',
+      'A file or sheet that still carries any earlier wording is saved with the current words.',
+    ],
+  },
+  {
     version: '0.10.274',
     date: '2026-11-26',
     title: 'Audit Mode: version v3.0.0, no Version History or build details, Auto Save and Product Failure Analysis hidden, non-auditable requirements hidden',
