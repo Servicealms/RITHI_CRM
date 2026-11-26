@@ -1413,6 +1413,10 @@ typed into a form that reads it.
   > regardless.
 - **User Master** `/user-master` — people, roles and the reporting line. A
   manager's team is worked out from here.
+  > **All · Active · Inactive** at the top shows everybody, only the people
+  > marked Active, or only the inactive ones, each with how many there are. It
+  > works together with the search and the filters, and your choice is
+  > remembered on this device.
   > **Department** comes from its own list (**Masters → Department** — add the
   > departments there first), so it is spelled one way everywhere.
   > **Many at once:** tick people (the header box ticks everyone the search is

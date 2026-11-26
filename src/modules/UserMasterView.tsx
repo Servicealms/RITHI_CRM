@@ -106,6 +106,17 @@ export function UserMasterView() {
     return [...seen.values()].sort((a, b) => a.localeCompare(b));
   }, [dir]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  // ACTIVE / INACTIVE TOGGLE (the user, 2026-11-26: "Add a Toggle, For Active
+  // and Inactive Users in User Master"). Active is the row's Active (validity)
+  // flag -- the same one a disabled login sets false (0484). Remembered on this
+  // device; "All" shows everybody, as the list always did.
+  const [activeView, setActiveView] = useState<'all' | 'active' | 'inactive'>(() => {
+    try { const v = localStorage.getItem('userMaster.activeView'); return v === 'active' || v === 'inactive' ? v : 'all'; } catch { return 'all'; }
+  });
+  const pickActiveView = (v: 'all' | 'active' | 'inactive') => {
+    setActiveView(v);
+    try { localStorage.setItem('userMaster.activeView', v); } catch { /* per-device convenience only */ }
+  };
   const [sheetRows, setSheetRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<DirectoryRow | null>(null);   // the drawer (new user)
@@ -605,7 +616,8 @@ export function UserMasterView() {
   // (case-blind). Nothing chosen means every person.
   const visibleDir = useMemo(() => {
     const s = q.trim().toLowerCase();
-    const byTag0 = tagFilter.length ? dir.filter((r) => tagFilter.some((t) => hasTag(r.tags, t))) : dir;
+    const byActive = activeView === 'all' ? dir : dir.filter((r) => (activeView === 'active' ? r.validity : !r.validity));
+    const byTag0 = tagFilter.length ? byActive.filter((r) => tagFilter.some((t) => hasTag(r.tags, t))) : byActive;
     // Signature filter: "Not yet" means a login with none saved -- somebody
     // who has never signed in has nothing to save one to.
     const byTag = !sigFilter || !sigRows ? byTag0 : byTag0.filter((r) => {
@@ -617,7 +629,7 @@ export function UserMasterView() {
     if (!s) return byTag;
     return byTag.filter((r) => `${r.name} ${r.email} ${r.gmail} ${r.designation} ${r.region} ${roleLabel(r.role)} ${(r.tags ?? []).join(' ')}`.toLowerCase().includes(s));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dir, q, tagFilter, sigFilter, sigRows, sigByEmail]);
+  }, [dir, q, tagFilter, sigFilter, sigRows, sigByEmail, activeView]);
 
   // ---------------------------------------------------------------------
   // WHERE THE LIST AND THE SIGN-IN DISAGREE ABOUT SOMEBODY'S ROLE.
@@ -752,6 +764,12 @@ export function UserMasterView() {
           toolbar={
             <Toolbar>
               <SearchBox value={q} onChange={setQ} placeholder="Name, email, region, designation, role, tag…" />
+              <div role="group" aria-label="Active or inactive users" style={{ display: 'flex', gap: 4 }}>
+                {([['all', 'All', dir.length], ['active', 'Active', dir.filter((r) => r.validity).length], ['inactive', 'Inactive', dir.filter((r) => !r.validity).length]] as const).map(([v, label, n]) => (
+                  <button key={v} type="button" className={`btn btn-sm ${activeView === v ? 'btn-primary' : 'btn-ghost'}`}
+                    aria-pressed={activeView === v} onClick={() => pickActiveView(v)}>{label} ({n})</button>
+                ))}
+              </div>
               <div style={{ minWidth: 180 }}>
                 <MultiPick values={tagFilter} options={dirTags} onChange={setTagFilter} allLabel="Any tag" noun="tags" />
               </div>
