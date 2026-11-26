@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.272',
+    date: '2026-11-26',
+    title: 'User Master: show All, Active or Inactive users',
+    changes: [
+      'A toggle at the top of the User Master — All, Active, Inactive — each with how many people it holds. It works with the search, the Tags and the signature filters, and is remembered on this device. All is where it starts, so nobody disappears from the list until you choose.',
+    ],
+  },
+  {
     version: '0.10.271',
     date: '2026-11-26',
     title: 'Field Failure Report: "No closed in FFR" now reads "CAPA Not Required"',
