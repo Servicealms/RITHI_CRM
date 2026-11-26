@@ -2444,7 +2444,12 @@ with checks(sort_order, bundle, provides, present) as (
     (399, 'Cover active from its start date (Product Database, 2.0)', 'product_database and product_database_v2 count a warranty or contract as running only once it has STARTED (0492). NO means the Product Database, a new call and the nightly refresh read a contract that has not begun as running. Restore: product_database_2.sql (0492)',
         position('COALESCE(p.warranty_start, ''-infinity''::date) <= CURRENT_DATE' in coalesce(pg_get_viewdef(to_regclass('public.product_database')), '')) > 0
         and (to_regclass('public.product_database_v2') is null
-             or position('COALESCE(m.contract_start, ''-infinity''::date) <= CURRENT_DATE' in coalesce(pg_get_viewdef(to_regclass('public.product_database_v2')), '')) > 0))
+             or position('COALESCE(m.contract_start, ''-infinity''::date) <= CURRENT_DATE' in coalesce(pg_get_viewdef(to_regclass('public.product_database_v2')), '')) > 0)),
+    (400, 'FFR: "No closed in FFR" reads "CAPA Not Required"', 'zz_ffr_capa_wording rewrites the old words on every write, no report still carries them, and zz_ffr_stamp is back ON after the one-time rewording (0493). NO means a report or an upload still shows "No closed in FFR", or a report''s last-updated stamp has stopped being kept. Restore: daily_review.sql (0493)',
+        exists (select 1 from pg_trigger where tgrelid = coalesce(to_regclass('public.field_failure_reports'), 0::regclass) and tgname = 'zz_ffr_capa_wording')
+        and exists (select 1 from pg_trigger where tgrelid = coalesce(to_regclass('public.field_failure_reports'), 0::regclass) and tgname = 'zz_ffr_stamp' and tgenabled <> 'D')
+        and not exists (select 1 from public.field_failure_reports f
+                         where lower(regexp_replace(btrim(coalesce(f.capa_responsibility, '')), '[^a-z]', '', 'gi')) = 'noclosedinffr'))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

@@ -56,7 +56,7 @@ export function FieldFailureReport() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [form, setForm] = useState<Record<string, unknown> | null>(null);
-  // CAPA RESPONSIBILITY: "No closed in FFR" and every ACTIVE person tagged
+  // CAPA RESPONSIBILITY: "CAPA Not Required" and every ACTIVE person tagged
   // "CAPA Responsibility" on the User Master (0408). Read when the form opens.
   // A value already on the report and no longer listed is kept at the top, so
   // an old report still shows who it names.
