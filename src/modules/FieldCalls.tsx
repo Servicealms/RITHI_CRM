@@ -30,7 +30,7 @@ import {
   updateFieldCall,
 } from '../lib/sheets';
 import { formatDay, formatDayTime } from '../lib/dates';
-import { supabaseConfigured, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
+import { supabaseConfigured, getPmHideUnsolvedMissed, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
 import { useAuditMode } from '../lib/auditMode';
 import { useCallFieldMasters } from './callFields';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
@@ -38,7 +38,7 @@ import { useUserNames, nameForUserId } from '../lib/userNames';
 import { logAudit } from '../lib/audit';
 import './fieldcalls.css';
 import { partial, searchScope } from '../lib/exportscope';
-import { isMissedPm, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
+import { isMissedPm, hiddenByMissedPmRule, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
 import {
   FC_CONTRACT_TYPE,
   FIELD_HEADERS,
@@ -1189,25 +1189,41 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // grouping"; the column stays.)
   const pendingOk = (row: Rec) => !pendingReasonFilter || pendingReasonOf(row) === pendingReasonFilter;
   const missedOk = (row: Rec) => !isPm || !missedPmFilter || missedOf(row) === missedPmFilter;
-  const visibleRows = useMemo(
-    () => listedRows.filter((row) => pendingOk(row) && missedOk(row)),
+  // THE PM HIDE RULE (Admin Config; the user, 2026-11-26): an UNSOLVED Missed
+  // PM call is left out of this register while the rule is on. Said on screen
+  // (hiddenByRule), so a shorter list never reads as fewer calls.
+  const [pmHideRule, setPmHideRule] = useState(false);
+  useEffect(() => {
+    if (!isPm || !supabaseConfigured()) return;
+    let live = true;
+    getPmHideUnsolvedMissed().then((v) => { if (live) setPmHideRule(v); }).catch(() => { /* rule unread: nothing hidden */ });
+    return () => { live = false; };
+  }, [isPm]);
+  const ruleHides = (row: Rec) => isPm && row._pending !== true && hiddenByMissedPmRule(pmHideRule, row.regDate, row.addedOn, row.callState);
+  const hiddenByRule = useMemo(() => (isPm && pmHideRule ? listedRows.filter(ruleHides).length : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [listedRows, callDates, pendingReasonFilter, missedPmFilter],
+    [listedRows, pmHideRule, isPm]);
+  const visibleRows = useMemo(
+    () => listedRows.filter((row) => pendingOk(row) && missedOk(row) && !ruleHides(row)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [listedRows, callDates, pendingReasonFilter, missedPmFilter, pmHideRule],
   );
   const countBy = (rows: Rec[], of: (row: Rec) => string) => {
     const c = new Map<string, number>();
     rows.forEach((row) => { const k = of(row); c.set(k, (c.get(k) ?? 0) + 1); });
     return [...c.entries()].map(([key, count]) => ({ key, count }));
   };
+  // The chips count what the list can show: a call the PM hide rule leaves out
+  // is not counted, or a chip would promise calls clicking it never gives.
   const pendingReasonCounts = useMemo(
-    () => countBy(listedRows, pendingReasonOf),
+    () => countBy(listedRows.filter((row) => !ruleHides(row)), pendingReasonOf),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [listedRows, callDates],
+    [listedRows, callDates, pmHideRule],
   );
   const missedPmCounts = useMemo(
-    () => (isPm ? countBy(listedRows, missedOf) : []),
+    () => (isPm ? countBy(listedRows.filter((row) => !ruleHides(row)), missedOf) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [listedRows, isPm],
+    [listedRows, isPm, pmHideRule],
   );
 
   const refreshFromMasters = async (what: 'party' | 'product', ucns: string[], clear?: () => void) => {
@@ -1508,6 +1524,12 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           storeKey={`calls.${config.callType}.missedPm`}
           more={moreAvailable || (searching && searchCapped)}
         />
+      )}
+      {isPm && hiddenByRule > 0 && (
+        <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
+          {hiddenByRule}{moreAvailable || (searching && searchCapped) ? '+' : ''} unsolved Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden
+          by the rule on <b>Admin Config → PM Calls</b>. A Missed PM call shows again once it is solved.
+        </p>
       )}
 
       {allotBlocked && (

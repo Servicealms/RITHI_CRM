@@ -54,7 +54,7 @@ import { manualReportLink } from '../src/lib/reports';
 import { drivePreviewUrl } from '../src/lib/drive';
 import { callAging, agingTone, callDays } from '../src/lib/aging';
 import { currentItemStatus, itemStatusToday, coverEndingIn, endOfNextMonth, monthBounds } from '../src/lib/coverToday';
-import { isMissedPm } from '../src/lib/missedPm';
+import { isMissedPm, hiddenByMissedPmRule } from '../src/lib/missedPm';
 import { pmBatchTimes, pmCallNumber, shapePmDueRows } from '../src/lib/pmImport';
 import { parseRef as parseRefForCheck } from '../src/lib/reportMapping';
 import { TRAINING_METHODOLOGY as TRAINING_METHODOLOGY_FOR_CHECK, TRAINING_FORM as TRAINING_FORM_FOR_CHECK, RECORD_SHEET_FIRST_PAGE as RECORD_SHEET_FIRST_PAGE_FOR_CHECK, paginateRows as paginateRowsForCheck } from '../src/lib/trainingForm';
@@ -10154,6 +10154,9 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
   // NAR-014..NAR-025 (2026-11-18): ONE list of non-auditable screens, read
   // by every place that shows a screen.
   {
+    // Its own reader: this block sits where no `r` helper is in scope (it
+    // crashed check:ui from v0.10.268 to v0.10.275 with "r is not defined").
+    const r = (f: string) => readFileSync(f, 'utf8');
     const ah = r('src/lib/auditHidden.ts');
     for (const p of ['/kpi', '/objective', '/spare-insights', '/training', '/product-database-2', '/indoor', '/call-review',
       '/exports/unused', '/feedback-without-report', '/visit-date-check', '/install-calls-unmapped',
@@ -10177,6 +10180,10 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
     eq('the Non-Auditable section and the moved requirements are hidden in Audit Mode (NAR-030)',
       r('src/modules/SoftwareValidation.tsx').includes("const show = (k: TabKey) => (all || tab === k) && !(k === 'nonaudit' && auditOn);")
         && r('src/modules/SoftwareValidation.tsx').includes("URS_ALL.filter((u) => !isMovedToNonAuditable(u.id))"), true);
+    // FRS-131.23 (2026-11-26): the PM hide rule.
+    eq('the PM hide rule hides an unsolved Missed PM and shows a solved one',
+      hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Unsolved') && !hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Solved')
+        && !hiddenByMissedPmRule(true, '2026-03-10', '2026-03-20', 'Unsolved') && !hiddenByMissedPmRule(false, '2026-03-10', '2026-10-01', 'Unsolved'), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);
   }
   eq('My Workload loads once the access scope is ready',

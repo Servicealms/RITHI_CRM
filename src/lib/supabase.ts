@@ -3703,6 +3703,26 @@ export async function getDccrAutoSaveDefault(): Promise<{ on: boolean; at: numbe
   return { on: String(on).trim() === 'on', at: Number.isFinite(at) ? at : 0 };
 }
 
+/** THE PM HIDE RULE (the user, 2026-11-26: "Add a Provision for ADMIN to hide
+ *  Calls Added and Flagged as Missed PM, Only if they are Unsolved"): when on,
+ *  the PM Calls register leaves out a Missed PM call (Added On after its month)
+ *  that is not Solved or Cancelled. Off unless set. */
+export const PM_HIDE_UNSOLVED_MISSED_KEY = 'pm.hide_unsolved_missed';
+export async function getPmHideUnsolvedMissed(): Promise<boolean> {
+  const { data, error } = await must().from('app_settings').select('value').eq('key', PM_HIDE_UNSOLVED_MISSED_KEY).maybeSingle();
+  if (error) throw new Error(errMsg(error));
+  return String(data?.value ?? '').trim() === 'on';
+}
+export async function setPmHideUnsolvedMissed(on: boolean): Promise<{ ok: boolean; error?: string }> {
+  // ASKS FOR THE ROW BACK: a write row-level security refuses can succeed with
+  // nothing written, and that must not read as saved (finding 48).
+  const { data, error } = await must().from('app_settings')
+    .upsert([{ key: PM_HIDE_UNSOLVED_MISSED_KEY, value: on ? 'on' : 'off', updated_at: new Date().toISOString() }], { onConflict: 'key' })
+    .select('key');
+  if (error) return { ok: false, error: errMsg(error) };
+  return (data ?? []).length ? { ok: true } : { ok: false, error: 'Nothing was saved -- changing this needs the Admin config permission.' };
+}
+
 export async function setDccrAutoSaveDefault(on: boolean): Promise<{ ok: boolean; error?: string }> {
   const now = new Date().toISOString();
   const { error } = await must().from('app_settings').upsert([
