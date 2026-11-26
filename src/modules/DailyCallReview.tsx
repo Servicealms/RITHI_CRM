@@ -137,7 +137,14 @@ export function DailyCallReview() {
   const [mine, setMine] = useState(() => readMyAutoSave());
   const [org, setOrg] = useState<{ on: boolean; at: number } | null>(null);
   const [applying, setApplying] = useState(false);
-  const autoSave = effectiveAutoSave(mine, org);
+  // AUTO SAVE IS NON-AUDITABLE (NAR-028, the user 2026-11-26: "Auto Save in
+  // Daily Complaint Review Register is also a Non Auditable Requirement, Hide
+  // it in Audit Mode"): while Audit Mode is on the switch is not shown and a
+  // review is written only by Save review -- a hidden switch that went on
+  // saving would write answers with nothing on screen saying so. Each
+  // person's choice is kept and comes back when Audit Mode is switched off.
+  const auditOnForSave = useAuditMode().on;
+  const autoSave = effectiveAutoSave(mine, org) && !auditOnForSave;
 
   useEffect(() => {
     if (!live) return;
@@ -693,7 +700,7 @@ export function DailyCallReview() {
                 register's own controls — and not on each review, where a tick
                 box repeated per record invited the reading that it applied to
                 that one call. It shows wherever reviews are actually edited. */}
-            {editable && (tab === 'desk' || tab === 'todo' || tab === 'r2' || tab === 'r3' || tab === 'register') && (
+            {editable && !auditOnForSave && (tab === 'desk' || tab === 'todo' || tab === 'r2' || tab === 'r3' || tab === 'register') && (
               <label className="row dccr-autosave" title="Answers are written as you choose them, on every review you open. Completing a stage still needs Save review.">
                 <input
                   type="checkbox"

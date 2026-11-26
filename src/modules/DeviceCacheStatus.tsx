@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuditMode } from '../lib/auditMode';
+import { AUDIT_VERSION } from '../lib/auditHidden';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Toolbar, SearchBox, FacetChips } from '../components/ui/ui';
 import { formatDayTime } from '../lib/dates';
@@ -61,6 +63,7 @@ const COLUMNS: Column<Row>[] = [
   { key: 'device_label', header: 'Device', width: 170, wrap: false,
     render: (r) => (r.device_id ? <span title={r.user_agent ?? ''}>{r.device_label || 'Unknown device'}</span> : '') },
   { key: 'app_version', header: 'App version', width: 100, wrap: false,
+    // NAR-027: in Audit Mode every device's version reads as the shown one.
     render: (r) => (r.app_version ? `v${r.app_version}` : '') },
   { key: 'machines', header: 'Machines', width: 90, wrap: false, render: (r) => count(r.machines) },
   { key: 'machines_at', header: 'Machines downloaded', width: 230, render: (r) => when(r.machines_at) },
@@ -84,6 +87,7 @@ const COLUMNS: Column<Row>[] = [
 ];
 
 export function DeviceCacheStatus() {
+  const auditOn = useAuditMode().on;
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -148,7 +152,7 @@ export function DeviceCacheStatus() {
 
       <FacetChips options={facets} value={state} onChange={setState} more={false} />
 
-      <DataTable<Row> columns={COLUMNS} rows={visible} getRowId={(r) => r.id} />
+      <DataTable<Row> columns={COLUMNS} rows={auditOn ? visible.map((r) => (r.app_version ? { ...r, app_version: AUDIT_VERSION } : r)) : visible} getRowId={(r) => r.id} />
     </div>
   );
 }

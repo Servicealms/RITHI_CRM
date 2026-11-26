@@ -16,7 +16,7 @@ import { watchMachineRegister } from '../../lib/machinestore';
 import { clearMasterCache } from '../../lib/masters';
 import { supabaseConfigured, globalSearchKind } from '../../lib/supabase';
 import { useAuditMode } from '../../lib/auditMode';
-import { isAuditHiddenPath } from '../../lib/auditHidden';
+import { isAuditHiddenPath, shownVersion } from '../../lib/auditHidden';
 import { HIT_GROUPS, MIN_CHARS, PER_KIND, searchTerm, shownHits, type HitKind, type SearchHit } from '../../lib/globalSearch';
 
 interface NavItem {
@@ -678,9 +678,12 @@ export function Layout({ children }: { children: ReactNode }) {
               save. So it names a version only when the version actually
               differs, and otherwise says what IS true: the build is older. */}
           <span>
-            {newBuild && newBuild !== __APP_VERSION__
-              ? `A newer version (v${newBuild}) is out — this tab is still on v${__APP_VERSION__}.`
-              : `An update is out — this tab is running an earlier build of v${__APP_VERSION__}.`}
+            {auditOn
+              // NAR-027: no version number in Audit Mode, real or shown.
+              ? 'An update is out — reload to get it.'
+              : newBuild && newBuild !== __APP_VERSION__
+                ? `A newer version (v${newBuild}) is out — this tab is still on v${__APP_VERSION__}.`
+                : `An update is out — this tab is running an earlier build of v${__APP_VERSION__}.`}
           </span>
           <button className="btn btn-sm btn-primary" onClick={updateNow} title="Reload into the new version. Keeps the machine and customer lists stored on this device for offline search.">
             ⟳ Update now
@@ -825,14 +828,20 @@ export function Layout({ children }: { children: ReactNode }) {
         <SignatureReminder />
         <main className="app-content">{children}</main>
 
-        <footer className="app-footer" title={`Built ${__BUILD_TIME__}`}>
-          <span><b>RITHI CRM</b>&nbsp;v{__APP_VERSION__}</span>
-          <span className="foot-sep">·</span>
-          <span>build #{__BUILD_NUMBER__}</span>
-          <span className="foot-sep">·</span>
-          <span className="foot-hide-sm">ID {__BUILD_ID__}</span>
-          <span className="foot-sep foot-hide-sm">·</span>
-          <span className="foot-hide-sm">built {fmtDateTime(__BUILD_TIME__)}</span>
+        {/* AUDIT MODE (NAR-027): the version reads v3.0.0, and the build
+            number, ID and build time are not shown. */}
+        <footer className="app-footer" title={auditOn ? undefined : `Built ${__BUILD_TIME__}`}>
+          <span><b>RITHI CRM</b>&nbsp;v{shownVersion(auditOn, __APP_VERSION__)}</span>
+          {!auditOn && (
+            <>
+              <span className="foot-sep">·</span>
+              <span>build #{__BUILD_NUMBER__}</span>
+              <span className="foot-sep">·</span>
+              <span className="foot-hide-sm">ID {__BUILD_ID__}</span>
+              <span className="foot-sep foot-hide-sm">·</span>
+              <span className="foot-hide-sm">built {fmtDateTime(__BUILD_TIME__)}</span>
+            </>
+          )}
           <span className="foot-spacer" />
           {/* NAMED FOR WHAT IT DOES, AND PUT WHERE IT IS FOUND. "Force update"
               in the footer was a thing you had to be told about: a first-time

@@ -10156,7 +10156,8 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
   {
     const ah = r('src/lib/auditHidden.ts');
     for (const p of ['/kpi', '/objective', '/spare-insights', '/training', '/product-database-2', '/indoor', '/call-review',
-      '/exports/unused', '/feedback-without-report', '/visit-date-check', '/install-calls-unmapped']) {
+      '/exports/unused', '/feedback-without-report', '/visit-date-check', '/install-calls-unmapped',
+      '/product-failure', '/version-history']) {
       eq(`${p} is hidden in Audit Mode`, ah.includes(`'${p}',`), true);
     }
     eq('...the route guard sends a hidden page home', /audit\.on && audit\.known && isAuditHiddenPath\(location\.pathname\)\) return <Navigate to="\/" replace \/>/.test(r('src/App.tsx')), true);
@@ -10165,6 +10166,17 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
     eq('...Roles & Permissions leaves out its row', r('src/modules/RolePermissions.tsx').includes('!(auditOn && p.path && isAuditHiddenPath(p.path))'), true);
     eq('...My Workload leaves out its section', r('src/modules/Workload.tsx').includes("!(auditOn && isAuditHiddenPath(j.needs.replace('mod:', '')))"), true);
     eq('...the data flows leave out its steps', r('src/components/flow/FlowDiagram.tsx').includes('withoutHiddenSteps('), true);
+    // NAR-027 / 028 / 030 (2026-11-26).
+    const lay2 = r('src/components/layout/Layout.tsx');
+    eq('Audit Mode shows v3.0.0 and no build number, ID or time in the footer',
+      /AUDIT_VERSION = '3\.0\.0'/.test(ah) && lay2.includes('v{shownVersion(auditOn, __APP_VERSION__)}') && /\{!auditOn && \(\s*<>\s*<span className="foot-sep">·<\/span>\s*<span>build #/.test(lay2), true);
+    eq('...and the update banner names no version then', lay2.includes("? 'An update is out — reload to get it.'"), true);
+    eq('Auto Save is hidden and off in Audit Mode (NAR-028)',
+      /const autoSave = effectiveAutoSave\(mine, org\) && !auditOnForSave;/.test(r('src/modules/DailyCallReview.tsx'))
+        && r('src/modules/DailyCallReview.tsx').includes('{editable && !auditOnForSave && (tab ==='), true);
+    eq('the Non-Auditable section and the moved requirements are hidden in Audit Mode (NAR-030)',
+      r('src/modules/SoftwareValidation.tsx').includes("const show = (k: TabKey) => (all || tab === k) && !(k === 'nonaudit' && auditOn);")
+        && r('src/modules/SoftwareValidation.tsx').includes("URS_ALL.filter((u) => !isMovedToNonAuditable(u.id))"), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);
   }
   eq('My Workload loads once the access scope is ready',

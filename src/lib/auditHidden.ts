@@ -27,7 +27,18 @@ export const AUDIT_HIDDEN_PATHS: readonly string[] = [
   '/feedback-without-report',  // NAR-022 Feedback Without a Report
   '/visit-date-check',         // NAR-023 Visit Date Check (+ Corrected dates)
   '/install-calls-unmapped',   // NAR-024 Machines Without an Installation Call
+  '/version-history',          // NAR-027 Version History
+  '/product-failure',          // NAR-029 Product Failure Analysis
 ];
+
+/** THE VERSION SHOWN WHILE AUDIT MODE IS ON (NAR-027, the user, 2026-11-26:
+ *  "When Audit mode is enabled, Set the Version to v3.0.0 and Hide Version
+ *  History. Hide Build ID, ID, Built when Audit Mode is enabled"). Only what
+ *  is SHOWN changes: the build itself, and the update check (which compares
+ *  build ids, not this), are untouched. */
+export const AUDIT_VERSION = '3.0.0';
+/** The version a screen shows: AUDIT_VERSION in Audit Mode, else the build's. */
+export const shownVersion = (auditOn: boolean, real: string): string => (auditOn ? AUDIT_VERSION : real);
 
 /** True for a route on the list or below one: `/indoor` and `/indoor/pdqc`,
  *  `/indoor-dc/DC-1`; never `/indoorx`, never `/kpi-export`. */

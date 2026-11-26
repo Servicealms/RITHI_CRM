@@ -67,8 +67,12 @@ Audit Mode on, these are not on the menu, in search or in this guide, and a
 link to one goes to the home screen: KPI & Failure Analysis, Objective, Spare
 Insights, Training, Product Database 2.0, all of Indoor Service (with Spare
 Recycling and the Pre-Delivery Quality Check), Call Review, Not Consumed Against
-this Call, Feedback Without a Report, Visit Date Check and Machines Without an
-Installation Call. Their permissions and Version History entries are hidden too.
+this Call, Feedback Without a Report, Visit Date Check, Machines Without an
+Installation Call, Product Failure Analysis and Version History. Their
+permissions are hidden too. Also hidden: the Field Failure Report's Update log,
+the Auto save switch on the Daily Complaint Review Register (reviews save with
+Save review), the build number, ID and time in the footer (the version reads
+v3.0.0), and on Software Validation the Non-Auditable Requirements section.
 Nothing is taken away: switch Audit Mode off and they are back.
 
 ---
