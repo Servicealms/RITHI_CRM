@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.273',
+    date: '2026-11-26',
+    title: 'User Master without the signature strip; the FFR Update log hidden in Audit Mode',
+    auditTitle: 'User Master without the signature strip',
+    auditHiddenChanges: [1],
+    changes: [
+      'The "Signatures saved: X of Y" strip is gone from the top of User Master. The Signature column and its filter still show who has saved a signature and who has not.',
+      'With Audit Mode on, a Field Failure Report no longer shows its Update log, and Load old update log is not offered. Every change is still recorded; switch Audit Mode off and the log is back.',
+    ],
+  },
+  {
     version: '0.10.272',
     date: '2026-11-26',
     title: 'User Master: show All, Active or Inactive users',
@@ -1170,6 +1181,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.162',
     date: '2026-10-11',
     title: 'FFR Update log: a loaded report starts on its FFR Date',
+    // NAR-026 (2026-11-26): hidden in Audit Mode.
+    auditHidden: true,
     changes: [
       'A Field Failure Report loaded from the old register now reads "Report raised" on its FFR DATE in the Update log, not on the day it was loaded (14-Sep-2026 for all 560 of them). The load date is still shown beside it, as "loaded into RITHI on". Reports raised in RITHI are unchanged.',
     ],
@@ -1212,6 +1225,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.10.157',
     date: '2026-10-10',
     title: 'User Master tags; the FFR CAPA list from them; the old FFR update log loads',
+    // NAR-026 (2026-11-26): hidden in Audit Mode.
+    auditHiddenChanges: [2],
+    auditTitle: "User Master tags; the FFR CAPA list from them",
     changes: [
       'NEW on the User Master: Tags. Give a person as many tags as you like (type one and press Enter), filter the list by tag at the top, and tick people to Add or Remove a tag on all of them at once.',
       'The Field Failure Register\'s CAPA (if reqd) Responsibility now lists "No closed in FFR" and every active person tagged CAPA Responsibility on the User Master. The old fixed names are gone from the list; a report that already names one still shows it.',
@@ -5075,6 +5091,8 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.222',
     date: '2026-09-12',
     title: 'Editing a Field Failure Report saves again',
+    // NAR-026 (2026-11-26): hidden in Audit Mode.
+    auditHiddenChanges: [2],
     changes: [
       'FIXED: opening a report from the register and saving it failed with \u201CCould not find the \u2018live_any_potential_effect’ column\u201D, and the edit was lost. The register shows the report BESIDE the live call, and saving was sending those live columns back as if they were part of the report.',
       'FIXED: saving an edit replaced \u201CRaised by\u201D with the e-mail address of whoever saved it — so correcting a typo on somebody else’s report took their name off it. Raised by is now set once, when the report is raised, and left alone afterwards.',
@@ -5096,6 +5114,9 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.9.220',
     date: '2026-09-12',
     title: 'The Field Failure Report is the real form, and every change to it is kept',
+    // NAR-026 (2026-11-26): hidden in Audit Mode.
+    auditHiddenChanges: [2],
+    auditTitle: "The Field Failure Report is the real form",
     changes: [
       'THE WORD COPY IS NOW THE CONTROLLED FORM — R-SER-03 Rev 02 itself: the header band with the company mark and the page number, the same boxes in the same order with the same wording, and the footer carrying the template number. It is no longer a tidier document holding the same information.',
       'AND THERE IS A PRINTABLE PAGE, the way the Delivery Challan and the Declaration print — open a report and press Print. Same form, no Word needed.',

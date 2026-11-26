@@ -18,7 +18,6 @@ import './fieldcalls.css';
 import { COMPLETE, cappedAt } from '../lib/exportscope';
 import { useMaster } from '../lib/masters';
 import { PersonProfile } from '../components/people/PersonProfile';
-import { SignatureTracker } from '../components/people/SignatureTracker';
 import { MultiPick } from '../components/ui/MultiPick';
 import { TagInput, TagChips, tidyTags, hasTag } from '../components/ui/TagInput';
 import { SignaturePad } from '../components/ui/SignaturePad';
@@ -725,8 +724,11 @@ export function UserMasterView() {
         </div>
       )}
 
-      {/* WHO HAS SAVED A SIGNATURE (0454) -- for whoever edits these details. */}
-      {editable && !editing && <SignatureTracker rows={sigRows} err={sigErr} />}
+      {/* THE "SIGNATURES SAVED: X OF Y" STRIP IS GONE (the user, 2026-11-26:
+          "Remove this Strip from User Master"). The Signature column and its
+          filter (FRS-281.7) answer who has and has not; a failed read still
+          says so here rather than leaving the column blank without a word. */}
+      {editable && !editing && sigErr && <div className="sheet-banner sheet-banner-info"><span>Signatures could not be read: {sigErr}</span></div>}
 
       {live ? (
         <DataTable<DirectoryRow & Record<string, unknown>>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuditMode } from '../lib/auditMode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, Drawer, SearchBox } from '../components/ui/ui';
 import { DataTable, type Column } from '../components/table/DataTable';
@@ -44,6 +45,7 @@ type Row = Record<string, unknown> & { id: string };
 const DATE_KEYS = new Set(['ffr_date', 'crn_date', 'installation_date', 'call_solved_at']);
 
 export function FieldFailureReport() {
+  const auditOn = useAuditMode().on;
   const { can, user } = useAuth();
   const mySig = useMySignature();
   const mayRaise = can('ffr.manage');
@@ -298,7 +300,7 @@ export function FieldFailureReport() {
           ? (
             <div className="row" style={{ gap: 8 }}>
               {/* The old update sheet (0409): ffr.manage AND bulk.upload, as the database asks. */}
-              {supabaseConfigured() && can('bulk.upload') && <FfrSheetUpdateLoader onDone={() => void load()} />}
+              {supabaseConfigured() && can('bulk.upload') && !auditOn && <FfrSheetUpdateLoader onDone={() => void load()} />}
               <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(ffrFromReview({})); }}>＋ Raise FFR</button>
             </div>
           )
@@ -486,7 +488,11 @@ export function FieldFailureReport() {
             {/* THE CHANGE LOG. Only on an existing report — a report being
                 raised has no history, and an empty panel on the new-report form
                 would read as one that failed to load. */}
-            {editing != null && <FfrHistory ffrNo={String(form?.ffr_no ?? '')} />}
+            {/* NON-AUDITABLE (NAR-026, the user 2026-11-26: "Move FFR Logs into
+                Non Auditable Requirement. And Hide it when Audit Mode is
+                enabled"): not shown while Audit Mode is on. The database goes
+                on recording every change (ffr_history) either way. */}
+            {editing != null && !auditOn && <FfrHistory ffrNo={String(form?.ffr_no ?? '')} />}
 
             <div className="rep-actions">
               {editing != null && (
