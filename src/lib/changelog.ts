@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.276',
+    date: '2026-11-26',
+    title: 'PM Calls: a rule to hide unsolved Missed PM calls',
+    changes: [
+      'Admin Config → PM Calls — hide unsolved Missed PM calls. With it on, the PM Calls register leaves out a Missed PM call (added after the month it is registered for) until it is solved; a solved or cancelled one is shown. A line on the register says how many are hidden, and the filter counts leave them out too.',
+      'It is off until switched on, needs the Admin config permission, and changes no call: switch it off and every call shows again.',
+    ],
+  },
+  {
     version: '0.10.275',
     date: '2026-11-26',
     title: 'Field Failure Report: "CAPA Not Required" reads "No", and Admin Config can change it',

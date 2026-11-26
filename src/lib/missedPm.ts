@@ -25,4 +25,13 @@ export function isMissedPm(regDate: unknown, addedOn: unknown): boolean {
 }
 
 export const MISSED_PM_LABEL = 'Missed PM';
+
+/** THE PM HIDE RULE (Admin Config, 2026-11-26): a Missed PM call is left out of
+ *  the PM Calls register while it is UNSOLVED -- any state but Solved or
+ *  Cancelled. A solved one is shown, as the user asked. */
+export function hiddenByMissedPmRule(ruleOn: boolean, regDate: unknown, addedOn: unknown, callState: unknown): boolean {
+  if (!ruleOn || !isMissedPm(regDate, addedOn)) return false;
+  const st = String(callState ?? '').trim();
+  return st !== 'Solved' && st !== 'Cancelled';
+}
 export const MISSED_PM_TITLE = 'Added On after the month it is registered for';

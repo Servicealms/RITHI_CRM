@@ -4,6 +4,7 @@ import { AuditModeCard } from './AuditModeCard';
 import { DataImport } from './DataImport';
 import { ReportReaderTrialCard } from './ReportReaderTrialCard';
 import { FfrCapaLabelCard } from './FfrCapaLabelCard';
+import { PmHideRuleCard } from './PmHideRuleCard';
 
 // ===========================================================================
 // ADMIN CONFIG — what the app itself is configured with.
@@ -40,6 +41,8 @@ export function AdminConfig() {
       <AuditModeCard />
       <div style={{ height: 16 }} />
       <FfrCapaLabelCard />
+      <div style={{ height: 16 }} />
+      <PmHideRuleCard />
       <div style={{ height: 16 }} />
       <ReportReaderTrialCard />
     </div>
