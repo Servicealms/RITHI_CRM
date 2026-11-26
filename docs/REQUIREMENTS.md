@@ -10535,12 +10535,60 @@ questions for a person.
 
 ---
 
-**191** user requirements · **291** system requirements · **33** call-request · **44** servicing · **321** tests · **26** recorded as non-auditable · **589** of 191 user requirements tied to a module.
+**191** user requirements · **291** system requirements · **33** call-request · **44** servicing · **321** tests · **30** recorded as non-auditable · **589** of 191 user requirements tied to a module.
 ---
 
 ## Non-auditable requirements
 
 Recorded here because a feature absent from the specification is the thing an assessor finds. Each is classified by PROVENANCE: it is not derived from a regulatory clause and is not offered as evidence against one. That is a statement about where the requirement came from, NOT a statement that its use goes unrecorded.
+
+### NAR-030 — The requirements of the hidden screens, and the whole Non-Auditable section, are not shown in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden while Audit Mode is on* · risk: **Low** · *v0.10.274 · 26-Nov-2026*
+
+NAR-030.1 The requirements and tests about the screens hidden in Audit Mode only (MOVED_TO_NON_AUDITABLE in validation.ts: URS-050, 051, 055, 059, 069, 098, 116, 117, 171, 180; FRS-058, 059, 063, 064, 070, 081, 121, 228, 251, 255; and their fourteen tests) shall be listed under the Non-Auditable Requirements, keeping their IDs and every link, and not in the URS or FRS tables, the module view, the traceability matrix or the counts. NAR-030.2 While Audit Mode is on, Software Validation shall not show the Non-Auditable Requirements section at all -- every NAR and the requirements moved to it -- nor the moved tests, nor a moved ID among the requirements a test traces.
+
+**Why it is classified this way.** The system owner, 2026-11-19: "Move those Requirements to Non-Auditable Requirements and Hide the Complete Non-Auditable Requirements. But Park this Activity for now"; acted on 2026-11-26: "Finish all Audit mode Changes / Non Auditable Features". URS-045 and URS-046 are filed under hidden screens but state wider rules and stay auditable.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** src/lib/validation.ts · src/modules/SoftwareValidation.tsx
+
+### NAR-029 — Product Failure Analysis -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden while Audit Mode is on* · risk: **Low** · *v0.10.274 · 26-Nov-2026*
+
+NAR-029.1 While Audit Mode is on, Product Failure Analysis shall not be on the menu, in search, in the Module Guide or in How to Use, and an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions. Nothing a role holds changes.
+
+**Why it is classified this way.** The system owner, 2026-11-19: "Product Failure Ananlysis should also be Hidden. It is showing under Quality and Analytics."
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** src/lib/auditHidden.ts
+
+### NAR-028 — Auto Save on the Daily Complaint Review Register -- non-auditable, hidden in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden while Audit Mode is on* · risk: **Low** · *v0.10.274 · 26-Nov-2026*
+
+NAR-028.1 While Audit Mode is on, the Daily Complaint Review Register shall not show the Auto save switch, and a review shall be written only by Save review; each person's choice and the default for everyone are kept and apply again when Audit Mode is switched off.
+
+**Why it is classified this way.** The system owner, 2026-11-26: "Auto Save in Daily Complaint Review Register is also a Non Auditable Requirement, Hide it in Audit Mode". A hidden switch that went on saving would write answers with nothing on screen saying so, so it is also off while hidden.
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** src/modules/DailyCallReview.tsx
+
+### NAR-027 — Version, Version History and build details in Audit Mode
+
+*Non-Auditable Requirement (user-originated; no regulatory clause claimed) — hidden while Audit Mode is on* · risk: **Low** · *v0.10.274 · 26-Nov-2026*
+
+NAR-027.1 While Audit Mode is on, the version shall read v3.0.0 wherever the application shows one (the footer, the device list, Software Validation's requirement dates and security scans show no other), the build number, Build ID and build time shall not be shown, the update banner shall name no version, How to Use shall leave out Find the Build ID, and Version History shall not be on the menu, in search or in the Module Guide, an open page or a link returning to the home screen. The build itself, and the update check (which compares build ids), shall not change.
+
+**Why it is classified this way.** The system owner, 2026-11-26: "When Audit mode is enabled, Set the Version to v3.0.0 and Hide Version History. Hide Build ID, ID, Built when Audit Mode is enabled".
+
+**No test protocol names this requirement.** That is a gap, not a decision.
+
+**Where it lives:** src/lib/auditHidden.ts · src/components/layout/Layout.tsx · src/modules/SoftwareValidation.tsx · src/modules/DeviceCacheStatus.tsx · src/modules/HowToUse.tsx
 
 ### NAR-026 — The Field Failure Report Update log -- non-auditable, hidden in Audit Mode
 

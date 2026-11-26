@@ -966,7 +966,80 @@ export interface NonAuditableReq extends Req {
    *  should not show"). */
   auditHidden?: boolean;
 }
+// MOVED TO THE NON-AUDITABLE REQUIREMENTS (the user, 2026-11-19: "Move those
+// Requirements to Non-Auditable Requirements and Hide the Complete
+// Non-Auditable Requirements"; acted on 2026-11-26: "Finish all Audit mode
+// Changes / Non Auditable Features"). The requirements and tests that are
+// about the screens hidden in Audit Mode ONLY (auditHidden.ts) -- filed under
+// no other screen -- and the FFR Update log's (URS-059, NAR-026). URS-045 and
+// URS-046 are filed under hidden screens but say something wider (pickers
+// everywhere; the DCCR frequent-failure rule) and stay auditable. A test that
+// also proves an auditable requirement stays too.
+//
+// MOVED BY LIST, NOT RENUMBERED: each keeps its ID, text and every link to it,
+// so the traceability, the flows and the generated documents stay whole. The
+// Software Validation screen shows them under the Non-Auditable Requirements,
+// not in the URS / FRS tables, the module view, the matrix or the counts; and
+// while Audit Mode is on the whole Non-Auditable section -- these and every
+// NAR -- is not shown, nor are the moved tests.
+export const MOVED_TO_NON_AUDITABLE = {
+  urs: ['URS-050', 'URS-051', 'URS-055', 'URS-059', 'URS-069', 'URS-098', 'URS-116', 'URS-117', 'URS-171', 'URS-180'],
+  frs: ['FRS-058', 'FRS-059', 'FRS-063', 'FRS-064', 'FRS-070', 'FRS-081', 'FRS-121', 'FRS-228', 'FRS-251', 'FRS-255'],
+  tests: ['OQ-44', 'OQ-45', 'OQ-49', 'OQ-53', 'OQ-65', 'OQ-109', 'OQ-246', 'OQ-252', 'OQ-264', 'OQ-273', 'OQ-276', 'OQ-277', 'OQ-284', 'OQ-293'],
+} as const;
+const MOVED_IDS: ReadonlySet<string> = new Set([...MOVED_TO_NON_AUDITABLE.urs, ...MOVED_TO_NON_AUDITABLE.frs, ...MOVED_TO_NON_AUDITABLE.tests]);
+/** A requirement or test moved to the Non-Auditable Requirements. */
+export const isMovedToNonAuditable = (id: string): boolean => MOVED_IDS.has(id);
+
 export const NON_AUDITABLE: NonAuditableReq[] = [
+  {
+    id: 'NAR-030',
+    version: '0.10.274', date: '2026-11-26',
+    title: "The requirements of the hidden screens, and the whole Non-Auditable section, are not shown in Audit Mode",
+    classification: 'Non-Auditable Requirement (user-originated; no regulatory clause claimed) \u2014 hidden while Audit Mode is on',
+    auditHidden: true,
+    modules: ['/software-validation'],
+    text: "NAR-030.1 The requirements and tests about the screens hidden in Audit Mode only (MOVED_TO_NON_AUDITABLE in validation.ts: URS-050, 051, 055, 059, 069, 098, 116, 117, 171, 180; FRS-058, 059, 063, 064, 070, 081, 121, 228, 251, 255; and their fourteen tests) shall be listed under the Non-Auditable Requirements, keeping their IDs and every link, and not in the URS or FRS tables, the module view, the traceability matrix or the counts. NAR-030.2 While Audit Mode is on, Software Validation shall not show the Non-Auditable Requirements section at all -- every NAR and the requirements moved to it -- nor the moved tests, nor a moved ID among the requirements a test traces.",
+    rationale: "The system owner, 2026-11-19: \"Move those Requirements to Non-Auditable Requirements and Hide the Complete Non-Auditable Requirements. But Park this Activity for now\"; acted on 2026-11-26: \"Finish all Audit mode Changes / Non Auditable Features\". URS-045 and URS-046 are filed under hidden screens but state wider rules and stay auditable.",
+    risk: 'Low',
+    refs: ['src/lib/validation.ts', 'src/modules/SoftwareValidation.tsx'],
+  },
+  {
+    id: 'NAR-029',
+    version: '0.10.274', date: '2026-11-26',
+    title: "Product Failure Analysis -- non-auditable, hidden in Audit Mode",
+    classification: 'Non-Auditable Requirement (user-originated; no regulatory clause claimed) \u2014 hidden while Audit Mode is on',
+    auditHidden: true,
+    modules: ['/product-failure'],
+    text: "NAR-029.1 While Audit Mode is on, Product Failure Analysis shall not be on the menu, in search, in the Module Guide or in How to Use, and an open page, a link or a typed address shall return to the home screen; its row and keys shall not be shown on Roles & Permissions. Nothing a role holds changes.",
+    rationale: "The system owner, 2026-11-19: \"Product Failure Ananlysis should also be Hidden. It is showing under Quality and Analytics.\"",
+    risk: 'Low',
+    refs: ['src/lib/auditHidden.ts'],
+  },
+  {
+    id: 'NAR-028',
+    version: '0.10.274', date: '2026-11-26',
+    title: "Auto Save on the Daily Complaint Review Register -- non-auditable, hidden in Audit Mode",
+    classification: 'Non-Auditable Requirement (user-originated; no regulatory clause claimed) \u2014 hidden while Audit Mode is on',
+    auditHidden: true,
+    modules: ['/daily-review'],
+    text: "NAR-028.1 While Audit Mode is on, the Daily Complaint Review Register shall not show the Auto save switch, and a review shall be written only by Save review; each person's choice and the default for everyone are kept and apply again when Audit Mode is switched off.",
+    rationale: "The system owner, 2026-11-26: \"Auto Save in Daily Complaint Review Register is also a Non Auditable Requirement, Hide it in Audit Mode\". A hidden switch that went on saving would write answers with nothing on screen saying so, so it is also off while hidden.",
+    risk: 'Low',
+    refs: ['src/modules/DailyCallReview.tsx'],
+  },
+  {
+    id: 'NAR-027',
+    version: '0.10.274', date: '2026-11-26',
+    title: "Version, Version History and build details in Audit Mode",
+    classification: 'Non-Auditable Requirement (user-originated; no regulatory clause claimed) \u2014 hidden while Audit Mode is on',
+    auditHidden: true,
+    modules: ['/version-history'],
+    text: "NAR-027.1 While Audit Mode is on, the version shall read v3.0.0 wherever the application shows one (the footer, the device list, Software Validation's requirement dates and security scans show no other), the build number, Build ID and build time shall not be shown, the update banner shall name no version, How to Use shall leave out Find the Build ID, and Version History shall not be on the menu, in search or in the Module Guide, an open page or a link returning to the home screen. The build itself, and the update check (which compares build ids), shall not change.",
+    rationale: "The system owner, 2026-11-26: \"When Audit mode is enabled, Set the Version to v3.0.0 and Hide Version History. Hide Build ID, ID, Built when Audit Mode is enabled\".",
+    risk: 'Low',
+    refs: ['src/lib/auditHidden.ts', 'src/components/layout/Layout.tsx', 'src/modules/SoftwareValidation.tsx', 'src/modules/DeviceCacheStatus.tsx', 'src/modules/HowToUse.tsx'],
+  },
   {
     id: 'NAR-026',
     version: '0.10.273', date: '2026-11-26',

@@ -53,7 +53,7 @@ interface GoTo { to: string; label: string; always?: boolean }
 // Carried on the task rather than wrapping the list in arrays so every existing
 // section literal stays exactly as it was — and so a task can be moved by
 // changing one line rather than re-nesting the file.
-interface Sec { id: string; n: string; title: string; who: string; group?: string; lead: ReactNode; steps: ReactNode[]; go?: GoTo[]; note?: { tone: 'tip' | 'warn' | 'good'; icon: string; body: ReactNode } }
+interface Sec { id: string; n: string; title: string; who: string; group?: string; auditHidden?: boolean; lead: ReactNode; steps: ReactNode[]; go?: GoTo[]; note?: { tone: 'tip' | 'warn' | 'good'; icon: string; body: ReactNode } }
 
 const SECTIONS: Sec[] = [
   {
@@ -398,7 +398,8 @@ const SECTIONS: Sec[] = [
     note: { tone: 'good', icon: '🔒', body: <><b>Only you can see it or set it</b> — not your manager, not an administrator. An administrator can ask who has saved one and remove a leaver’s, but can never read one. It is a reproduced image, not a cryptographic signature.</> },
   },
   {
-    id: 'build', n: '30', title: 'Find the Build ID (for support)', who: 'When something looks wrong',
+    // NAR-027: the Build ID is not shown in Audit Mode, so neither is this.
+    id: 'build', n: '30', title: 'Find the Build ID (for support)', who: 'When something looks wrong', auditHidden: true,
     lead: <>The <b>Build ID</b> tells support exactly which version you’re on. It lives in the <b>footer</b> at the very bottom of every page.</>,
     steps: [
       <>Scroll to the very bottom of any screen.</>,
@@ -503,7 +504,7 @@ export function HowToUse() {
     const out: Sec[] = [];
     let carry: string | undefined;
     for (const sec of SECTIONS) {
-      if (sec.go?.length && sec.go.every((g) => isAuditHiddenPath(g.to))) { carry = carry ?? sec.group; continue; }
+      if (sec.auditHidden || (sec.go?.length && sec.go.every((g) => isAuditHiddenPath(g.to)))) { carry = carry ?? sec.group; continue; }
       out.push({ ...sec, group: sec.group ?? carry, n: String(out.length + 1) });
       carry = undefined;
     }

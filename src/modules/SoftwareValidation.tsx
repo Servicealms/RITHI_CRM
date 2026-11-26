@@ -6,7 +6,8 @@ import { useAuth } from '../lib/auth';
 import { useAuditMode } from '../lib/auditMode';
 import { listValidationResults, saveValidationResult, supabaseConfigured, type ValidationResult } from '../lib/supabase';
 import {
-  VAL_META, APPROVALS, APPROACH, CHECKLIST, URS, FRS, NON_AUDITABLE, DEFECTS, ARCHITECTURE, DETAILED, RISKS, TESTS,
+  VAL_META, APPROVALS, APPROACH, CHECKLIST, URS as URS_ALL, FRS as FRS_ALL, NON_AUDITABLE, DEFECTS, ARCHITECTURE, DETAILED, RISKS, TESTS as TESTS_ALL,
+  MOVED_TO_NON_AUDITABLE, isMovedToNonAuditable,
   FMEA, FMEA_SCALE, SUPPLIERS, VSR,
   DATA_MIGRATION, BACKUP, SECURITY, ALCOA, CONFIG_SPEC, SOPS, GOVERNANCE, CAPA_COLUMNS, type Risk,
   MODULES_WITHOUT_REQUIREMENT,
@@ -84,8 +85,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 // EVERY REQUIREMENT CARRIES ITS VERSION AND DATE (Rev 3.2, the user,
 // 2026-10-03). Shown under the ID wherever a requirement is listed.
-const verTag = (r: { version?: string; date?: string }) => (r.version
-  ? <span className="sv-ref" style={{ display: 'block', fontWeight: 400 }}>v{r.version} · {formatDay(r.date ?? '')}</span>
+// AUDIT MODE (NAR-027): the version reads v3.0.0 everywhere, so a requirement
+// shows only its date there -- "v0.10.228" beside it would contradict that.
+const verTag = (r: { version?: string; date?: string }, auditOn = false) => (r.version
+  ? <span className="sv-ref" style={{ display: 'block', fontWeight: 400 }}>{auditOn ? '' : `v${r.version} · `}{formatDay(r.date ?? '')}</span>
   : null);
 
 export function SoftwareValidation() {
@@ -95,9 +98,16 @@ export function SoftwareValidation() {
   // The key the database asks (0293) -- it refused users.manage, which this
   // screen used to accept (finding 64).
   const canRecord = can('validation.manage');
+  // MOVED TO THE NON-AUDITABLE REQUIREMENTS (validation.ts): never in the URS /
+  // FRS tables, the module view, the matrix or the counts; their tests, and
+  // the whole Non-Auditable section, are not shown while Audit Mode is on.
+  const URS = useMemo(() => URS_ALL.filter((u) => !isMovedToNonAuditable(u.id)), []);
+  const FRS = useMemo(() => FRS_ALL.filter((f) => !isMovedToNonAuditable(f.id)), []);
+  const TESTS = useMemo(() => TESTS_ALL.filter((t) => !(auditOn && isMovedToNonAuditable(t.id))), [auditOn]);
+  const shownIds = (ids: readonly string[]) => (auditOn ? ids.filter((x) => !isMovedToNonAuditable(x)) : ids);
   const [tab, setTab] = useState<TabKey>('overview');
   const [all, setAll] = useState(false); // render every section (for printing the full package)
-  const show = (k: TabKey) => all || tab === k;
+  const show = (k: TabKey) => (all || tab === k) && !(k === 'nonaudit' && auditOn);
   const printAll = () => { setAll(true); setTimeout(() => { window.print(); setAll(false); }, 60); };
 
   // Execution results (DB-backed tracker).
@@ -112,15 +122,15 @@ export function SoftwareValidation() {
     let pass = 0, fail = 0, done = 0;
     TESTS.forEach((t) => { const r = results[t.id]?.result; if (r === 'Pass') { pass++; done++; } else if (r === 'Fail') { fail++; done++; } else if (r === 'N/A') done++; });
     return { pass, fail, done, total: TESTS.length };
-  }, [results]);
+  }, [results, TESTS]);
 
   // Traceability: URS → FRS → Test cases.
   const trace = useMemo(() => URS.map((u) => {
     const frs = FRS.filter((f) => f.urs.includes(u.id));
     const tests = TESTS.filter((t) => t.reqs.some((r) => r === u.id || frs.some((f) => f.id === r)));
     return { u, frs, tests };
-  }), []);
-  const orphanFrs = useMemo(() => FRS.filter((f) => !TESTS.some((t) => t.reqs.includes(f.id))), []);
+  }), [URS, FRS, TESTS]);
+  const orphanFrs = useMemo(() => FRS.filter((f) => !TESTS.some((t) => t.reqs.includes(f.id))), [FRS, TESTS]);
 
   return (
     <div className="sv">
@@ -133,7 +143,7 @@ export function SoftwareValidation() {
       </div>
 
       <div className="sv-tabs no-print">
-        {TABS.map((t) => (
+        {TABS.filter((t) => !(t.key === 'nonaudit' && auditOn)).map((t) => (
           <button key={t.key} className={`sv-tab ${tab === t.key ? 'on' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
         ))}
       </div>
@@ -185,15 +195,21 @@ export function SoftwareValidation() {
 
       {/* URS */}
       {show('bymodule') && (() => {
-        const groups = requirementsByModule();
-        const wide = systemWideRequirements();
-        const gaps = requirementGaps();
+        const keepE = (e: UrsEntry) => !isMovedToNonAuditable(e.req.id);
+        const groups = requirementsByModule()
+          .map((g) => ({ ...g, modules: g.modules.map((m) => ({ ...m, urs: m.urs.filter(keepE) })).filter((m) => m.urs.length) }))
+          .filter((g) => g.modules.length);
+        const wide = systemWideRequirements().filter(keepE);
+        const gaps0 = requirementGaps();
+        const gaps = Object.fromEntries(Object.entries(gaps0).map(([k, v]) => [k, Array.isArray(v)
+          ? (v as { id: string }[]).filter((x) => !isMovedToNonAuditable(x.id))
+          : v])) as typeof gaps0;
         const ungoverned = modulesWithNoRequirement();
         const tied = groups.reduce((n, g) => n + g.modules.reduce((m, x) => m + x.urs.length, 0), 0);
         const Urs = ({ e }: { e: UrsEntry }) => (
           <div className="sv-req">
             <div className="sv-req-head">
-              <span className="sv-id">{e.req.id}</span> <b>{e.req.title}</b> {riskBadge(e.req.risk)}{verTag(e.req)}
+              <span className="sv-id">{e.req.id}</span> <b>{e.req.title}</b> {riskBadge(e.req.risk)}{verTag(e.req, auditOn)}
               {/* WHICH KIND OF CLAIM FILED IT HERE. "The text says so" and
                   "somebody said so" are different kinds of evidence, and a
                   reader cannot tell them apart from an absence. */}
@@ -334,7 +350,7 @@ export function SoftwareValidation() {
         // follows one requirement down its own block — which is how a matrix
         // is read on paper, and why the block gets a rule above it.
         // ===================================================================
-        const rows = traceabilityMatrix();
+        const rows = traceabilityMatrix().filter((r) => !isMovedToNonAuditable(r.ursId));
         const sum = traceabilitySummary(rows);
         return (
           <Section title="Traceability matrix">
@@ -403,7 +419,7 @@ export function SoftwareValidation() {
       {show('urs') && (
         <Section title="User Requirements Specification (URS)">
           <table className="sv-table"><thead><tr><th style={{ width: 84 }}>ID</th><th>Requirement</th><th style={{ width: 80 }}>Risk</th></tr></thead>
-            <tbody>{URS.map((u) => <tr key={u.id}><td className="sv-id">{u.id}{verTag(u)}</td><td><b>{u.title}.</b> {u.text}{u.refs ? <span className="sv-ref"> [{u.refs.join('; ')}]</span> : null}</td><td>{riskBadge(u.risk)}</td></tr>)}</tbody>
+            <tbody>{URS.map((u) => <tr key={u.id}><td className="sv-id">{u.id}{verTag(u, auditOn)}</td><td><b>{u.title}.</b> {u.text}{u.refs ? <span className="sv-ref"> [{u.refs.join('; ')}]</span> : null}</td><td>{riskBadge(u.risk)}</td></tr>)}</tbody>
           </table>
         </Section>
       )}
@@ -412,7 +428,7 @@ export function SoftwareValidation() {
       {show('srs') && (
         <Section title="System / Functional Requirements Specification (FRS)">
           <table className="sv-table"><thead><tr><th style={{ width: 84 }}>ID</th><th>Requirement</th><th style={{ width: 90 }}>Traces to</th><th style={{ width: 80 }}>Risk</th></tr></thead>
-            <tbody>{FRS.map((f) => <tr key={f.id}><td className="sv-id">{f.id}{verTag(f)}</td><td><b>{f.title}.</b> {f.text}</td><td className="sv-ref">{f.urs.join(', ')}</td><td>{riskBadge(f.risk)}</td></tr>)}</tbody>
+            <tbody>{FRS.map((f) => <tr key={f.id}><td className="sv-id">{f.id}{verTag(f, auditOn)}</td><td><b>{f.title}.</b> {f.text}</td><td className="sv-ref">{f.urs.join(', ')}</td><td>{riskBadge(f.risk)}</td></tr>)}</tbody>
           </table>
         </Section>
       )}
@@ -490,6 +506,26 @@ export function SoftwareValidation() {
               </tr>
             ))}</tbody>
           </table>
+          {/* MOVED HERE FROM THE AUDITABLE SET (validation.ts). Listed by ID so
+              each can still be read in full under its own ID; while Audit Mode
+              is on this whole section is not shown. */}
+          <h3 style={{ marginTop: 18 }}>Moved here from the auditable requirements</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+            About the screens that are hidden in Audit Mode only (the user, 2026-11-26). They keep their IDs and
+            every link to them; they are no longer counted or listed with the auditable requirements.
+          </p>
+          <table className="sv-table">
+            <thead><tr><th style={{ width: 84 }}>ID</th><th>Requirement</th><th style={{ width: 80 }}>Risk</th></tr></thead>
+            <tbody>
+              {URS_ALL.filter((u) => isMovedToNonAuditable(u.id)).map((u) => (
+                <tr key={u.id}><td className="sv-id">{u.id}{verTag(u, auditOn)}</td><td><b>{u.title}.</b> {u.text}</td><td>{riskBadge(u.risk)}</td></tr>
+              ))}
+              {FRS_ALL.filter((f) => isMovedToNonAuditable(f.id)).map((f) => (
+                <tr key={f.id}><td className="sv-id">{f.id}{verTag(f, auditOn)}</td><td><b>{f.title}.</b> {f.text} <span className="sv-ref">[implements {f.urs.join(', ')}]</span></td><td>{riskBadge(f.risk)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="muted" style={{ fontSize: 13 }}>Their tests stay in the Test Protocol: {MOVED_TO_NON_AUDITABLE.tests.join(', ')}.</p>
         </Section>
       )}
 
@@ -583,14 +619,14 @@ export function SoftwareValidation() {
 
       {/* SECURITY SCAN, AND THE TWO WORD DOCUMENTS (npm run docs:validation) */}
       {show('secscan') && (
-        <Section title={`Security Scan — ${formatDay(SECURITY_SCAN.date)} (v${SECURITY_SCAN.version})`}>
+        <Section title={`Security Scan — ${formatDay(SECURITY_SCAN.date)}${auditOn ? '' : ` (v${SECURITY_SCAN.version})`}`}>
           <div className="sv-h3" style={{ fontSize: 14 }}>Documents</div>
           <ul className="sv-list">
             <li><a href={`${import.meta.env.BASE_URL}docs/RITHI_Software_Validation_R-QMS-SV-13_Rev02.docx`} download>⭳ Software Validation of RITHI — R/QMS/SV/13 Rev 02 (Word)</a> — the old AppSheet template's sections, filled from this package; sign-off blank.</li>
             <li><a href={`${import.meta.env.BASE_URL}docs/RITHI_Security_Scan_2026-10-27.docx`} download>⭳ Security Scan of RITHI — annex to R/QMS/SV/13 (Word)</a></li>
           </ul>
           {SECURITY_SCAN.rescans.map((r) => (
-            <p key={r.date} className="sv-p"><b>Re-scanned {formatDay(r.date)} (v{r.version}).</b> {r.summary}</p>
+            <p key={r.date} className="sv-p"><b>Re-scanned {formatDay(r.date)}{auditOn ? '' : ` (v${r.version})`}.</b> {r.summary}</p>
           ))}
           <div className="sv-h3" style={{ fontSize: 14, marginTop: 12 }}>Scope</div>
           <ul className="sv-list">{SECURITY_SCAN.scope.map((t, i) => <li key={i}>{t}</li>)}</ul>
@@ -673,7 +709,7 @@ export function SoftwareValidation() {
                   <div className="sv-test" key={t.id}>
                     <div className="sv-test-head">
                       <b>{t.id}</b> — {t.objective} {riskBadge(t.risk)}
-                      <span className="sv-ref">traces: {t.reqs.join(', ')}</span>
+                      <span className="sv-ref">traces: {shownIds(t.reqs).join(', ')}</span>
                       {r?.result && <span className={`sv-risk ${r.result === 'Pass' ? 'sv-risk-low' : r.result === 'Fail' ? 'sv-risk-high' : 'sv-risk-medium'}`}>{r.result}</span>}
                     </div>
                     <ol className="sv-steps">{t.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>

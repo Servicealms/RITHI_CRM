@@ -20,6 +20,19 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.274',
+    date: '2026-11-26',
+    title: 'Audit Mode: version v3.0.0, no Version History or build details, Auto Save and Product Failure Analysis hidden, non-auditable requirements hidden',
+    // About Audit Mode itself, so hidden with it (Version History is hidden then anyway).
+    auditHidden: true,
+    changes: [
+      'With Audit Mode on, the version reads v3.0.0; the build number, Build ID and build time are not shown; Version History is hidden; the update banner names no version.',
+      'With Audit Mode on, the Auto save switch on the Daily Complaint Review Register is hidden and reviews save with Save review. Everyone\'s choice comes back when Audit Mode is switched off.',
+      'Product Failure Analysis is hidden in Audit Mode, like the other non-auditable screens.',
+      'Software Validation: the requirements and tests about the hidden screens are moved to the Non-Auditable Requirements (they keep their IDs), and with Audit Mode on the whole Non-Auditable section is hidden.',
+    ],
+  },
+  {
     version: '0.10.273',
     date: '2026-11-26',
     title: 'User Master without the signature strip; the FFR Update log hidden in Audit Mode',
