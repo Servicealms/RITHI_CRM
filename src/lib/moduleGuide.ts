@@ -132,9 +132,13 @@ export const MODULE_GUIDE: ModuleGuideEntry[] = [
       'Raise an FFR by hand, or complete one raised from the Daily Complaint Review Register',
       'Fill in CAPA responsibility, number and status, and do the weekly review',
       'Choose the CAPA responsibility from the people tagged CAPA Responsibility on the User Master',
-      'Load the old FFR update sheet into each report\'s Update log, the latest values applied',
       'Print the R-SER-03 page or download a Word copy',
       'Use Insights: trend, Pareto with drill-down, and cross-filtered charts',
+    ],
+    // NAR-026 (2026-11-26): the Update log is not shown in Audit Mode.
+    notAudited: [
+      'Open a report\'s Update log -- every change, from what to what, by whom and when (not shown in Audit Mode)',
+      'Load the old FFR update sheet into each report\'s Update log, the latest values applied (not shown in Audit Mode)',
     ],
     records: ['field_failure_reports', 'field_failure_register', 'ffr_history', 'ffr_sheet_updates', 'user_signatures', 'rpc:ffr_call_context', 'rpc:ffr_load_sheet_updates', 'audit_log'],
     rules: [

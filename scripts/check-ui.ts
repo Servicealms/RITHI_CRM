@@ -2573,7 +2573,11 @@ console.log('\n-- a Training Form is signed by the people it names; the signatur
   const prof = readFileSync('src/modules/Profile.tsx', 'utf8');
   eq('...and My Profile opens the tab a link names', /params\.get\('tab'\)/.test(prof) && /<TrainingToSign \/>/.test(prof), true);
   const um = readFileSync('src/modules/UserMasterView.tsx', 'utf8');
-  eq('the tracker is on User Master for whoever edits its details', /\{editable && !editing && <SignatureTracker rows=\{sigRows\} err=\{sigErr\} \/>\}/.test(um), true);
+  // THE STRIP IS GONE (the user, 2026-11-26: "Remove this Strip from User Master").
+  eq('the Signatures saved strip is not on User Master', /<SignatureTracker\b|from '..\/components\/people\/SignatureTracker'/.test(um) || existsSync('src/components/people/SignatureTracker.tsx'), false);
+  eq('...the FFR Update log and its loader are not shown in Audit Mode (NAR-026)',
+    /editing != null && !auditOn && <FfrHistory/.test(readFileSync('src/modules/FieldFailureReport.tsx', 'utf8'))
+      && /can\('bulk\.upload'\) && !auditOn && <FfrSheetUpdateLoader/.test(readFileSync('src/modules/FieldFailureReport.tsx', 'utf8')), true);
   const s455 = readFileSync('supabase/migrations/0455_signature_on_user_master.sql', 'utf8');
   eq('...the signature itself is shown one person at a time, every look audited in the same call (0455)',
     /'signature\.view'/.test(s455)

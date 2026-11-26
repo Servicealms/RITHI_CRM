@@ -762,6 +762,8 @@ against the call it was fitted to.
     person tagged **CAPA Responsibility** on the User Master — tag somebody
     there to add them. A report that already names someone no longer on the
     list still shows that name.
+  - **The Update log and ⭱ Load old update log are not shown while Audit Mode
+    is on** (the change is still recorded).
   - **⭱ Load old update log** loads the old *Field Failure Register – Update*
     sheet (export it as CSV). Each row goes to the report with the same **FFR
     No and UCN** and is added to its **Update log**, dated by the sheet's
@@ -1428,15 +1430,12 @@ typed into a form that reads it.
   > and use **＋ Add tag** / **− Remove tag** in the bar. A person tagged
   > **CAPA Responsibility** (and Active) is offered as the CAPA (if reqd)
   > Responsibility on the Field Failure Register.
-  > **Signatures saved: X of Y** (above the list, for whoever may edit these
-  > details): how many active logins have saved a signature, **Show who** for
-  > those still to do and when each one saved theirs, and **⬇ CSV**.
   > **Disabling a login sets the person inactive here**: 🔒 Disable login turns
   > the person's **Active** to No on User Master. Enabling the login again does
   > not turn Active back on; do that on User Master if it is meant.
   > **No signature is asked of a test account or an inactive user**: tag a
   > test login **Test Account** in Tags (any capitals), or mark the person
-  > inactive. They read **Not required**, are not counted in Signatures saved,
+  > inactive. They read **Not required**,
   > and never get the "Add your signature" reminder. A signature already saved
   > still reads Saved.
   > The list has a **Signature** column (Saved with the date / Not
