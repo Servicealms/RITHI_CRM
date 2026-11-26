@@ -13,7 +13,7 @@ import { supabaseConfigured, getPmHideUnsolvedMissed, setPmHideUnsolvedMissed } 
 //
 // A Missed PM call is one Added On after the month it is registered for
 // (missedPm.ts). With the rule on, the PM Calls register leaves such a call out
-// while it is not Solved (or Cancelled), and says how many it left out. It is
+// unless it is Solved -- a cancelled one too -- and says how many. It is
 // a view rule: no call is changed, and switching it off shows them all again.
 // ===========================================================================
 export function PmHideRuleCard() {
@@ -36,7 +36,7 @@ export function PmHideRuleCard() {
     if (!res.ok) { setMsg({ tone: 'error', text: res.error ?? 'Not saved.' }); return; }
     setOn(next);
     setMsg({ tone: 'ok', text: next
-      ? 'On. The PM Calls register hides Missed PM calls that are not yet solved.'
+      ? 'On. PM Calls, Pending Calls and search hide Missed PM calls that are not solved, cancelled ones included.'
       : 'Off. The PM Calls register shows every call.' });
   };
 
@@ -44,8 +44,9 @@ export function PmHideRuleCard() {
     <SectionCard title="PM Calls — hide unsolved Missed PM calls">
       <p className="muted" style={{ marginTop: 0 }}>
         A <b>Missed PM</b> is a PM call added after the month it is registered for. With this on, the PM Calls
-        register leaves out a Missed PM call while it is <b>not solved</b>, and says how many it left out. Once
-        solved it shows again. No call is changed, and switching this off shows them all.
+        register, Pending Calls and the search at the top leave out a Missed PM call unless it is <b>solved</b> (a
+        cancelled one is left out too), and say how many they left out. Field and Installation calls are never
+        affected. No call is changed, and switching this off shows them all.
       </p>
       <label className="row" style={{ gap: 8, alignItems: 'center' }}>
         <input type="checkbox" checked={!!on} disabled={!may || busy || on === null} onChange={(e) => void flip(e.target.checked)} />

@@ -1527,8 +1527,8 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       )}
       {isPm && hiddenByRule > 0 && (
         <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
-          {hiddenByRule}{moreAvailable || (searching && searchCapped) ? '+' : ''} unsolved Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden
-          by the rule on <b>Admin Config → PM Calls</b>. A Missed PM call shows again once it is solved.
+          {hiddenByRule}{moreAvailable || (searching && searchCapped) ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden
+          (not solved, or cancelled) by the rule on <b>Admin Config → PM Calls</b>. A Missed PM call shows again once it is solved.
         </p>
       )}
 

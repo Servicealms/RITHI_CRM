@@ -10184,6 +10184,7 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
     eq('the PM hide rule hides an unsolved Missed PM and shows a solved one',
       hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Unsolved') && !hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Solved')
         && !hiddenByMissedPmRule(true, '2026-03-10', '2026-03-20', 'Unsolved') && !hiddenByMissedPmRule(false, '2026-03-10', '2026-10-01', 'Unsolved'), true);
+    eq('...and a cancelled Missed PM is hidden too', hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Cancelled'), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);
   }
   eq('My Workload loads once the access scope is ready',
