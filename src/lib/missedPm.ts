@@ -26,11 +26,27 @@ export function isMissedPm(regDate: unknown, addedOn: unknown): boolean {
 
 export const MISSED_PM_LABEL = 'Missed PM';
 
-/** THE PM HIDE RULE (Admin Config, 2026-11-26): a Missed PM call is left out of
- *  the PM Calls register unless it is SOLVED -- cancelled ones too (the user:
- *  "Hide cancelled too, only in PM Calls"). A solved one is shown. */
-export function hiddenByMissedPmRule(ruleOn: boolean, regDate: unknown, addedOn: unknown, callState: unknown): boolean {
-  if (!ruleOn || !isMissedPm(regDate, addedOn)) return false;
-  return String(callState ?? '').trim() !== 'Solved';
+/** THE PM HIDE RULES (Admin Config) -- three tick boxes, any of them on (the
+ *  user, 2026-11-27: "Hide All PM Calls with Flag Missed PM, Hide All Unsolved
+ *  PM Calls with Flag Missed PM, Hide All Canceled PM Calls with Flag Missed PM
+ *  -- It is multiple tick box"):
+ *   all       every Missed PM call, solved ones too;
+ *   unsolved  a Missed PM call that is neither Solved nor Cancelled -- open,
+ *             report pending or reopened;
+ *   cancelled a cancelled Missed PM call.
+ *  (Until 2026-11-27 "unsolved" also hid cancelled calls; cancelled is its own
+ *  box now.) A call that is not a Missed PM is never hidden. */
+export interface PmHideRules { all: boolean; unsolved: boolean; cancelled: boolean }
+export const NO_PM_HIDE: PmHideRules = { all: false, unsolved: false, cancelled: false };
+export const pmHideOn = (r: PmHideRules) => r.all || r.unsolved || r.cancelled;
+export function hiddenByMissedPmRule(rules: PmHideRules, regDate: unknown, addedOn: unknown, callState: unknown): boolean {
+  if (!pmHideOn(rules) || !isMissedPm(regDate, addedOn)) return false;
+  if (rules.all) return true;
+  const s = String(callState ?? '').trim();
+  if (s === 'Cancelled') return rules.cancelled;
+  return rules.unsolved && s !== 'Solved';
 }
+/** What the rules hide, in words, for the line that says how many were hidden. */
+export const pmHideWhat = (r: PmHideRules) => (r.all ? 'every Missed PM call'
+  : [r.unsolved && 'not solved', r.cancelled && 'cancelled'].filter(Boolean).join(' or '));
 export const MISSED_PM_TITLE = 'Added On after the month it is registered for';

@@ -4,8 +4,8 @@ import { SelectPicker } from '../components/ui/SelectPicker';
 import { useNavigate } from 'react-router-dom';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Toolbar, SearchBox, FacetChips } from '../components/ui/ui';
-import { listPendingCalls, reallocateCalls, callFamily, supabaseConfigured, getPmHideUnsolvedMissed, type CallState, type CallFamily } from '../lib/supabase';
-import { hiddenByMissedPmRule } from '../lib/missedPm';
+import { listPendingCalls, reallocateCalls, callFamily, supabaseConfigured, getPmHideRules, type CallState, type CallFamily } from '../lib/supabase';
+import { hiddenByMissedPmRule, pmHideOn, pmHideWhat, NO_PM_HIDE, type PmHideRules } from '../lib/missedPm';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
 import { allowsAllottee, useAccessScope, useTeamEngineers } from '../lib/access';
 import { csvExport, fmtLongDate, fmtLongSmart, timeAgo } from '../lib/format';
@@ -124,13 +124,13 @@ export function PendingCalls() {
   // THE PM HIDE RULE (Admin Config; the user, 2026-11-26: "2. Yes" -- Pending
   // Calls follows it too): a PM call the PM register hides is not listed or
   // counted here either, and a line says how many.
-  const [pmRule, setPmRule] = useState(false);
+  const [pmRule, setPmRule] = useState<PmHideRules>(NO_PM_HIDE);
   useEffect(() => {
     if (!supabaseConfigured()) return;
-    getPmHideUnsolvedMissed().then(setPmRule).catch(() => { /* unread: nothing hidden */ });
+    getPmHideRules().then(setPmRule).catch(() => { /* unread: nothing hidden */ });
   }, []);
-  const ruleHides = (r: Row) => pmRule && callFamily(r.callType) === 'pm' && hiddenByMissedPmRule(true, r.regDate, r.addedOn, r.callState ?? r.state);
-  const shown = useMemo(() => (pmRule ? rows.filter((r) => !ruleHides(r)) : rows),
+  const ruleHides = (r: Row) => pmHideOn(pmRule) && callFamily(r.callType) === 'pm' && hiddenByMissedPmRule(pmRule, r.regDate, r.addedOn, r.callState ?? r.state);
+  const shown = useMemo(() => (pmHideOn(pmRule) ? rows.filter((r) => !ruleHides(r)) : rows),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [rows, pmRule]);
   const hiddenByRule = rows.length - shown.length;
@@ -279,8 +279,8 @@ export function PendingCalls() {
 
       {hiddenByRule > 0 && (
         <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
-          {hiddenByRule}{moreAvailable ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden (not solved, or cancelled)
-          by the rule on <b>Admin Config → PM Calls</b>.
+          {hiddenByRule}{moreAvailable ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden ({pmHideWhat(pmRule)})
+          by the rules on <b>Admin Config → PM Calls</b>.
         </p>
       )}
       <DataTable<Row>

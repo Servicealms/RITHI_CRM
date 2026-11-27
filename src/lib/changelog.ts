@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.281',
+    date: '2026-11-27',
+    title: 'PM Calls: three tick boxes for hiding Missed PM calls',
+    changes: [
+      'Admin Config → PM Calls now has three tick boxes, any of them on: hide all PM calls flagged Missed PM; hide the unsolved ones; hide the cancelled ones. The PM register, Pending Calls and the search at the top follow them, and say how many they hid.',
+      'With “all” ticked, the Missed PM chips on the PM register are hidden too.',
+      'The unsolved box no longer hides cancelled calls — tick the cancelled box for those.',
+      'The search at the top now treats a reopened Missed PM call the way the PM register does.',
+    ],
+  },
+  {
     version: '0.10.280',
     date: '2026-11-27',
     title: 'DCCR History is kept apart from Call History, with a page of its own',
