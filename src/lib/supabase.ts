@@ -5814,6 +5814,55 @@ export async function uploadRows(
   return { ok: true, written };
 }
 
+// ---------------------------------------------------------------------------
+// CALL HISTORY SCREEN (0495; the user, 2026-11-27): what was loaded, and the
+// calls themselves. The summary is COUNTED BY THE DATABASE (call_history_summary,
+// security_invoker), never by adding up the rows a screen happened to load.
+// ---------------------------------------------------------------------------
+export interface CallHistoryGroup {
+  record_year: number | null; source: string; register: string;
+  calls: number; duplicates: number; without_serial: number;
+  first_call_at: string | null; last_call_at: string | null;
+  last_loaded_at: string | null; last_loaded_by: string | null;
+}
+export async function callHistorySummary(): Promise<CallHistoryGroup[]> {
+  const c = must();
+  return allRows<CallHistoryGroup>((from, to) =>
+    c.from('call_history_summary').select('*')
+      .order('record_year', { ascending: false, nullsFirst: false })
+      .order('source', { ascending: true })
+      .order('register', { ascending: true })
+      .range(from, to));
+}
+
+export interface CallHistoryFilter { year?: number | null; source?: string; register?: string; duplicate?: boolean; q?: string }
+export const CALL_HISTORY_COLS = 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,contract_type,call_status,solved_at,source,record_year,duplicate,loaded_at,loaded_by';
+
+function callHistoryQuery(f: CallHistoryFilter, cols: string, count?: 'exact') {
+  let q = must().from('call_history').select(cols, count ? { count } : undefined);
+  if (f.year != null) q = q.eq('record_year', f.year);
+  // '(not recorded)' is how the summary names a blank source or call type.
+  if (f.source) q = f.source === '(not recorded)' ? q.eq('source', '') : q.eq('source', f.source);
+  if (f.register) q = f.register === '(not recorded)' ? q.is('register', null) : q.eq('register', f.register);
+  if (f.duplicate) q = q.eq('duplicate', true);
+  const t = searchTerm(f.q ?? '');
+  if (t) q = q.or(['ucn', 'call_no', 'party_name', 'item_name', 'serial'].map((k) => `${k}.ilike.%${t}%`).join(','));
+  return q.order('call_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false });
+}
+
+/** One page of history calls under the filter, and the EXACT number matching it. */
+export async function listCallHistory(f: CallHistoryFilter, from: number, to: number): Promise<{ rows: Record<string, unknown>[]; total: number | null }> {
+  const { data, error, count } = await callHistoryQuery(f, CALL_HISTORY_COLS, 'exact').range(from, to);
+  if (error) throw new Error(errMsg(error));
+  return { rows: (data ?? []) as unknown as Record<string, unknown>[], total: count ?? null };
+}
+
+/** Every history call under the filter, for a download (paged; capped). */
+export async function allCallHistory(f: CallHistoryFilter, cap = 100000): Promise<Record<string, unknown>[]> {
+  return allRows<Record<string, unknown>>((from, to) =>
+    callHistoryQuery(f, CALL_HISTORY_COLS).range(from, to) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: { message?: string; code?: string } | null }>, cap);
+}
+
 export async function countTable(table: string): Promise<number | null> {
   const c = getSupabase(); if (!c) return null;
   const { count, error } = await c.from(table).select('*', { count: 'exact', head: true });

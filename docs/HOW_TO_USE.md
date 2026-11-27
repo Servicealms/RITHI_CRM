@@ -1782,6 +1782,27 @@ typed into a form that reads it.
   > **both** a product and a serial says so rather than guessing — a serial on
   > its own is not a machine.
 
+- **Call History** `/call-history` — the calls before RITHI (up to 2025) in one
+  place: **upload** a file, see **what has been loaded**, and **read the calls**.
+  Administrators only to begin with; tick it for another role on Roles &
+  Permissions.
+  - **Upload a file** is the same Call History upload as Bulk Uploads: choose
+    the **Source**, the **Year** (for a yearly sheet) and the **Call Type**
+    (Field, Installation, PM or Mixed) first. It needs *Load registers in bulk*.
+  - **What has been loaded** has one row per **year, source and call type**: how
+    many calls, how many are flagged **Duplicate**, how many have **no serial**,
+    the first and last call date, and when and by whom it was last loaded. The
+    numbers are counted by the database, so they are exact. A call that came from
+    two sources or years is counted once, under the year it is shown with.
+  - **No serial** means the call is stored but **not listed on Machine History**,
+    which finds an old call by its serial. Check the file's serial heading.
+  - **Click a summary row** to list those calls below, or filter by year,
+    source, call type or **Duplicates only**, and search by UC No., Call No.,
+    party, product or serial. **⭳ Excel / CSV** downloads what the filter shows
+    (it needs *Export / download CSV*).
+  > History only: nothing in RITHI is created or changed from these calls. Each
+  > machine's own old calls are on **Machine History** under *Call history*.
+
 - **Objective** `/objective` — the year's objectives with targets, owners and the
   month-by-month actual.
   - **Total** is worked out for every calculated objective, as the shared sheet

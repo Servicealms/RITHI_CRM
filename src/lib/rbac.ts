@@ -206,6 +206,11 @@ export const MODULES: ModuleDef[] = [
   // because a DEMO unit has no call to hang off: the register stands alone and
   // the call is an optional link, not the other way round.
   { path: '/machine-history', label: 'Machine History' },
+  // CALL HISTORY (0495) -- what was loaded of the calls before RITHI, the calls
+  // themselves and the upload (the user, 2026-11-27: "a UI for me (Admin)").
+  // `admin: true` keeps the key out of NON_ADMIN_MODULES; 0495 grants it to
+  // admin and technical_support. Others are ticked on Roles & Permissions.
+  { path: '/call-history', label: 'Call History', admin: true },
   // PART SEARCH -- every role (the user, 2026-10-01); 0308 merges the key into
   // every configured role, since on a project in use a code default reaches
   // nobody.
@@ -740,6 +745,8 @@ export const PERM_TREE: PermHeader[] = [
     // and grants nothing. `check:ui` compares the two now, which is what the
     // comment above claimed and nothing did.
     { path: '/machine-history', label: 'Machine History', actions: ['masters.view'] },
+    // The upload on it is bulk.upload's, the download export.data's (0495).
+    { path: '/call-history', label: 'Call History', actions: ['bulk.upload', 'export.data'] },
     // READ ONLY FOR EVERYONE, Admin included: the page has no action to tick.
     { path: '/part-search', label: 'Part Search', actions: [] },
   ] },

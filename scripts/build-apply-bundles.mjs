@@ -601,7 +601,10 @@ const MODULES = {
             '0493_capa_not_required.sql',
             // ...and the words are a setting, "No" by default, changed on Admin
             // Config and applied to every report (the user, 2026-11-26).
-            '0494_ffr_capa_none_label.sql'],
+            '0494_ffr_capa_none_label.sql',
+            // The Call History screen: what was loaded, by year x source x call
+            // type, and its page key for administrators (the user, 2026-11-27).
+            '0495_call_history_screen.sql'],
   },
   notifications: {
     title: 'Notifications',

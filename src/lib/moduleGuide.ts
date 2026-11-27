@@ -88,6 +88,23 @@ export const MODULE_GUIDE: ModuleGuideEntry[] = [
     ],
   },
   {
+    route: '/call-history',
+    purpose: 'The calls before RITHI (up to 2025): what has been loaded, by year, source and call type, the calls themselves, and the upload.',
+    does: [
+      'Upload a Call History file — choose the Source, the Year for a yearly sheet, and the Call Type first',
+      'See what has been loaded: calls, duplicates and calls with no serial for each year, source and call type, with when and by whom',
+      'Click a summary row, or filter by year, source, call type or Duplicates only, and search by UC No., Call No., party, product or serial',
+      'Download the filtered calls to Excel (dates as dates) or CSV',
+    ],
+    records: ['call_history', 'call_history_summary', 'audit_log'],
+    rules: [
+      'Administrators only, unless the page is ticked for another role on Roles & Permissions',
+      'History only — nothing in RITHI is created or changed from these calls',
+      'Uploading needs “Load registers in bulk”; downloading needs “Export / download CSV”',
+      'A call with no serial is stored but not listed on Machine History',
+    ],
+  },
+  {
     route: '/part-search',
     purpose: 'Look a part up: every active part with its Part Code, Description, Spare / Consumable and the products it fits.',
     does: [
