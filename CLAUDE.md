@@ -166,8 +166,8 @@ on testing the old shape. **When a migration replaces a definition, move the
   a report rather than several with `\echo` between them; that editor shows one
   result grid. `check:ui` refuses a meta-command in any hand-run SQL file.
   **Always give the LINK, not just the file name** (user's ask, 2026-09-03):
-  `https://github.com/neurolooom-eng/RITHI_CRM/blob/main/<path>` to read it,
-  `https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/<path>` to
+  `https://github.com/Servicealms/RITHI_CRM/blob/main/<path>` to read it,
+  `https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/<path>` to
   copy it. Same for a snippet pasted into chat — say which file it came from
   and link that file.
 - **`docs/REQUIREMENTS.md` is GENERATED — never hand-edit it.** ONE document,

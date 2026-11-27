@@ -20,7 +20,7 @@
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const GH = Deno.env.get('GITHUB_DISPATCH_TOKEN') ?? '';
-const REPO = 'neurolooom-eng/RITHI_CRM';
+const REPO = 'Servicealms/RITHI_CRM';
 const WORKFLOW = 'daily-report-crops.yml';
 
 const CORS = {

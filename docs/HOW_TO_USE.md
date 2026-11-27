@@ -1220,7 +1220,7 @@ set to zero.
   > party too but never decide it here. A machine with **no sale entry and no
   > transfer** keeps the party it was loaded with. To see why a machine shows
   > the party it does, run
-  > [`_trace_this_machine.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/_trace_this_machine.sql)
+  > [`_trace_this_machine.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/_trace_this_machine.sql)
   > with its product and serial: every register that names it, and what the
   > rule answers.
 
