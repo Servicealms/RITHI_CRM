@@ -47,6 +47,8 @@ const NEEDS = {
   // does not exist`.
   importedTs: [`to_regprocedure('public.imported_ts(jsonb,text)')`, 'imported_ts()',
                '0215_visit_dates_fall_back_to_first_booked.sql (apply bundle: performance)'],
+  dccrCallHistory: [`to_regclass('public.dccr_call_history')`, 'the dccr_call_history table',
+                    '0496_dccr_history_apart.sql (apply bundle: daily_review)'],
   coverCode: [`to_regprocedure('public.cover_code(text)')`, 'cover_code()',
               '0208_cover_code_normalised.sql (apply bundle: data_integrity)'],
   // The Product Database's computed Service Engineer (0235). Its OTHER
@@ -604,7 +606,10 @@ const MODULES = {
             '0494_ffr_capa_none_label.sql',
             // The Call History screen: what was loaded, by year x source x call
             // type, and its page key for administrators (the user, 2026-11-27).
-            '0495_call_history_screen.sql'],
+            '0495_call_history_screen.sql',
+            // DCCR History is its own table and screen, apart from Call History
+            // (the user, 2026-11-27: "2 Separate ... Containers").
+            '0496_dccr_history_apart.sql'],
   },
   notifications: {
     title: 'Notifications',
@@ -639,7 +644,7 @@ const MODULES = {
       'Also grants the Objective page to every role that can see KPI & Failure',
       'Analysis --- the same audience, and the KPI workbook export moved onto it.',
     ],
-    needs: ['profiles', 'rbac'],
+    needs: ['profiles', 'rbac', 'dccrCallHistory'],
     files: ['0130_quality_objectives.sql', '0132_objective_recalc.sql', '0133_objective_serial_filter.sql',
              '0134_objective_evidence_rows.sql', '0135_evidence_product_master.sql',
              '0136_objective_periods.sql', '0137_objective_solve_cutoff.sql',
@@ -720,7 +725,10 @@ const MODULES = {
             '0443_objective_tta_evidence.sql',
             // The evidence line names the registration date too (0473):
             // restates 0443's objective_evidence() with one expression changed.
-            '0473_objective_evidence_names_registration.sql'],
+            '0473_objective_evidence_names_registration.sql',
+            // The Recent Failure Rate's history arm reads DCCR History (0497),
+            // apart from Call History since 0496 (daily_review). Restates 0431.
+            '0497_failure_rate_reads_dccr_history_table.sql'],
   },
   validation: {
     title: 'Software Validation',

@@ -77,6 +77,9 @@ export const NAV: NavGroup[] = [
       // loaded, the calls, and the upload. Beside Machine History, which reads
       // the same calls one machine at a time.
       { to: '/call-history', label: 'Call History', icon: '📜' },
+      // DCCR HISTORY (0496): the old DCCR register's calls, apart from Call
+      // History -- "2 Separate ... Containers / Schema -- and Same for View".
+      { to: '/dccr-history', label: 'DCCR History', icon: '🗂' },
       // PART SEARCH (the user, 2026-10-01): a third "look something up"
       // screen -- read only for everyone, Admin included, and no download.
       { to: '/part-search', label: 'Part Search', icon: '🧩' },

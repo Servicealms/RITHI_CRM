@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.280',
+    date: '2026-11-27',
+    title: 'DCCR History is kept apart from Call History, with a page of its own',
+    changes: [
+      'The old DCCR register\u2019s calls are now DCCR History: their own table, their own page (Overview → DCCR History, administrators to begin with) and their own upload (DCCR Register — historical). They are no longer part of Call History.',
+      'Every DCCR register call already in Call History moved across, whole. Where a yearly sheet had replaced a DCCR call on Call History, the yearly sheet stays there and the DCCR call is on DCCR History; neither is flagged Duplicate any more.',
+      'The Recent Failure Rate counts the DCCR register\u2019s failures from DCCR History, with the DCCR register\u2019s own product, serial and date.',
+      'The Call History upload no longer offers “DCCR register” as a Source. Machine History shows Call History only.',
+    ],
+  },
+  {
     version: '0.10.279',
     date: '2026-11-27',
     title: 'Call History: see what has been loaded, read the calls, and upload — on one page',

@@ -91,7 +91,7 @@ export const MODULE_GUIDE: ModuleGuideEntry[] = [
     route: '/call-history',
     purpose: 'The calls before RITHI (up to 2025): what has been loaded, by year, source and call type, the calls themselves, and the upload.',
     does: [
-      'Upload a Call History file — choose the Source, the Year for a yearly sheet, and the Call Type first',
+      'Upload a Call History file — choose the Source, the Year for a yearly sheet, and the Call Type first (the DCCR register loads on DCCR History)',
       'See what has been loaded: calls, duplicates and calls with no serial for each year, source and call type, with when and by whom',
       'Click a summary row, or filter by year, source, call type or Duplicates only, and search by UC No., Call No., party, product or serial',
       'Download the filtered calls to Excel (dates as dates) or CSV',
@@ -102,6 +102,23 @@ export const MODULE_GUIDE: ModuleGuideEntry[] = [
       'History only — nothing in RITHI is created or changed from these calls',
       'Uploading needs “Load registers in bulk”; downloading needs “Export / download CSV”',
       'A call with no serial is stored but not listed on Machine History',
+    ],
+  },
+  {
+    route: '/dccr-history',
+    purpose: "The old DCCR register's calls (2025 and before), apart from Call History: what has been loaded, by year and call type, the calls themselves, and the upload.",
+    does: [
+      'Upload an old DCCR register file — each row keeps its call here and files its review',
+      'See what has been loaded: calls and calls with no serial for each year and call type, with when and by whom',
+      'Click a summary row, or filter by year or call type, and search by UC No., Call No., party, product or serial',
+      'Download the filtered calls to Excel (dates as dates) or CSV',
+    ],
+    records: ['dccr_call_history', 'dccr_call_history_summary', 'dccr_history_import', 'call_reviews', 'audit_log'],
+    rules: [
+      'Administrators only, unless the page is ticked for another role on Roles & Permissions',
+      'Apart from Call History: a call in both is in both, and neither is flagged Duplicate',
+      'History only — no call, visit or Field Failure Report is created; the Recent Failure Rate counts its failures through their reviews',
+      'Not on Machine History',
     ],
   },
   {
