@@ -15,7 +15,8 @@ import type { PmHideRules } from '../lib/missedPm';
 //
 // A Missed PM call is one Added On after the month it is registered for
 // (missedPm.ts). Either rule applies to the PM Calls register, Pending Calls
-// and the search at the top, which say how many they left out. View rules
+// and the search at the top; no line there says how many (the user, 2026-11-27:
+// "Remove the line"). View rules
 // only: no call is changed, and switching them off shows the calls again.
 // ===========================================================================
 const RULES: { key: PmHideRuleKey; field: keyof PmHideRules; label: string; on: string }[] = [
@@ -60,8 +61,8 @@ export function PmHideRuleCard() {
     <SectionCard title="PM Calls — hide Missed PM calls">
       <p className="muted" style={{ marginTop: 0 }}>
         A <b>Missed PM</b> is a PM call added after the month it is registered for. Tick any of these: the PM Calls
-        register, Pending Calls and the search at the top leave out the Missed PM calls each ticked rule names, and
-        say how many they left out. Field and Installation calls are never affected. No call is changed, and unticking
+        register, Pending Calls and the search at the top leave out the Missed PM calls each ticked rule names.
+        No note on those screens says calls were left out. Field and Installation calls are never affected. No call is changed, and unticking
         a rule shows its calls again.
       </p>
       {RULES.map((r) => (

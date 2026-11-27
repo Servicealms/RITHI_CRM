@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.282',
+    date: '2026-11-27',
+    title: 'PM Calls: no line counting the Missed PM calls the rules hide',
+    changes: [
+      'The PM register and Pending Calls no longer show a line saying how many Missed PM calls the Admin Config rules hid. Which rules are on is shown on Admin Config → PM Calls.',
+    ],
+  },
+  {
     version: '0.10.281',
     date: '2026-11-27',
     title: 'PM Calls: three tick boxes for hiding Missed PM calls',

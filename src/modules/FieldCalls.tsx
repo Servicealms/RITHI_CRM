@@ -38,7 +38,7 @@ import { useUserNames, nameForUserId } from '../lib/userNames';
 import { logAudit } from '../lib/audit';
 import './fieldcalls.css';
 import { partial, searchScope } from '../lib/exportscope';
-import { isMissedPm, hiddenByMissedPmRule, pmHideOn, pmHideWhat, NO_PM_HIDE, type PmHideRules, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
+import { isMissedPm, hiddenByMissedPmRule, NO_PM_HIDE, type PmHideRules, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
 import {
   FC_CONTRACT_TYPE,
   FIELD_HEADERS,
@@ -1193,8 +1193,8 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   const missedOk = (row: Rec) => !isPm || !missedPmFilter || pmHideRule.all || missedOf(row) === missedPmFilter;
   // THE PM HIDE RULES (Admin Config; the user, 2026-11-26 and -27: unsolved
   // Missed PM calls, and "have both Rules" -- every Missed PM call): left out of
-  // this register while on. Said on screen (hiddenByRule), so a shorter list
-  // never reads as fewer calls.
+  // this register while on. NO LINE SAYS HOW MANY (the user, 2026-11-27:
+  // "Remove the line"); Admin Config -> PM Calls shows which rules are on.
   const [pmHideRule, setPmHideRule] = useState<PmHideRules>(NO_PM_HIDE);
   useEffect(() => {
     if (!isPm || !supabaseConfigured()) return;
@@ -1203,9 +1203,6 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
     return () => { live = false; };
   }, [isPm]);
   const ruleHides = (row: Rec) => isPm && row._pending !== true && hiddenByMissedPmRule(pmHideRule, row.regDate, row.addedOn, row.callState);
-  const hiddenByRule = useMemo(() => (isPm && pmHideOn(pmHideRule) ? listedRows.filter(ruleHides).length : 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [listedRows, pmHideRule, isPm]);
   const visibleRows = useMemo(
     () => listedRows.filter((row) => pendingOk(row) && missedOk(row) && !ruleHides(row)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1531,12 +1528,6 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           storeKey={`calls.${config.callType}.missedPm`}
           more={moreAvailable || (searching && searchCapped)}
         />
-      )}
-      {isPm && hiddenByRule > 0 && (
-        <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
-          {hiddenByRule}{moreAvailable || (searching && searchCapped) ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden
-          ({pmHideWhat(pmHideRule)}) by the rules on <b>Admin Config → PM Calls</b>.{pmHideRule.all ? '' : ' A solved Missed PM call is shown.'}
-        </p>
       )}
 
       {allotBlocked && (
