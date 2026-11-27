@@ -30,7 +30,7 @@ import {
   updateFieldCall,
 } from '../lib/sheets';
 import { formatDay, formatDayTime } from '../lib/dates';
-import { supabaseConfigured, getPmHideUnsolvedMissed, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
+import { supabaseConfigured, getPmHideRules, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
 import { useAuditMode } from '../lib/auditMode';
 import { useCallFieldMasters } from './callFields';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
@@ -38,7 +38,7 @@ import { useUserNames, nameForUserId } from '../lib/userNames';
 import { logAudit } from '../lib/audit';
 import './fieldcalls.css';
 import { partial, searchScope } from '../lib/exportscope';
-import { isMissedPm, hiddenByMissedPmRule, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
+import { isMissedPm, hiddenByMissedPmRule, pmHideOn, pmHideWhat, NO_PM_HIDE, type PmHideRules, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
 import {
   FC_CONTRACT_TYPE,
   FIELD_HEADERS,
@@ -1188,19 +1188,22 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // strip was removed on the user's word, 2026-10-14: "I dont want this
   // grouping"; the column stays.)
   const pendingOk = (row: Rec) => !pendingReasonFilter || pendingReasonOf(row) === pendingReasonFilter;
-  const missedOk = (row: Rec) => !isPm || !missedPmFilter || missedOf(row) === missedPmFilter;
-  // THE PM HIDE RULE (Admin Config; the user, 2026-11-26): an UNSOLVED Missed
-  // PM call is left out of this register while the rule is on. Said on screen
-  // (hiddenByRule), so a shorter list never reads as fewer calls.
-  const [pmHideRule, setPmHideRule] = useState(false);
+  // A Missed PM filter picked before every Missed PM call was hidden would
+  // empty the list with its chips gone: it is ignored while that box is ticked.
+  const missedOk = (row: Rec) => !isPm || !missedPmFilter || pmHideRule.all || missedOf(row) === missedPmFilter;
+  // THE PM HIDE RULES (Admin Config; the user, 2026-11-26 and -27: unsolved
+  // Missed PM calls, and "have both Rules" -- every Missed PM call): left out of
+  // this register while on. Said on screen (hiddenByRule), so a shorter list
+  // never reads as fewer calls.
+  const [pmHideRule, setPmHideRule] = useState<PmHideRules>(NO_PM_HIDE);
   useEffect(() => {
     if (!isPm || !supabaseConfigured()) return;
     let live = true;
-    getPmHideUnsolvedMissed().then((v) => { if (live) setPmHideRule(v); }).catch(() => { /* rule unread: nothing hidden */ });
+    getPmHideRules().then((v) => { if (live) setPmHideRule(v); }).catch(() => { /* rules unread: nothing hidden */ });
     return () => { live = false; };
   }, [isPm]);
   const ruleHides = (row: Rec) => isPm && row._pending !== true && hiddenByMissedPmRule(pmHideRule, row.regDate, row.addedOn, row.callState);
-  const hiddenByRule = useMemo(() => (isPm && pmHideRule ? listedRows.filter(ruleHides).length : 0),
+  const hiddenByRule = useMemo(() => (isPm && pmHideOn(pmHideRule) ? listedRows.filter(ruleHides).length : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [listedRows, pmHideRule, isPm]);
   const visibleRows = useMemo(
@@ -1514,7 +1517,11 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
         storeKey={`calls.${config.callType}.pendingReason`}
         more={moreAvailable || (searching && searchCapped)}
       />
-      {isPm && (
+      {/* THE MISSED PM GROUPING GOES WITH THEM (the user, 2026-11-27: "This should
+          hide the Missed PM Grouping as well"): with every Missed PM call hidden
+          there is nothing for the chips to pick. With only the unsolved or
+          cancelled box ticked, solved ones are still on screen, so the chips stay. */}
+      {isPm && !pmHideRule.all && (
         <FacetChips
           options={missedPmCounts}
           value={missedPmFilter}
@@ -1528,7 +1535,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       {isPm && hiddenByRule > 0 && (
         <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
           {hiddenByRule}{moreAvailable || (searching && searchCapped) ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden
-          (not solved, or cancelled) by the rule on <b>Admin Config → PM Calls</b>. A Missed PM call shows again once it is solved.
+          ({pmHideWhat(pmHideRule)}) by the rules on <b>Admin Config → PM Calls</b>.{pmHideRule.all ? '' : ' A solved Missed PM call is shown.'}
         </p>
       )}
 

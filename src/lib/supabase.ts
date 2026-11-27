@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { hitFor, searchTerm, MIN_CHARS, PER_KIND, type HitKind, type SearchHit } from './globalSearch';
-import { hiddenByMissedPmRule } from './missedPm';
+import { hiddenByMissedPmRule, pmHideOn, type PmHideRules } from './missedPm';
 import { ffrWritable } from './ffr';
 export { machineKey } from './machine';
 import { machineKey } from './machine';
@@ -2942,14 +2942,18 @@ export async function globalSearchKind(kind: HitKind, raw: string): Promise<Sear
   };
   switch (kind) {
     case 'call': {
-      const found = await rows(c.from('calls').select('ucn,call_number,call_type,party_name,product_name,serial,status,open_state,reg_date,added_on,cancelled_at')
+      const found = await rows(c.from('calls').select('ucn,call_number,call_type,party_name,product_name,serial,status,open_state,reg_date,added_on,cancelled_at,reopened_at')
         .or(like(['ucn', 'call_number', 'party_name', 'serial', 'product_name']))
         .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(n));
       // THE PM HIDE RULE reaches search too (the user, 2026-11-26: "2. Yes"):
       // a PM call it hides on the PM register is not offered here either.
-      const ruleOn = await getPmHideUnsolvedMissed().catch(() => false);
-      return found.filter((r) => !(ruleOn && callFamily(r.call_type) === 'pm'
-        && hiddenByMissedPmRule(true, r.reg_date, r.added_on, r.cancelled_at ? 'Cancelled' : r.open_state))).map(hitFor.call);
+      // The call's state as every register reads it (dbToCall): a REOPENED call
+      // whose open_state still says Solved is Reopened, so the unsolved rule
+      // hides it here as it does on the register (review, 2026-11-27).
+      const rules = await getPmHideRules().catch(() => ({ all: false, unsolved: false, cancelled: false }));
+      return found.filter((r) => !(pmHideOn(rules) && callFamily(r.call_type) === 'pm'
+        && hiddenByMissedPmRule(rules, r.reg_date, r.added_on,
+             r.cancelled_at ? 'Cancelled' : r.reopened_at ? 'Reopened' : r.open_state))).map(hitFor.call);
     }
     case 'request':
       // PENDING requests only: a registered one is found as its call, and a
@@ -3710,21 +3714,26 @@ export async function getDccrAutoSaveDefault(): Promise<{ on: boolean; at: numbe
   return { on: String(on).trim() === 'on', at: Number.isFinite(at) ? at : 0 };
 }
 
-/** THE PM HIDE RULE (the user, 2026-11-26: "Add a Provision for ADMIN to hide
- *  Calls Added and Flagged as Missed PM, Only if they are Unsolved"): when on,
- *  the PM Calls register leaves out a Missed PM call (Added On after its month)
- *  that is not Solved or Cancelled. Off unless set. */
+/** THE PM HIDE RULES -- three tick boxes, off unless set (missedPm.ts; the
+ *  user, 2026-11-26 and -27): every Missed PM call; an unsolved one; a
+ *  cancelled one. pm.hide_unsolved_missed is the 2026-11-26 setting, which
+ *  hid cancelled calls too until cancelled got its own box. */
+export const PM_HIDE_ALL_MISSED_KEY = 'pm.hide_all_missed';
 export const PM_HIDE_UNSOLVED_MISSED_KEY = 'pm.hide_unsolved_missed';
-export async function getPmHideUnsolvedMissed(): Promise<boolean> {
-  const { data, error } = await must().from('app_settings').select('value').eq('key', PM_HIDE_UNSOLVED_MISSED_KEY).maybeSingle();
+export const PM_HIDE_CANCELLED_MISSED_KEY = 'pm.hide_cancelled_missed';
+export type PmHideRuleKey = typeof PM_HIDE_ALL_MISSED_KEY | typeof PM_HIDE_UNSOLVED_MISSED_KEY | typeof PM_HIDE_CANCELLED_MISSED_KEY;
+export async function getPmHideRules(): Promise<PmHideRules> {
+  const { data, error } = await must().from('app_settings').select('key,value')
+    .in('key', [PM_HIDE_ALL_MISSED_KEY, PM_HIDE_UNSOLVED_MISSED_KEY, PM_HIDE_CANCELLED_MISSED_KEY]);
   if (error) throw new Error(errMsg(error));
-  return String(data?.value ?? '').trim() === 'on';
+  const on = (k: string) => (data ?? []).some((r) => r.key === k && String(r.value ?? '').trim() === 'on');
+  return { all: on(PM_HIDE_ALL_MISSED_KEY), unsolved: on(PM_HIDE_UNSOLVED_MISSED_KEY), cancelled: on(PM_HIDE_CANCELLED_MISSED_KEY) };
 }
-export async function setPmHideUnsolvedMissed(on: boolean): Promise<{ ok: boolean; error?: string }> {
+export async function setPmHideRule(key: PmHideRuleKey, on: boolean): Promise<{ ok: boolean; error?: string }> {
   // ASKS FOR THE ROW BACK: a write row-level security refuses can succeed with
   // nothing written, and that must not read as saved (finding 48).
   const { data, error } = await must().from('app_settings')
-    .upsert([{ key: PM_HIDE_UNSOLVED_MISSED_KEY, value: on ? 'on' : 'off', updated_at: new Date().toISOString() }], { onConflict: 'key' })
+    .upsert([{ key, value: on ? 'on' : 'off', updated_at: new Date().toISOString() }], { onConflict: 'key' })
     .select('key');
   if (error) return { ok: false, error: errMsg(error) };
   return (data ?? []).length ? { ok: true } : { ok: false, error: 'Nothing was saved -- changing this needs the Admin config permission.' };

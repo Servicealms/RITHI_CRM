@@ -257,11 +257,16 @@ Nothing is taken away: switch Audit Mode off and they are back.
     call, a **Missed PM** column reading *Yes* (it sorts, and is in the CSV),
     and the **Missed PM** filter shows only those calls or only the rest. A call
     with no Added On date is never flagged.
-  - **Hiding unsolved Missed PM calls** (**Admin Config → PM Calls**, for whoever
-    may change Admin Config): with the rule on, the PM register leaves out a
-    Missed PM call unless it is solved (a cancelled one is hidden too), and says
-    how many it left out. Pending Calls and the search at the top follow it too;
-    Field and Installation calls are never hidden. Nothing about the call changes.
+  - **Hiding Missed PM calls** (**Admin Config → PM Calls**, for whoever may
+    change Admin Config): three tick boxes, any of them on —
+    **all** PM calls flagged Missed PM, the **unsolved** ones (open, report
+    pending or reopened), and the **cancelled** ones. The PM register leaves out
+    what the ticked boxes name and says how many it left out; Pending Calls and
+    the search at the top follow them too. With **all** ticked the **Missed PM**
+    chips go as well, since there is nothing left for them to pick. Field and
+    Installation calls are never hidden. Nothing about the call changes.
+    *(Until 27-Nov-2026 the unsolved box hid cancelled calls too — if you want
+    those hidden, tick the cancelled box as well.)*
   > **First Attended Date, Last Visit Date and Solved Date** (all three
   > registers): **First Attended** is the earlier of the first visit and the
   > first spare request on the call; **Last Visit** is the latest visit date;

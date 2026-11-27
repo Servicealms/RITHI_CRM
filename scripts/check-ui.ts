@@ -55,6 +55,8 @@ import { drivePreviewUrl } from '../src/lib/drive';
 import { callAging, agingTone, callDays } from '../src/lib/aging';
 import { currentItemStatus, itemStatusToday, coverEndingIn, endOfNextMonth, monthBounds } from '../src/lib/coverToday';
 import { isMissedPm, hiddenByMissedPmRule } from '../src/lib/missedPm';
+const U = { all: false, unsolved: true, cancelled: false }, ALL = { all: true, unsolved: false, cancelled: false },
+  C = { all: false, unsolved: false, cancelled: true }, NONE = { all: false, unsolved: false, cancelled: false };
 import { pmBatchTimes, pmCallNumber, shapePmDueRows } from '../src/lib/pmImport';
 import { parseRef as parseRefForCheck } from '../src/lib/reportMapping';
 import { TRAINING_METHODOLOGY as TRAINING_METHODOLOGY_FOR_CHECK, TRAINING_FORM as TRAINING_FORM_FOR_CHECK, RECORD_SHEET_FIRST_PAGE as RECORD_SHEET_FIRST_PAGE_FOR_CHECK, paginateRows as paginateRowsForCheck } from '../src/lib/trainingForm';
@@ -10182,9 +10184,23 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
         && r('src/modules/SoftwareValidation.tsx').includes("URS_ALL.filter((u) => !isMovedToNonAuditable(u.id))"), true);
     // FRS-131.23 (2026-11-26): the PM hide rule.
     eq('the PM hide rule hides an unsolved Missed PM and shows a solved one',
-      hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Unsolved') && !hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Solved')
-        && !hiddenByMissedPmRule(true, '2026-03-10', '2026-03-20', 'Unsolved') && !hiddenByMissedPmRule(false, '2026-03-10', '2026-10-01', 'Unsolved'), true);
-    eq('...and a cancelled Missed PM is hidden too', hiddenByMissedPmRule(true, '2026-03-10', '2026-10-01', 'Cancelled'), true);
+      hiddenByMissedPmRule(U, '2026-03-10', '2026-10-01', 'Unsolved') && !hiddenByMissedPmRule(U, '2026-03-10', '2026-10-01', 'Solved')
+        && !hiddenByMissedPmRule(U, '2026-03-10', '2026-03-20', 'Unsolved') && !hiddenByMissedPmRule(NONE, '2026-03-10', '2026-10-01', 'Unsolved'), true);
+    eq('...and a reopened one too', hiddenByMissedPmRule(U, '2026-03-10', '2026-10-01', 'Reopened'), true);
+    // FRS-131.24 (2026-11-27): three tick boxes -- all, unsolved, cancelled.
+    eq('the unsolved box alone no longer hides a cancelled Missed PM; the cancelled box does',
+      !hiddenByMissedPmRule(U, '2026-03-10', '2026-10-01', 'Cancelled') && hiddenByMissedPmRule(C, '2026-03-10', '2026-10-01', 'Cancelled')
+        && !hiddenByMissedPmRule(C, '2026-03-10', '2026-10-01', 'Unsolved') && !hiddenByMissedPmRule(C, '2026-03-10', '2026-10-01', 'Solved'), true);
+    eq('the all box hides a solved Missed PM, and never a call that is not one',
+      hiddenByMissedPmRule(ALL, '2026-03-10', '2026-10-01', 'Solved') && !hiddenByMissedPmRule(ALL, '2026-03-10', '2026-03-20', 'Solved'), true);
+    eq('...and unsolved + cancelled together still show a solved Missed PM',
+      !hiddenByMissedPmRule({ all: false, unsolved: true, cancelled: true }, '2026-03-10', '2026-10-01', 'Solved')
+        && hiddenByMissedPmRule({ all: false, unsolved: true, cancelled: true }, '2026-03-10', '2026-10-01', 'Cancelled'), true);
+    eq('the Missed PM chips go when every Missed PM call is hidden, and their filter with them',
+      /\{isPm && !pmHideRule\.all && \(\s*<FacetChips\s*options=\{missedPmCounts\}/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8'))
+        && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes('!missedPmFilter || pmHideRule.all ||'), true);
+    eq('search reads a reopened call as Reopened, as the registers do',
+      /r\.cancelled_at \? 'Cancelled' : r\.reopened_at \? 'Reopened' : r\.open_state/.test(readFileSync('src/lib/supabase.ts', 'utf8')), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);
   }
   eq('My Workload loads once the access scope is ready',
