@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.279',
+    date: '2026-11-27',
+    title: 'Call History: see what has been loaded, read the calls, and upload — on one page',
+    changes: [
+      'New page Overview → Call History (administrators to begin with): the calls before RITHI, up to 2025.',
+      'What has been loaded: for each year, source and call type (Field / Installation / PM), how many calls, how many are flagged Duplicate, how many have no serial (those are not listed on Machine History), the first and last call date, and when and by whom they were last loaded. Counted by the database, so the numbers are exact.',
+      'The calls themselves: click a summary row, or filter by year, source, call type or Duplicates only, and search by UC No., Call No., party, product or serial; download to Excel or CSV.',
+      'The Call History upload is on the page too — the same upload as Bulk Uploads, for anyone who can load registers in bulk.',
+    ],
+  },
+  {
     version: '0.10.278',
     date: '2026-11-27',
     title: 'RITHI has a new address: servicealms.github.io/RITHI_CRM',

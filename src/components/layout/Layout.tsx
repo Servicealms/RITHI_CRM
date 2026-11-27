@@ -73,6 +73,10 @@ export const NAV: NavGroup[] = [
       // machines"; this answers "what happened to THIS one". Not under
       // Reports, where it first went: a report is a file you take away.
       { to: '/machine-history', label: 'Machine History', icon: '🔬' },
+      // CALL HISTORY (the user, 2026-11-27): the calls before RITHI -- what was
+      // loaded, the calls, and the upload. Beside Machine History, which reads
+      // the same calls one machine at a time.
+      { to: '/call-history', label: 'Call History', icon: '📜' },
       // PART SEARCH (the user, 2026-10-01): a third "look something up"
       // screen -- read only for everyone, Admin included, and no download.
       { to: '/part-search', label: 'Part Search', icon: '🧩' },

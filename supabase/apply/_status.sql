@@ -2457,7 +2457,14 @@ with checks(sort_order, bundle, provides, present) as (
         and exists (select 1 from public.app_settings where key = 'ffr.capa_none_label')
         and (to_regprocedure('public.ffr_capa_none_earlier()') is null
              or not exists (select 1 from public.field_failure_reports f
-                             where public.ffr_capa_squash(f.capa_responsibility) = any (public.ffr_capa_none_earlier()))))
+                             where public.ffr_capa_squash(f.capa_responsibility) = any (public.ffr_capa_none_earlier())))),
+    (402, 'Call History screen: what was loaded, by year, source and call type', 'call_history_summary (0495) exists, reads as its reader (security_invoker), is granted to signed-in users and not to the public key, and mod:/call-history is held by admin. NO means the Call History screen cannot show its summary. Restore: daily_review.sql (0495)',
+        to_regclass('public.call_history_summary') is not null
+        and coalesce((select 'security_invoker=on' = any (c.reloptions) or 'security_invoker=true' = any (c.reloptions)
+                        from pg_class c where c.oid = to_regclass('public.call_history_summary')), false)
+        and has_table_privilege('authenticated', coalesce(to_regclass('public.call_history_summary'), 'pg_class'::regclass), 'select')
+        and not has_table_privilege('anon', coalesce(to_regclass('public.call_history_summary'), 'pg_class'::regclass), 'select')
+        and exists (select 1 from public.app_roles where role = 'admin' and (jsonb_array_length(permissions) = 0 or permissions ? 'mod:/call-history')))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,
