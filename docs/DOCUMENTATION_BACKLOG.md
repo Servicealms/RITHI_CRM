@@ -23,6 +23,12 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.287 — Product dropdown on the call registers (2026-11-27)
+- Asked: "Add Product filter dropdown too."
+- The register's Product search box became a type-to-search picker of useMaster('product') -- the stored product list the call form offers (6 h on the device).
+- Server: product_name ILIKE the picked name with no wildcard (whole, ignoring case) -- it was a fragment match (%x%), so VEGA also matched VEGA XT. Device-copy fallback and sheet path match whole too. No other screen pre-fills the product.
+- Write up: HOW_TO_USE call registers' search line (with v0.10.284 / .286).
+
 ## v0.10.286 — Call Status search on the call registers (2026-11-27)
 - Asked: "Similar to Engineer Name search, add Call Status also in filter."
 - Field / Installation / PM: a Call Status picker beside Engineer: Unattended, Unsolved, Solved - Report Pending (value "Report pending"), Solved, Reopened, Cancelled -- the state the register shows (dbToCall: cancelled_at -> Cancelled, else reopened_at -> Reopened, else open_state).

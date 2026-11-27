@@ -122,6 +122,7 @@
 .call-search .call-search-global { flex: 1 1 150px; min-width: 120px; }
 .call-search .call-search-engineer { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-status { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
+.call-search .call-search-product { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 
 /* ---- Call reporting drawer (sectioned, status-driven) ------------------- */
 .rep-form { display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }

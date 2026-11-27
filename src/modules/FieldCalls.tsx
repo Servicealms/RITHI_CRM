@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode, useRef } from 'react';
 import { startBackgroundSync } from '../lib/cache';
 import { SelectPicker } from '../components/ui/SelectPicker';
+import { useMaster } from '../lib/masters';
 import { useLocation } from 'react-router-dom';
 import { db, genId, type BaseRecord } from '../lib/db';
 import { useCollection } from '../lib/hooks';
@@ -707,6 +708,9 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // same rule on both sides of the change, so the picker is the courtesy and
   // the database is the guarantee.
   const allotTeam = useTeamEngineers();
+  // The product list the call form offers, for the Product search (stored on
+  // the device for six hours -- mastercache.ts).
+  const productNames = useMaster('product').values;
   const [picked, setPicked] = useState<Set<string>>(new Set());
   // PM BULK CLOSE (the user, 2026-11-17: "Multi select call and click on Bulk
   // close but in back end, it should save the visit details as separate line
@@ -885,11 +889,12 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       const dev = await deviceOpenCalls((t) => !fam || callFamily(t) === fam);
       if (!dev || !dev.rows.length) return null;
       const has = (v: unknown, t?: string) => !t || String(v ?? '').toLowerCase().includes(t.trim().toLowerCase());
+      const same = (v: unknown, t: string) => !t || String(v ?? '').trim().toLowerCase() === t.trim().toLowerCase();
       const rows = (active
         ? dev.rows.filter((r) => has(r.ucn, srch.ucn) && has(r.serial, srch.serial) && has(r.partyName, srch.partyName)
+            && same(r.productName, srch.productName)
             && (!srch.engineer || String(r.allocatedTo ?? '').trim().toLowerCase() === srch.engineer.trim().toLowerCase())
             && (!srch.status || String(r.state ?? '') === srch.status)
-            && has(r.productName, srch.productName)
             && (!srch.q || ['ucn', 'callNumber', 'partyName', 'serial', 'productName', 'allocatedTo', 'city', 'state', 'standardComplaint', 'complaintReported', 'customerName']
               .some((k) => has(r[k], srch.q))))
         : dev.rows) as Rec[];
@@ -1203,7 +1208,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       scopeOk(row) && openOk(row) && reopenOk(row) && engineerOk(row) &&
       (onDb || (
         has(row.ucn, srch.ucn) &&
-        has(row.productName, srch.productName) &&
+        (!srch.productName || String(row.productName ?? '').trim().toLowerCase() === srch.productName.trim().toLowerCase()) &&
         has(row.serial, srch.serial) &&
         has(row.partyName, srch.partyName) &&
         (!srch.engineer || String(row.allocatedTo ?? '').trim().toLowerCase() === srch.engineer.trim().toLowerCase()) &&
@@ -1638,7 +1643,10 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           <Toolbar>
             <div className="call-search">
               <input className="input" placeholder="UCN No" value={srch.ucn} onChange={(e) => setSrch1('ucn', e.target.value)} />
-              <input className="input" placeholder="Product" value={srch.productName} onChange={(e) => setSrch1('productName', e.target.value)} />
+              {/* PRODUCT, picked from the Product list (the user, 2026-11-27): the
+                  same stored list the call form offers, matched whole. */}
+              <SelectPicker className="call-search-product" value={srch.productName} onChange={(v) => setSrch1('productName', v)}
+                placeholder="Product" options={productNames} />
               <input className="input" placeholder="Serial" value={srch.serial} onChange={(e) => setSrch1('serial', e.target.value)} />
               <input className="input" placeholder="Party" value={srch.partyName} onChange={(e) => setSrch1('partyName', e.target.value)} />
               {/* ENGINEER, PICKED FROM A LIST (the user, 2026-11-27): the names this
