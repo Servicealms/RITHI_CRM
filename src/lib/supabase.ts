@@ -308,7 +308,7 @@ export async function listCalls(callType = '', limit = 20000): Promise<Record<st
 // Server-side register search. Field-specific terms AND together (each an
 // ilike on its column); the global term ORs across the common columns. RLS
 // already scopes the result to what the user may see.
-export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string }
+export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string; status?: string }
 const _san = (t: string) => t.replace(/[%,()]/g, ' ').trim();
 export async function searchCalls(callType: string, terms: CallSearch, limit = 1000): Promise<Record<string, unknown>[]> {
   let q = orderCalls(must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null), callType).limit(limit);
@@ -320,11 +320,21 @@ export async function searchCalls(callType: string, terms: CallSearch, limit = 1
   // Search ... Preferably Drop down"), so it is matched WHOLE -- an ilike with no
   // wildcard, i.e. equal ignoring case -- never as a fragment of another name.
   if (terms.engineer) q = q.ilike('allocated_to', _san(terms.engineer));
+  // CALL STATUS, picked from a list (the user, 2026-11-27: "Similar to Engineer
+  // Name search, add Call Status also in filter"): the state the register SHOWS
+  // (dbToCall: cancelled, else reopened, else open_state). Narrowed on the
+  // server by the column that carries it, then checked row by row below, so an
+  // edge -- a reopened call whose latest visit reads "cancel" -- lands only
+  // under the state it is shown with.
+  if (terms.status === 'Cancelled') q = q.eq('open_state', 'Cancelled');
+  else if (terms.status === 'Reopened') q = q.not('reopened_at', 'is', null);
+  else if (terms.status) q = q.eq('open_state', terms.status).is('reopened_at', null);
   const g = _san(terms.q ?? '');
   if (g) q = q.or(['ucn', 'call_number', 'party_name', 'serial', 'product_name', 'allocated_to', 'city', 'state', 'standard_complaint', 'complaint_reported', 'customer_name'].map((c) => `${c}.ilike.%${g}%`).join(','));
   const { data, error } = await q;
   if (error) throw new Error(errMsg(error));
-  return (data ?? []).map(dbToCall);
+  const rows = (data ?? []).map(dbToCall);
+  return terms.status ? rows.filter((r) => String(r.callState ?? '') === terms.status) : rows;
 }
 
 // Latest registration date-time already recorded for PM calls in a due month

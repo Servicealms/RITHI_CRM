@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.286',
+    date: '2026-11-27',
+    title: 'Call registers: search by call status',
+    changes: [
+      'Beside the Engineer search, the Field, Installation and PM registers now have a Call Status list — Unattended, Unsolved, Solved - Report Pending, Solved, Reopened, Cancelled. It searches the whole register for calls in that status, together with any other search you have filled in.',
+    ],
+  },
+  {
     version: '0.10.285',
     date: '2026-11-27',
     title: 'Device Cache Status shows the open calls; tidier call register headers',
