@@ -63,7 +63,7 @@ import { HandStockReport } from './modules/HandStockReport';
 import { FeedbackWithoutReport } from './modules/FeedbackWithoutReport';
 import { VisitDateCheck } from './modules/VisitDateCheck';
 import { InstallCallsUnmapped } from './modules/InstallCallsUnmapped';
-import { CallHistory } from './modules/CallHistory';
+import { CallHistory, DccrHistory } from './modules/CallHistory';
 import { ReportsHub } from './modules/ReportsHub';
 import { SpareInsights } from './modules/SpareInsights';
 import { Workload } from './modules/Workload';
@@ -300,6 +300,7 @@ function Shell() {
         <Route path="/spare-insights" element={<SpareInsights />} />
         <Route path="/machine-history" element={<MachineHistory />} />
         <Route path="/call-history" element={<CallHistory />} />
+        <Route path="/dccr-history" element={<DccrHistory />} />
         <Route path="/part-search" element={<PartSearch />} />
         <Route path="/exports" element={<ReportsHub />} />
         {/* One page, one tab per report — so the menu can name each report

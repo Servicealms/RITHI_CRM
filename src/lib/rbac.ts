@@ -211,6 +211,9 @@ export const MODULES: ModuleDef[] = [
   // `admin: true` keeps the key out of NON_ADMIN_MODULES; 0495 grants it to
   // admin and technical_support. Others are ticked on Roles & Permissions.
   { path: '/call-history', label: 'Call History', admin: true },
+  // DCCR HISTORY (0496) -- the old DCCR register's calls, apart from Call
+  // History (the user, 2026-11-27: "2 Separate ... Containers"). Same pattern.
+  { path: '/dccr-history', label: 'DCCR History', admin: true },
   // PART SEARCH -- every role (the user, 2026-10-01); 0308 merges the key into
   // every configured role, since on a project in use a code default reaches
   // nobody.
@@ -747,6 +750,7 @@ export const PERM_TREE: PermHeader[] = [
     { path: '/machine-history', label: 'Machine History', actions: ['masters.view'] },
     // The upload on it is bulk.upload's, the download export.data's (0495).
     { path: '/call-history', label: 'Call History', actions: ['bulk.upload', 'export.data'] },
+    { path: '/dccr-history', label: 'DCCR History', actions: ['bulk.upload', 'export.data'] },
     // READ ONLY FOR EVERYONE, Admin included: the page has no action to tick.
     { path: '/part-search', label: 'Part Search', actions: [] },
   ] },

@@ -42,7 +42,7 @@ export const DOC_PROCESSES: DocProcess[] = [
     checks: ['Stock out by stores to the corresponding engineers, with the Delivery Challan', 'Acknowledged receipt per delivery', 'Hand stock derived from issues, consumption, transfers and returns', 'Consumption booked against a visit; reconciliation and voiding'],
     keywords: ['stock', 'dispatch', 'consumption', 'transfer', 'material return', 'mrn', 'challan', 'part master', 'part '] },
   { id: '3', name: 'Sales – Warranty and Non-warranty', responsibility: 'Service admin · Commercial',
-    paths: ['/warranties', '/product-database', '/product-database-2', '/product-master', '/ownership-transfer', '/lookup', '/machine-history', '/call-history'],
+    paths: ['/warranties', '/product-database', '/product-database-2', '/product-master', '/ownership-transfer', '/lookup', '/machine-history', '/call-history', '/dccr-history'],
     checks: ['Product sale entry with its warranty', 'The Product Database names the party of the latest sale entry or ownership transfer', 'Ownership transfer of a machine'],
     keywords: ['sale', 'warranty', 'product database', 'ownership', 'machine', 'cover', 'install base'] },
   { id: '4', name: 'Annual Maintenance Contracts', responsibility: 'Service admin · Commercial',

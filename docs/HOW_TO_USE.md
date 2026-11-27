@@ -339,16 +339,17 @@ on Roles & Permissions does not reach another team's calls.
   heading row even under a letterhead, reads tab-separated files, and lists what
   it kept and what it held back. Unrecognised columns are **kept on the row**
   where the register allows it.
-  > **DCCR Register — historical (calls kept in Call History)** (Quality) loads
+  > **DCCR Register — historical (calls kept in DCCR History)** (Quality) loads
   > an old DCCR register export as it is — for a year whose calls are not in
-  > RITHI (2025 and before). Each row keeps **the call in Call History** (never
-  > a live register), dated by CALL DATE, with the file's CURRENT CALL STATUS
+  > RITHI (2025 and before). Each row keeps **the call in DCCR History** (never
+  > a live register, and **apart from Call History**), dated by CALL DATE, with the file's CURRENT CALL STATUS
   > and solved date as its status, and files **the review** (kept as imported,
   > no Field Failure Report raised) so the **Recent Failure Rate** still counts
   > its failures. **No visit is filed; nobody is notified.** A call already in
   > RITHI is left alone. Re-loading the file corrects the history it kept.
   > The 2025 calls loaded this way before 13-Oct-2026 were moved to Call History
-  > then, so 2025 no longer appears in the DCCR View.
+  > then, so 2025 no longer appears in the DCCR View — and on 27-Nov-2026 they
+  > moved again, to **DCCR History**, where every DCCR register call now lives.
   > **PM calls in the DCCR:** a PM call joins the Daily Complaint Review when
   > a part booked on it is a **Spare** in the Part Master (SPARE pre-set).
   > **Call History — calls before RITHI (up to 2025)** (Calls) stores old calls
@@ -361,7 +362,7 @@ on Roles & Permissions does not reach another team's calls.
   > file again and it corrects, never doubles. Every other column the file has
   > is kept with the call. Read them on **Machine History** (group *Call
   > history*). **Choose the Source** (e-service, WinMax, Yearly sheet, DCCR
-  > register, Other) **and, for a yearly sheet, its Year** before uploading,
+  > Other) **and, for a yearly sheet, its Year** before uploading,
   > **and the Call Type** — Field, Installation or PM — which is recorded
   > beside the file's own Call Type (kept as written). For a file holding
   > several types choose **Mixed**: each row's type is then read off its own
@@ -369,7 +370,9 @@ on Roles & Permissions does not reach another team's calls.
   > When the same UC No. + Call No. comes from another source or year — an Old
   > Call in the next year's sheet, a call in two systems — the **latest year's
   > record is shown**, the other is kept with it and the call is flagged
-  > **Duplicate**; nothing else is done about it. *How RITHI Functions →
+  > **Duplicate**; nothing else is done about it. The **DCCR register is not a
+  > source here**: its calls are **DCCR History**, a separate table, and a call
+  > that is in both is in both — neither is flagged. *How RITHI Functions →
   > Evolution of Service Tools* explains the systems behind the history.
   > **Field Failure Register (any year)** (Quality) loads old FFR logs, a
   > year's tab at a time.
@@ -1802,6 +1805,25 @@ typed into a form that reads it.
     (it needs *Export / download CSV*).
   > History only: nothing in RITHI is created or changed from these calls. Each
   > machine's own old calls are on **Machine History** under *Call history*.
+  > The old DCCR register's calls are **not** here — they are on **DCCR History**.
+
+- **DCCR History** `/dccr-history` — the old DCCR register's calls (2025 and
+  before), **kept apart from Call History**: their own table, their own upload,
+  their own page. Administrators only to begin with.
+  - **Upload a file** is the *DCCR Register — historical* upload: each row keeps
+    its call here and files its review (no visit, nobody notified). It needs
+    *Load registers in bulk*.
+  - **What has been loaded**: one row per **year and call type** — how many
+    calls, how many have **no serial**, the first and last call date, and when
+    and by whom. There is no Source or Duplicate: one source, one record per
+    UC No. + Call No., and a re-load corrects it.
+  - **No serial** here means the **Recent Failure Rate cannot count it** — a
+    failure is matched to its machine by serial.
+  - The list, the search and **⭳ Excel / CSV** work as on Call History.
+  > **Apart, both ways.** A call that is in a yearly sheet *and* in the DCCR
+  > register is in both pages and flagged in neither. The Recent Failure Rate
+  > reads the DCCR register's own values. **DCCR History is not on Machine
+  > History.**
 
 - **Objective** `/objective` — the year's objectives with targets, owners and the
   month-by-month actual.

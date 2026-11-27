@@ -5825,42 +5825,63 @@ export interface CallHistoryGroup {
   first_call_at: string | null; last_call_at: string | null;
   last_loaded_at: string | null; last_loaded_by: string | null;
 }
-export async function callHistorySummary(): Promise<CallHistoryGroup[]> {
+/** WHICH HISTORY: Call History, or DCCR History -- two tables, apart (0496;
+ *  the user, 2026-11-27: "2 Separate ... Containers -- and Same for View"). */
+export type HistoryKind = 'call' | 'dccr';
+const HISTORY = {
+  call: { table: 'call_history',
+          cols: 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,contract_type,call_status,solved_at,source,record_year,duplicate,loaded_at,loaded_by' },
+  // No source or duplicate columns: one source, nothing to be a duplicate of.
+  dccr: { table: 'dccr_call_history',
+          cols: 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,contract_type,call_status,solved_at,record_year,loaded_at,loaded_by' },
+} as const;
+export const historyTable = (kind: HistoryKind) => HISTORY[kind].table;
+
+// TWO LITERAL CHAINS, NOT ONE WITH A VARIABLE TABLE: check:orders reads the
+// relation name off `.from('...')` and asks a database whether each order
+// column exists there -- a name held in a variable is one it cannot check.
+export async function callHistorySummary(kind: HistoryKind = 'call'): Promise<CallHistoryGroup[]> {
   const c = must();
-  return allRows<CallHistoryGroup>((from, to) =>
-    c.from('call_history_summary').select('*')
+  return allRows<CallHistoryGroup>((from, to) => (kind === 'dccr'
+    ? c.from('dccr_call_history_summary').select('*')
       .order('record_year', { ascending: false, nullsFirst: false })
       .order('source', { ascending: true })
       .order('register', { ascending: true })
-      .range(from, to));
+      .range(from, to)
+    : c.from('call_history_summary').select('*')
+      .order('record_year', { ascending: false, nullsFirst: false })
+      .order('source', { ascending: true })
+      .order('register', { ascending: true })
+      .range(from, to)));
 }
 
 export interface CallHistoryFilter { year?: number | null; source?: string; register?: string; duplicate?: boolean; q?: string }
-export const CALL_HISTORY_COLS = 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,contract_type,call_status,solved_at,source,record_year,duplicate,loaded_at,loaded_by';
 
-function callHistoryQuery(f: CallHistoryFilter, cols: string, count?: 'exact') {
-  let q = must().from('call_history').select(cols, count ? { count } : undefined);
+function callHistoryQuery(kind: HistoryKind, f: CallHistoryFilter, count?: 'exact') {
+  const h = HISTORY[kind];
+  let q = must().from(h.table).select(h.cols, count ? { count } : undefined);
   if (f.year != null) q = q.eq('record_year', f.year);
   // '(not recorded)' is how the summary names a blank source or call type.
-  if (f.source) q = f.source === '(not recorded)' ? q.eq('source', '') : q.eq('source', f.source);
+  // DCCR History has one source and no duplicates, so those two never filter it.
+  if (kind === 'call' && f.source) q = f.source === '(not recorded)' ? q.eq('source', '') : q.eq('source', f.source);
   if (f.register) q = f.register === '(not recorded)' ? q.is('register', null) : q.eq('register', f.register);
-  if (f.duplicate) q = q.eq('duplicate', true);
+  if (kind === 'call' && f.duplicate) q = q.eq('duplicate', true);
   const t = searchTerm(f.q ?? '');
   if (t) q = q.or(['ucn', 'call_no', 'party_name', 'item_name', 'serial'].map((k) => `${k}.ilike.%${t}%`).join(','));
   return q.order('call_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false });
 }
 
 /** One page of history calls under the filter, and the EXACT number matching it. */
-export async function listCallHistory(f: CallHistoryFilter, from: number, to: number): Promise<{ rows: Record<string, unknown>[]; total: number | null }> {
-  const { data, error, count } = await callHistoryQuery(f, CALL_HISTORY_COLS, 'exact').range(from, to);
+export async function listCallHistory(kind: HistoryKind, f: CallHistoryFilter, from: number, to: number): Promise<{ rows: Record<string, unknown>[]; total: number | null }> {
+  const { data, error, count } = await callHistoryQuery(kind, f, 'exact').range(from, to);
   if (error) throw new Error(errMsg(error));
   return { rows: (data ?? []) as unknown as Record<string, unknown>[], total: count ?? null };
 }
 
 /** Every history call under the filter, for a download (paged; capped). */
-export async function allCallHistory(f: CallHistoryFilter, cap = 100000): Promise<Record<string, unknown>[]> {
+export async function allCallHistory(kind: HistoryKind, f: CallHistoryFilter, cap = 100000): Promise<Record<string, unknown>[]> {
   return allRows<Record<string, unknown>>((from, to) =>
-    callHistoryQuery(f, CALL_HISTORY_COLS).range(from, to) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: { message?: string; code?: string } | null }>, cap);
+    callHistoryQuery(kind, f).range(from, to) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: { message?: string; code?: string } | null }>, cap);
 }
 
 export async function countTable(table: string): Promise<number | null> {

@@ -2234,10 +2234,11 @@ with checks(sort_order, bundle, provides, present) as (
      and not coalesce(has_table_privilege('anon', 'public.call_history', 'select'), true)
      and (select count(*) from pg_trigger where tgrelid = to_regclass('public.call_history') and not tgisinternal
             and tgname not in ('call_history_stamp', 'call_history_year_default', 'call_history_zz_keep_latest', 'call_history_register', 'zzz_sys_stamp') and tgname not like 'record_audit%') = 0)),
-    (350, 'The old DCCR register keeps its calls as history', 'dccr_history_apply (0430) keeps each call in call_history and files no visit, and _dccr_failure_calls (0431) counts a Call History row with an imported review as a failure, so the 2025 DCCR history left the live tables without moving a Recent Failure Rate. NO means a DCCR-history load still files calls into the live registers, or the failure rates lost 2025. Restore: daily_review.sql (0430), objective.sql (0431)',
-        (coalesce((select p.prosrc like '%insert into public.call_history%' and p.prosrc not like '%insert into public.reports%'
+    (350, 'The old DCCR register keeps its calls as history, in DCCR History', 'dccr_history_apply (0496) keeps each call in dccr_call_history -- never call_history -- and files no visit, and _dccr_failure_calls (0497) counts a DCCR History row with an imported review as a failure, so the DCCR history stays out of the live tables and out of Call History without moving a Recent Failure Rate. NO means a DCCR-history load still files calls into Call History or a live register, or the failure rates read Call History. Restore: daily_review.sql (0496), objective.sql (0497)',
+        (coalesce((select p.prosrc like '%insert into public.dccr_call_history%' and p.prosrc not like '%insert into public.call_history%'
+                          and p.prosrc not like '%insert into public.reports%'
                      from pg_proc p where p.oid = to_regprocedure('public.dccr_history_apply()')), false)
-     and coalesce((select p.prosrc like '%public.call_history h%'
+     and coalesce((select p.prosrc like '%public.dccr_call_history h%' and p.prosrc not like '%public.call_history h%'
                      from pg_proc p where p.oid = to_regprocedure('public._dccr_failure_calls(text,text,date)')), false))),
     (351, 'Call History keeps every source: latest year shown, duplicates flagged', 'call_history.source / record_year / duplicate / duplicates and the trigger call_history_zz_keep_latest (0432): when the same UC No. + Call No. comes from another source or year, the later year''s record shows and the other is kept, flagged -- nothing else done. NO means a second system''s file would overwrite a call''s history. Restore: daily_review.sql (0432)',
         (exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'duplicates')
@@ -2464,7 +2465,21 @@ with checks(sort_order, bundle, provides, present) as (
                         from pg_class c where c.oid = to_regclass('public.call_history_summary')), false)
         and has_table_privilege('authenticated', coalesce(to_regclass('public.call_history_summary'), 'pg_class'::regclass), 'select')
         and not has_table_privilege('anon', coalesce(to_regclass('public.call_history_summary'), 'pg_class'::regclass), 'select')
-        and exists (select 1 from public.app_roles where role = 'admin' and (jsonb_array_length(permissions) = 0 or permissions ? 'mod:/call-history')))
+        and exists (select 1 from public.app_roles where role = 'admin' and (jsonb_array_length(permissions) = 0 or permissions ? 'mod:/call-history'))),
+    (403, 'DCCR History is its own table, apart from Call History', 'dccr_call_history (0496): row-level security on, read like a call, written by no signed-in user and never read through the public key, keyed by UC No. + Call No.; no DCCR-register record left in call_history, as a row or inside another row''s duplicates; dccr_call_history_summary reads as its reader; mod:/dccr-history held by admin. NO means DCCR History is still mixed into Call History, or its screen cannot show its summary. Restore: daily_review.sql (0496)',
+        to_regclass('public.dccr_call_history') is not null
+        and coalesce((select relrowsecurity from pg_class where oid = to_regclass('public.dccr_call_history')), false)
+        and to_regclass('public.dccr_call_history_key') is not null
+        and not has_table_privilege('authenticated', coalesce(to_regclass('public.dccr_call_history'), 'pg_class'::regclass), 'insert')
+        and not has_table_privilege('anon', coalesce(to_regclass('public.dccr_call_history'), 'pg_class'::regclass), 'select')
+        and to_regclass('public.call_history') is not null
+        and not exists (select 1 from public.call_history h
+                         where coalesce(h.source, '') = 'DCCR register'
+                            or h.duplicates @? '$[*] ? (@.source == "DCCR register")')
+        and to_regclass('public.dccr_call_history_summary') is not null
+        and coalesce((select 'security_invoker=on' = any (c.reloptions) or 'security_invoker=true' = any (c.reloptions)
+                        from pg_class c where c.oid = to_regclass('public.dccr_call_history_summary')), false)
+        and exists (select 1 from public.app_roles where role = 'admin' and (jsonb_array_length(permissions) = 0 or permissions ? 'mod:/dccr-history')))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

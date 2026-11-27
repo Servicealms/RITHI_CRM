@@ -1,12 +1,14 @@
 -- ===========================================================================
--- THE OLD DCCR REGISTER (0395), KEPT AS HISTORY SINCE 0430.
+-- THE OLD DCCR REGISTER (0395), KEPT AS HISTORY SINCE 0430, IN ITS OWN
+-- TABLE SINCE 0496.
 --
---   A row keeps its call in CALL HISTORY (never a live register) with the
+--   A row keeps its call in DCCR HISTORY (dccr_call_history -- never a live
+--   register, never Call History) with the
 --   file's status and solved date, keyed by UC Number + Call Number, and files
 --   its review (imported, no FFR); it files NO VISIT. A UC Number that is a
 --   live call is left alone, its missing review added. Nobody is notified; a
 --   re-load corrects; only a holder of bulk.upload may load. The Recent Failure
---   Rate still counts a history call's failure through its review (0431).
+--   Rate still counts a DCCR History call's failure through its review (0497).
 --
 -- Run ONCE after _stub.sql + every migration. Every error printed is labelled
 -- `expect ERROR` -- anything else is a failure.
@@ -55,28 +57,30 @@ values
   '', 'Solved - Report Completed', '2025-05-03T00:00:00Z', 'SPARE', '', '', '', null, null, '', '', '');
 commit;
 
-select 'HX-1: kept in Call History as the file has it -- date, party, place, cover, status, solved date -- and in no live register' as t,
+select 'HX-1: kept in DCCR History as the file has it -- date, party, place, cover, status, solved date -- and in no live register' as t,
        (select (call_at at time zone 'Asia/Kolkata')::date = '2025-01-02' and party_name = 'PARTY A' and city = 'CHENNAI'
                and item_status = 'CMC' and call_type = 'FIELD' and call_status = 'Solved - Report Completed'
                and solved_at = timestamptz '2025-01-05T00:00:00Z' and extra->>'warranty_start_in_file' = 'Nov-2015'
-          from public.call_history where ucn = 'HX-1' and call_no = 'C-1')
+          from public.dccr_call_history where ucn = 'HX-1' and call_no = 'C-1')
    and not exists (select 1 from public.calls where ucn = 'HX-1') as ok;
+select 'nothing from the DCCR load is in Call History (0496)' as t,
+       not exists (select 1 from public.call_history where ucn like 'HX-%') as ok;
 select 'HX-1: its review is imported, and NO visit is filed' as t,
        (select imported and spare_category = 'SPARE' and review2_at = '2025-01-10' from public.call_reviews where ucn = 'HX-1')
    and (select count(*) = 0 from public.reports where ucn = 'HX-1') as ok;
 select 'HX-2: Unattended is kept as the file says, with no visit' as t,
-       (select call_status = 'Unattended' from public.call_history where ucn = 'HX-2')
+       (select call_status = 'Unattended' from public.dccr_call_history where ucn = 'HX-2')
    and (select count(*) = 0 from public.reports where ucn = 'HX-2') as ok;
 select 'HX-3: a P M VISIT row is kept too, as history, not in the PM register' as t,
-       exists (select 1 from public.call_history where ucn = 'HX-3' and call_type = 'P M VISIT')
+       exists (select 1 from public.dccr_call_history where ucn = 'HX-3' and call_type = 'P M VISIT')
    and not exists (select 1 from public.pm_calls where ucn = 'HX-3') as ok;
 select 'HX-4: Canceled is kept as Canceled, with no visit' as t,
-       (select call_status = 'Canceled' from public.call_history where ucn = 'HX-4')
+       (select call_status = 'Canceled' from public.dccr_call_history where ucn = 'HX-4')
    and (select count(*) = 0 from public.reports where ucn = 'HX-4') as ok;
-select 'HX-LIVE: a call already in RITHI keeps its party, date and review; nothing kept in history; no visit added' as t,
+select 'HX-LIVE: a call already in RITHI keeps its party, date and review; nothing kept in DCCR History; no visit added' as t,
        (select party_name = 'LIVE PARTY' and reg_date = '2026-02-01' from public.field_calls where ucn = 'HX-LIVE')
    and (select spare_category = 'CORRECTION' and not coalesce(imported, false) from public.call_reviews where ucn = 'HX-LIVE')
-   and not exists (select 1 from public.call_history where ucn = 'HX-LIVE')
+   and not exists (select 1 from public.dccr_call_history where ucn = 'HX-LIVE')
    and (select count(*) = 0 from public.reports where ucn = 'HX-LIVE')
    and (select result from public.dccr_history_import where ucn = 'HX-LIVE') like 'call already in the register%' as ok;
 select 'nobody was notified, though every call names an engineer with a login' as t,
@@ -87,9 +91,9 @@ select 'no Field Failure Report was raised' as t, not exists (select 1 from publ
 begin; set local role authenticated;
 update public.dccr_history_import set party_name = 'PARTY A CORRECTED' where ucn = 'HX-1';
 commit;
-select 'the re-load corrected the history row, and added no second row, call or visit' as t,
-       (select party_name from public.call_history where ucn = 'HX-1') = 'PARTY A CORRECTED'
-   and (select count(*) from public.call_history where ucn = 'HX-1') = 1
+select 'the re-load corrected the DCCR History row, and added no second row, call or visit' as t,
+       (select party_name from public.dccr_call_history where ucn = 'HX-1') = 'PARTY A CORRECTED'
+   and (select count(*) from public.dccr_call_history where ucn = 'HX-1') = 1
    and not exists (select 1 from public.calls where ucn = 'HX-1')
    and (select count(*) from public.reports where ucn = 'HX-1') = 0 as ok;
 
