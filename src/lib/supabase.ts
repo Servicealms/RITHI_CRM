@@ -308,7 +308,7 @@ export async function listCalls(callType = '', limit = 20000): Promise<Record<st
 // Server-side register search. Field-specific terms AND together (each an
 // ilike on its column); the global term ORs across the common columns. RLS
 // already scopes the result to what the user may see.
-export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string }
+export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string }
 const _san = (t: string) => t.replace(/[%,()]/g, ' ').trim();
 export async function searchCalls(callType: string, terms: CallSearch, limit = 1000): Promise<Record<string, unknown>[]> {
   let q = orderCalls(must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null), callType).limit(limit);
@@ -316,6 +316,10 @@ export async function searchCalls(callType: string, terms: CallSearch, limit = 1
   if (terms.serial) q = q.ilike('serial', `%${_san(terms.serial)}%`);
   if (terms.partyName) q = q.ilike('party_name', `%${_san(terms.partyName)}%`);
   if (terms.productName) q = q.ilike('product_name', `%${_san(terms.productName)}%`);
+  // THE ENGINEER IS PICKED FROM A LIST (the user, 2026-11-27: "Add Engineer
+  // Search ... Preferably Drop down"), so it is matched WHOLE -- an ilike with no
+  // wildcard, i.e. equal ignoring case -- never as a fragment of another name.
+  if (terms.engineer) q = q.ilike('allocated_to', _san(terms.engineer));
   const g = _san(terms.q ?? '');
   if (g) q = q.or(['ucn', 'call_number', 'party_name', 'serial', 'product_name', 'allocated_to', 'city', 'state', 'standard_complaint', 'complaint_reported', 'customer_name'].map((c) => `${c}.ilike.%${g}%`).join(','));
   const { data, error } = await q;

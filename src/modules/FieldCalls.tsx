@@ -665,7 +665,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // is the courtesy), so the two cannot drift apart into a lie.
   const lockByRight = (fields: FieldDef[]): FieldDef[] => lockCallFields(fields, P, can);
 
-  const [srch, setSrch] = useState({ ucn: '', productName: '', serial: '', partyName: '', q: '' });
+  const [srch, setSrch] = useState({ ucn: '', productName: '', serial: '', partyName: '', engineer: '', q: '' });
   // A SEARCH RETURNS AT MOST SEARCH_CAP CALLS -- the server's own cap on one
   // response -- so a search that comes back with exactly that many may have
   // more behind it. It used to say "1000 matches" as if that were the answer,
@@ -870,6 +870,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       const has = (v: unknown, t?: string) => !t || String(v ?? '').toLowerCase().includes(t.trim().toLowerCase());
       const rows = (active
         ? dev.rows.filter((r) => has(r.ucn, srch.ucn) && has(r.serial, srch.serial) && has(r.partyName, srch.partyName)
+            && (!srch.engineer || String(r.allocatedTo ?? '').trim().toLowerCase() === srch.engineer.trim().toLowerCase())
             && has(r.productName, srch.productName)
             && (!srch.q || ['ucn', 'callNumber', 'partyName', 'serial', 'productName', 'allocatedTo', 'city', 'state', 'standardComplaint', 'complaintReported', 'customerName']
               .some((k) => has(r[k], srch.q))))
@@ -884,7 +885,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // whole register on the server (RLS-scoped); empty terms show the recent set.
   useEffect(() => {
     if (!onDb) return;
-    const active = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName);
+    const active = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName || srch.engineer);
     const applyRows = (rows: Rec[]) => {
       db.removeWhere(config.collection, (r) => !!(r as Rec)._synced);
       db.insertMany(config.collection,
@@ -1187,6 +1188,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
         has(row.productName, srch.productName) &&
         has(row.serial, srch.serial) &&
         has(row.partyName, srch.partyName) &&
+        (!srch.engineer || String(row.allocatedTo ?? '').trim().toLowerCase() === srch.engineer.trim().toLowerCase()) &&
         (!q || ['ucn', 'callNumber', 'partyName', 'city', 'state', 'productName', 'serial', 'standardComplaint', 'complaintReported', 'allocatedTo', 'customerName'].some(
           (k) => String(row[k] ?? '').toLowerCase().includes(q),
         ))
@@ -1314,7 +1316,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
 
   // More rows exist beyond what is loaded (only in the unfiltered browse set),
   // so the count is a lower bound — shown as "N+".
-  const searching = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName);
+  const searching = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName || srch.engineer);
   const moreAvailable = configured && !searching && cached.filter((r) => r._synced).length >= loadLimit;
   // One definition, used by the header. The database pages in 800s; the sheet
   // has to be re-read, so it asks for 300 more and refreshes.
@@ -1623,6 +1625,11 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
               <input className="input" placeholder="Product" value={srch.productName} onChange={(e) => setSrch1('productName', e.target.value)} />
               <input className="input" placeholder="Serial" value={srch.serial} onChange={(e) => setSrch1('serial', e.target.value)} />
               <input className="input" placeholder="Party" value={srch.partyName} onChange={(e) => setSrch1('partyName', e.target.value)} />
+              {/* ENGINEER, PICKED FROM A LIST (the user, 2026-11-27): the names this
+                  person may allot to -- every active engineer for an office role,
+                  the team for a manager -- matched whole on the server. */}
+              <SelectPicker className="call-search-engineer" value={srch.engineer} onChange={(v) => setSrch1('engineer', v)}
+                placeholder="Engineer" options={allotTeam.names} />
               <input className="input call-search-global" placeholder="🔎 Global" value={srch.q} onChange={(e) => setSrch1('q', e.target.value)} />
             </div>
             <button

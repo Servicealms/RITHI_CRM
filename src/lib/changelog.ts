@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.284',
+    date: '2026-11-27',
+    title: 'Call registers: search by engineer',
+    changes: [
+      'The Field, Installation and PM registers have an Engineer search beside UCN, Product, Serial and Party: a type-to-search list of the engineers you can allot to. It searches the whole register for calls allocated to that engineer, together with any other search you have filled in.',
+    ],
+  },
+  {
     version: '0.10.283',
     date: '2026-11-27',
     title: 'Open calls are kept on each device, like the Product Database',

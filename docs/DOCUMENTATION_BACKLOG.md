@@ -23,6 +23,13 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.284 — Engineer search on the call registers (2026-11-27)
+- Asked: "Add Engineer Search in all Calls Page like UCN, Party .. Preferably Drop down to select From."
+- Field / Installation / PM registers: an Engineer picker (type-to-search, PickList) beside UCN / Product / Serial / Party. Options = useTeamEngineers(): every active User Master name for an office role, self + reports for a manager, self for an engineer (the Call Allocated To list).
+- Server search: allocated_to ILIKE the picked name with no wildcard (equal ignoring case, never a fragment), ANDed with the other terms; the device-copy fallback and the sheet path match the same way.
+- Pending Calls already has engineer chips; not changed.
+- Write up: HOW_TO_USE call registers' search line; FRS for the register search (beside FRS-131).
+
 ## v0.10.283 — Open calls kept on each device (2026-11-27)
 - Asked: "Similar to Customer, Party, Product Database, can we also cache Calls?" Chosen: OPEN calls only; used by the call registers, Pending Calls, the search box and the call-status colours. (My Workload was also chosen but reads no calls -- nothing to do there.)
 - Store: machinestore.ts register `open-calls` (IndexedDB), downloaded from `pending_calls` (not the historical import), id-keyset, under the reader's RLS; keyed by the signed-in user, wiped on sign-out. Used 30 min; every 15 min / tab focus / signal back it asks `calls` (not pending_calls -- a solved call leaves that view) whether any row has sys_updated_on after the copy's latest, and re-downloads if so. Replaced only by a complete download. Indexes: 0498 (sys_columns module), _status.sql row 404.
