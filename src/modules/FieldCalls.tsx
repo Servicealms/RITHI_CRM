@@ -30,7 +30,7 @@ import {
   updateFieldCall,
 } from '../lib/sheets';
 import { formatDay, formatDayTime } from '../lib/dates';
-import { supabaseConfigured, getPmHideRules, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
+import { supabaseConfigured, deviceOpenCalls, callFamily, getPmHideRules, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
 import { useAuditMode } from '../lib/auditMode';
 import { useCallFieldMasters } from './callFields';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
@@ -859,6 +859,27 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // THE DEVICE'S OPEN CALLS for this register, under the search terms when a
+  // search is showing, or NULL when this device holds no copy (or none match
+  // nothing to show beats a list that looks like the register and is not).
+  const deviceFallback = async (active: boolean): Promise<{ rows: Rec[]; text: string } | null> => {
+    try {
+      const fam = config.callType ? callFamily(config.callType) : '';
+      const dev = await deviceOpenCalls((t) => !fam || callFamily(t) === fam);
+      if (!dev || !dev.rows.length) return null;
+      const has = (v: unknown, t?: string) => !t || String(v ?? '').toLowerCase().includes(t.trim().toLowerCase());
+      const rows = (active
+        ? dev.rows.filter((r) => has(r.ucn, srch.ucn) && has(r.serial, srch.serial) && has(r.partyName, srch.partyName)
+            && has(r.productName, srch.productName)
+            && (!srch.q || ['ucn', 'callNumber', 'partyName', 'serial', 'productName', 'allocatedTo', 'city', 'state', 'standardComplaint', 'complaintReported', 'customerName']
+              .some((k) => has(r[k], srch.q))))
+        : dev.rows) as Rec[];
+      const as = dev.at ? `, as of ${formatDayTime(new Date(dev.at).toISOString())}` : '';
+      return { rows, text: `Could not reach the server — showing the ${rows.length} open ${config.singular.toLowerCase()}s kept on this device${as}${
+        active ? ' that match your search' : ''}. Solved and cancelled calls, and saving, need a connection.` };
+    } catch { return null; }
+  };
+
   // Server-side search (Supabase). Debounced: any active term re-queries the
   // whole register on the server (RLS-scoped); empty terms show the recent set.
   useEffect(() => {
@@ -887,7 +908,12 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
             : `${rows.length} match${rows.length === 1 ? '' : 'es'} for your search (server-side).`)
           : `Showing ${rows.length} ${config.singular.toLowerCase()}s${rows.length >= loadLimit ? ' — Load more for older' : ''}; search finds any call.` });
       } catch (e) {
-        setBanner({ tone: 'error', text: `Search failed: ${e instanceof Error ? e.message : String(e)}` });
+        // NO SIGNAL: THE OPEN CALLS KEPT ON THIS DEVICE (the user, 2026-11-27).
+        // Open calls only -- solved and cancelled ones need the server -- and a
+        // search is matched on the device the way the server would match it.
+        const dev = await deviceFallback(active);
+        if (dev) { applyRows(dev.rows); setBanner({ tone: 'info', text: dev.text }); }
+        else setBanner({ tone: 'error', text: `Search failed: ${e instanceof Error ? e.message : String(e)}` });
       } finally { setBusy(false); }
     }, active ? 350 : 0);
     return () => window.clearTimeout(t);

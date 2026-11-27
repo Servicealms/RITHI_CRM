@@ -31,7 +31,7 @@
 //   * EVERY STORAGE CALL IS GUARDED. A private window or a full disk throws on
 //     IndexedDB itself; then the app simply asks the server, as it always did.
 // ===========================================================================
-import { getSupabase, productRowToSheet, sbReportDeviceCache } from './supabase';
+import { getSupabase, productRowToSheet, sbReportDeviceCache, HISTORICAL_MARK } from './supabase';
 import { storedListInfo, warmMaster, MASTER_STORED_EVENT } from './masters';
 import {
   downloadAfter, packRows, unpackRows, toCached, deviceLabel,
@@ -131,10 +131,18 @@ async function currentUser(): Promise<string> {
 // ---- one register ---------------------------------------------------------------
 // The machine register and the Party Master are the same problem with a
 // different table, so they are the same code with a different table.
+// A filter the download applies, on the PostgREST query builder.
+type Narrow = <Q extends { is: (col: string, v: null) => Q }>(q: Q) => Q;
 function register<T extends { id: number }>(o: {
   key: string; table: string; toItem: (row: Record<string, unknown>) => T;
   /** How long a copy is used before it is downloaded again. */
   refreshMs: number;
+  /** Narrows what is downloaded (the open calls: not the historical import). */
+  narrow?: Narrow;
+  /** Where "has anything changed?" is asked, when that is not `table`: the open
+   *  calls are downloaded from pending_calls, but a call that CLOSES leaves that
+   *  view -- so the question is asked of `calls`, where the closing write shows. */
+  changedTable?: string;
 }) {
   let memory: { user: string; at: number; items: T[]; mark?: string } | null = null;
   let loaded: Promise<void> | null = null;
@@ -163,7 +171,9 @@ function register<T extends { id: number }>(o: {
   async function fetchAfter(afterId: number, size: number) {
     const c = getSupabase(); if (!c) throw new Error('Database not connected.');
     // `select('*')`: EVERY COLUMN, as the user asked.
-    const { data, error } = await c.from(o.table).select('*').gt('id', afterId).order('id').limit(size);
+    let q = c.from(o.table).select('*').gt('id', afterId);
+    if (o.narrow) q = o.narrow(q);
+    const { data, error } = await q.order('id').limit(size);
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({ ...(r as Record<string, unknown>), id: Number(r.id) }));
   }
@@ -177,7 +187,7 @@ function register<T extends { id: number }>(o: {
       // A copy made before 0460 has no mark: the device's own time, less ten
       // minutes for a clock that runs fast.
       const after = m.mark || new Date(m.at - 10 * 60 * 1000).toISOString();
-      const { data, error } = await c.from(o.table).select('id').gt('sys_updated_on', after).limit(1);
+      const { data, error } = await c.from(o.changedTable ?? o.table).select('id').gt('sys_updated_on', after).limit(1);
       return !error && (data ?? []).length > 0;
     } catch { return false; }
   }
@@ -327,6 +337,28 @@ const parties = register<CachedParty>({
   toItem: (row) => ({ ...row, id: Number(row.id) }),
 });
 
+// THE OPEN CALLS (the user, 2026-11-27: "Similar to Customer, Party, Product
+// Database, can we also cache Calls?"; asked, chose: open calls only, used by
+// the call registers when the server cannot be reached, Pending Calls, the
+// search box and the call-status colours). Downloaded from pending_calls --
+// exactly what the Pending Calls register reads, so the two agree row for row
+// -- under the reader's own row-level security, and asked "changed?" of
+// `calls` (0498 indexes it), because a call that is solved leaves the view.
+// FOR READING ONLY: every save still goes to the server.
+// Thirty minutes, and sooner whenever the server says a call was written.
+export const CALL_REFRESH_MS = 30 * 60 * 1000;
+const calls = register<Record<string, unknown> & { id: number }>({
+  key: 'open-calls', table: 'pending_calls', changedTable: 'calls',
+  narrow: (q) => q.is(HISTORICAL_MARK, null),
+  toItem: (r) => ({ ...r, id: Number(r.id) }), refreshMs: CALL_REFRESH_MS,
+});
+/** The open calls on this device for the signed-in person, or NULL when there
+ *  is no copy yet. Never waits for the network. */
+export const localOpenCalls = calls.local;
+export const refreshOpenCalls = calls.refresh;
+export const onOpenCalls = calls.on;
+export const openCallsStatus = calls.status;
+
 export const localMachines = machines.local;
 export const localParties = parties.local;
 export const onMachineRegister = machines.on;
@@ -342,9 +374,9 @@ export const refreshPartyRegister = parties.refresh;
  *  (the user, 2026-10-05). */
 export const refreshMachinesOnly = machines.refresh;
 
-/** Wipe both: sign-out. */
+/** Wipe every copy: sign-out. */
 export async function clearMachineRegister(): Promise<void> {
-  machines.forget(); parties.forget();
+  machines.forget(); parties.forget(); calls.forget();
   // SAID BEFORE SIGNING OUT, while the session can still write its own row:
   // this device no longer holds a copy. Bounded, so a dead signal cannot hold
   // up somebody signing out.
@@ -364,14 +396,15 @@ let watching = false;
 export function watchMachineRegister(): void {
   if (watching || typeof window === 'undefined') return;
   watching = true;
-  window.addEventListener('online', () => { void refreshMachineRegister(); warmLists(); });
+  window.addEventListener('online', () => { void refreshMachineRegister(); void calls.refresh(); warmLists(); });
   // A LIST STORED is something the report should say (the complaints).
   window.addEventListener(MASTER_STORED_EVENT, () => scheduleReport());
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') void refreshMachineRegister();
+    if (document.visibilityState === 'visible') { void refreshMachineRegister(); void calls.refresh(); }
   });
-  window.setInterval(() => { void refreshMachineRegister(); warmLists(); }, 15 * 60 * 1000);
+  window.setInterval(() => { void refreshMachineRegister(); void calls.refresh(); warmLists(); }, 15 * 60 * 1000);
   void refreshMachineRegister();
+  void calls.refresh();
   // THE STANDARD COMPLAINTS TOO, so a Call Request can be filled with no
   // signal even if no call form was opened while there was one.
   // THE PART MASTER WITH ITS PRODUCTS, AND EACH PRODUCT'S ACCESSORIES
