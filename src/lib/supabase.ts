@@ -315,7 +315,10 @@ export async function searchCalls(callType: string, terms: CallSearch, limit = 1
   if (terms.ucn) q = q.ilike('ucn', `%${_san(terms.ucn)}%`);
   if (terms.serial) q = q.ilike('serial', `%${_san(terms.serial)}%`);
   if (terms.partyName) q = q.ilike('party_name', `%${_san(terms.partyName)}%`);
-  if (terms.productName) q = q.ilike('product_name', `%${_san(terms.productName)}%`);
+  // THE PRODUCT IS PICKED FROM A LIST TOO (the user, 2026-11-27: "Add Product
+  // filter dropdown too"): matched whole, ignoring case -- VEGA never brings
+  // back VEGA XT.
+  if (terms.productName) q = q.ilike('product_name', _san(terms.productName));
   // THE ENGINEER IS PICKED FROM A LIST (the user, 2026-11-27: "Add Engineer
   // Search ... Preferably Drop down"), so it is matched WHOLE -- an ilike with no
   // wildcard, i.e. equal ignoring case -- never as a fragment of another name.

@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.287',
+    date: '2026-11-27',
+    title: 'Call registers: Product is a dropdown',
+    changes: [
+      'The Product search on the Field, Installation and PM registers is now a type-to-search list of products — the same list the call form offers. It finds calls for exactly that product (VEGA no longer also brings back VEGA XT), together with any other search you have filled in.',
+    ],
+  },
+  {
     version: '0.10.286',
     date: '2026-11-27',
     title: 'Call registers: search by call status',
