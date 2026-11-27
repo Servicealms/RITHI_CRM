@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.285 — Device Cache Status: open calls; PM Calls subtitle removed (2026-11-27)
+- Device Cache Status: new columns Open calls / Open calls downloaded (0499: device_cache_status.open_calls / open_calls_at; device_cache_report() rebuilt with them last, 0380's body otherwise; _status.sql row 405). Each device reports the count of its open-calls copy and when it was downloaded -- nothing else. Blank for a device on a build before 0.10.285. A project without 0499 still accepts the rest of the report.
+- Call registers' header: subtitles removed -- PM ("Preventive-maintenance visits (call_type = P M VISIT). Bulk-load monthly; back-dating supported.", the user: "Remove this statement"), Field and Installation ("Live ... register — new calls get a UCN and are written back.", the user: "Remove Duplicate Info"); the status line's "⟳ synced Xs ago" removed (the same time reads beside Refresh); "Loading calls from the Google Sheet…" shown only on the sheet path, and a failed read on the database path says "Could not load calls" (the user: "This is no longer true").
+- Write up: HOW_TO_USE Device Cache Status (the columns); the device-copy requirement (with the v0.10.283 entry).
+
 ## v0.10.284 — Engineer search on the call registers (2026-11-27)
 - Asked: "Add Engineer Search in all Calls Page like UCN, Party .. Preferably Drop down to select From."
 - Field / Installation / PM registers: an Engineer picker (type-to-search, PickList) beside UCN / Product / Serial / Party. Options = useTeamEngineers(): every active User Master name for an office role, self + reports for a manager, self for an engineer (the Call Allocated To list).
