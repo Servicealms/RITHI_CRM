@@ -76,7 +76,7 @@ In your words:
 
 **Where things stand.** Measured on 2026-09-26 on a database built from all
 265 migrations. The live project may differ.
-[`_tables_without_key_time_author.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/_tables_without_key_time_author.sql)
+[`_tables_without_key_time_author.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/_tables_without_key_time_author.sql)
 is read-only and gives the same table for the live database, one row per
 table.
 

@@ -4,6 +4,7 @@ Living backlog for the Field Service module. Newest decisions at the top of each
 section. Shipped items also appear in the in-app **Version History**; this file
 tracks what's **done**, **in progress**, and **queued**.
 
+_Last updated: 2026-11-27 (REPOSITORY MOVED — v0.10.278: neurolooom-eng/RITHI_CRM → Servicealms/RITHI_CRM (restored from a git bundle at 2291308); site https://servicealms.github.io/RITHI_CRM/. REPO in run-daily-crops, SITE in security-live-check, the create-auth-users example and every file link updated; PR #328's link left on the old repository, since the pull requests did not move. ⏳ THE USER'S STEPS: GitHub secrets SUPABASE_DB_URL + SUPABASE_ACCESS_TOKEN; a new fine-grained GITHUB_DISPATCH_TOKEN (Actions: read and write, this repository) in the Supabase Edge Function secrets; Supabase Auth → URL Configuration (Site URL + Redirect URLs) to the new site; Pages on gh-pages, root. ⏳ OPEN: why Call Pending Reason is blank on the Field Call export -- waiting on `_why_is_pending_reason_blank.sql`'s counts.)
 _Last updated: 2026-11-19 (COVER ACTIVE FROM ITS START — v0.10.270, 0491 (sales_contracts) + 0492 (product_database_2): every status (saved, machine_cover, the Product Database view, 2.0, the device and Product & Party Search) counts a warranty or contract only from its start date. ⏸ ON HOLD (the user: "Hold on this Change where - Which comes first"): warranty-vs-contract order when both really run -- the saved status and machine_cover ask the contract first, the Product Database view the warranty; the nightly refresh (0490) copies the view's. ⏳ THE USER'S DATA: six machines where warranty and contract overlap (probe `_machines_with_warranty_and_contract_active.sql`) -- 19146 and 11260 both running now (an extended warranty entered as a contract), 11204 from Jun-2027, 11430 by 5 days (installation solved later than the contract assumed), 19163 by 2 days; 20133 is the ideal case (contract the day after). Offered, not built: a warning when a contract is entered starting before that machine's warranty ends.)
 _Last updated: 2026-11-19 (PRODUCT DATABASE ITEM STATUS FOR TODAY — v0.10.269, 0490 (product_database_2.sql): the device copy works the status out from today when read (warranty first, the view's rule), so the Product Database and a new call's prefill no longer show a contract that ran out as CMC; refresh_product_item_status() at 00:05 IST copies the view's status onto products where it differs (pg_cron; first run left to the schedule). ⏳ Calls already registered keep their status -- 🛡️ Update Product Details corrects them. ⏳ Product & Party Search's Current Item Status still asks the CONTRACT first (settled 2026-10-15) where the Product Database asks the WARRANTY first -- the two disagree only on a machine with both running; the user to choose one rule. ⏳ sync_product_machine (0330) still stores contract-first on a register write, corrected that night.)
 _Last updated: 2026-11-13 (QUEUED: Product Database → Google Sheet, waiting on the columns, the spreadsheet and the hour.) Before that: 2026-11-11 (HAND STOCK RECONCILIATION — 0468–0470, v0.10.231, URS-191 / FRS-287 / OQ-306: a physical count per engineer + part resets the line from the moment it is entered; older movements kept, not counted; ⏳ tick handstock.reconcile for whoever counts.) Before that: 2026-10-15 (EQUIPMENT LIST: FFR HEADER, PARTY FIRST (ONCE, outside the table since v0.10.201; header + footer on EVERY page via fixed elements since v0.10.202; Service Engineer optional, off by default; minimal header in Cormorant Garamond / Source Sans 3 since v0.10.203; Current Status beside Serial; no OT Number), ONE PARTY PER LIST — v0.10.200, FRS-118.13 / OQ-294; footer = the FFR property notice (the user's wording); template sent to the user for approval. Before: v0.10.199 four filters + green highlight; 0444 email corrected; objectives move on the next Re-Calculate ⏳; 150 calls with SEVERAL requests ⏳ USER DECISION. Still ⏳ from 0432: the 2023 yearly sheet for VISIT HISTORY; the e-service export; uploads 2018-22 (WinMax), 2023-2025 (Yearly sheet + year).)
@@ -1282,7 +1283,7 @@ applied cleanly, and none touches this view. So the cause is in something only
 the live project has, and no fix is offered until it is measured.
 
 **To run (read-only, one grid):**
-[`supabase/apply/_why_does_the_machine_download_time_out.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_why_does_the_machine_download_time_out.sql)
+[`supabase/apply/_why_does_the_machine_download_time_out.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_why_does_the_machine_download_time_out.sql)
 with the affected person's email on the marked line. It becomes that person,
 times one page and each of its parts with the timeout lifted, and prints the
 register sizes beside them.
@@ -2206,7 +2207,7 @@ still gets its UCN, a party its Party Key and a review its FFR. `_status.sql`
 rows 188-190 read NO without the fix and yes with it. Full validation.
 
 **PENDING — the user's step:** run
-[`lockdown.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/lockdown.sql),
+[`lockdown.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/lockdown.sql),
 the cover bundle `sales_contracts.sql` and `data_integrity.sql` — or just the
 three migration files 0246-0248, which are the only new statements.
 **Still open:** 53, 54 (which tables), 55, 56 need decisions or live numbers.
@@ -2232,7 +2233,7 @@ foreign keys), 56 (unindexed filters). Details and fixes in
 `docs/MODULE_REVIEW_LOG.md`.
 
 **PENDING — the user's step:** run
-[`_table_health.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/_table_health.sql)
+[`_table_health.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/_table_health.sql)
 (read-only) — the live counts and the live grants. **PENDING — decisions:** 51
 (which permission), 53, 54, 55. **NOT DONE:** the fixes themselves.
 
@@ -2275,7 +2276,7 @@ and 12,000 visits; the trigger adds about 13 µs a row (a 20,000-row insert went
 from ~330 ms to ~590 ms). Not measured on the live project.
 
 **PENDING — the user's step:** run
-[`sys_columns.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/sys_columns.sql)
+[`sys_columns.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/sys_columns.sql)
 once. It is safe to re-run, and re-running it is also how a table added later
 gets the columns (row 187 says when).
 
@@ -2311,7 +2312,7 @@ seven, transfers counted), the name/part-code keys, the permission.
   Visit UID — not blank dates.
 
 **PENDING — the user's step**: apply
-[`0243_reconciliation_needs_no_visit.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/migrations/0243_reconciliation_needs_no_visit.sql)
+[`0243_reconciliation_needs_no_visit.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/migrations/0243_reconciliation_needs_no_visit.sql)
 in the SQL editor. It is one `create or replace function` plus the same trigger
 re-created, so it is safe to re-run; the whole `HandStock_X.sql` also carries it
 but re-executes the entire module, which is the lock risk noted above.
@@ -4008,7 +4009,7 @@ route and say "recovered" rather than "missing". `check:ui` refused the screen
 until it was tied to one, which is the mechanism working.
 
 **TO RUN:** `_status.sql` (row **172**), then
-[`supabase/apply/reports.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/reports.sql).
+[`supabase/apply/reports.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/reports.sql).
 
 validate: **96/96 suites, 16/16 checks.**
 
@@ -4109,7 +4110,7 @@ Speed is unaffected: 3 ms / 3.5 ms / 5.8 ms for the count and two pages on the
 loaded fixture, measured after the repair.
 
 **TO RUN:** `_status.sql` (row **170**), then re-run
-[`supabase/apply/product_database_2.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/product_database_2.sql).
+[`supabase/apply/product_database_2.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/product_database_2.sql).
 It is idempotent, so running it again over 0220 is the repair.
 
 validate: **95/95 suites, 16/16 checks.**
@@ -4191,7 +4192,7 @@ says so where it does it.
 
 **TO RUN (the user's step):** `_status.sql` first — row **170** reads NO until
 this is applied — then
-[`supabase/apply/product_database_2.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/product_database_2.sql).
+[`supabase/apply/product_database_2.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/product_database_2.sql).
 
 **Also in this change:** the Review Desk reported *"500+ of 0"* — the deep load
 added earlier that day sets the rows only at the END, so the previous tab's 500
@@ -6335,7 +6336,7 @@ lesson the harness was built on.
 
 ### Applied — 2026-09-15
 
-[`daily_review.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/daily_review.sql)
+[`daily_review.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/daily_review.sql)
 run on the live project, so `_status.sql` row 152 reads yes and rule 2 is
 answering alongside rule 1.
 
@@ -6387,7 +6388,7 @@ rather than the sale.
 
 ### Applied — 2026-09-15
 
-[`daily_review.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/daily_review.sql)
+[`daily_review.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/daily_review.sql)
 run on the live project, so `_status.sql` row 151 reads yes: Change product?
 now moves the failure, rather than saving while nothing moves.
 
@@ -6517,7 +6518,7 @@ rather than silently inserting.
 
 ### Applied — 2026-09-15
 
-[`HandStock_X.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/HandStock_X.sql)
+[`HandStock_X.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/HandStock_X.sql)
 run on the live project, so `_status.sql` row 150 reads yes and Edit works on a
 part that has history.
 
@@ -6704,7 +6705,7 @@ menu-parsing regex from silently matching nothing and making the rest vacuous.
 
 ### To run on the live project
 
-[`rbac.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/rbac.sql)
+[`rbac.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/rbac.sql)
 — `_status.sql` row 149 answers NO until it is in, and until then those three
 screens stay invisible.
 
@@ -6824,7 +6825,7 @@ Supabase SQL editor does not show a `raise notice`, so the migration's own
 "N machine(s) had their kept columns read back out of `extra`" is invisible
 there.
 
-[`_product_database_check.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_product_database_check.sql)
+[`_product_database_check.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_product_database_check.sql)
 (read-only) asks the rows themselves: per column, how many machines have a value
 in the COLUMN, and how many have one in `extra` that did **not** reach it. Every
 text column should read **0** in that second number. Where `PO Date` or
@@ -6842,7 +6843,7 @@ except the two corrected by hand; after it, **0** for every text column, 1 for
 
 `masters.sql` was run by the user on 2026-09-14, carrying 0194. Nothing is
 outstanding; confirm with `_status.sql` row 148 and the check above. (Row 147's `masters.sql` +
-[`rbac.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/rbac.sql)
+[`rbac.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/rbac.sql)
 were run by the user on 2026-09-14; `masters.sql` now carries 0194 as well, so
 running it again brings both.)
 
@@ -7065,7 +7066,7 @@ can be given one without the others.
 
 ### To run on the live project
 
-[`performance.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/performance.sql)
+[`performance.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/performance.sql)
 — `_status.sql` row 146 answers NO until it is in.
 
 ## 2026-09-14 — The feedback date, and a Pareto that drills
@@ -7131,7 +7132,7 @@ a drill-down shows one thing and claims another.
 
 ### To run on the live project
 
-[`data_integrity.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/data_integrity.sql)
+[`data_integrity.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/data_integrity.sql)
 — `_status.sql` row 145 answers NO until it is in. It backfills; nothing needs
 re-uploading.
 
@@ -7278,9 +7279,9 @@ empty register.
 
 ### To run on the live project
 
-[`data_integrity.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/data_integrity.sql) ·
-[`stock_transfer.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/stock_transfer.sql) ·
-[`objective.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/objective.sql)
+[`data_integrity.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/data_integrity.sql) ·
+[`stock_transfer.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/stock_transfer.sql) ·
+[`objective.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/objective.sql)
 
 `_status.sql` rows 142, 143 and 144 answer NO until each is in.
 
@@ -7325,8 +7326,8 @@ escaped it only by naming its new index differently.
 
 ### To run on the live project
 
-[`data_integrity.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/data_integrity.sql)
-— [read it here](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/data_integrity.sql).
+[`data_integrity.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/data_integrity.sql)
+— [read it here](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/data_integrity.sql).
 Once more, and it is safe however many times.
 
 ## 2026-09-14 — "About to expire" is thirty days, and the number lives in one place
@@ -7400,14 +7401,14 @@ the stale file back.
 
 ### To run on the live project
 
-[`sales_contracts.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/sales_contracts.sql)
-— [read it here](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/sales_contracts.sql).
+[`sales_contracts.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/sales_contracts.sql)
+— [read it here](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/sales_contracts.sql).
 `_status.sql` row 139 answers NO while the sixty-day band is still live, and it
 asks the function rather than reading it, because that is the only way to tell 30
 from 60 on a project that has run one bundle and not the other.
 
-And [`data_integrity.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/data_integrity.sql)
-— [read it here](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/data_integrity.sql)
+And [`data_integrity.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/data_integrity.sql)
+— [read it here](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/data_integrity.sql)
 — which was already pending for 0186 (the Customer Feedback key) and whose
 earlier link carried the stale partial index described above.
 
@@ -8464,7 +8465,7 @@ in an `ilike` pattern `_` matches ANY character, so pattern-matching alone would
 quietly pull in neighbours. **No SQL needed.**
 
 OPTIONAL tidy-up, dry-run by default:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_party_name_normalise.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_party_name_normalise.sql>
 — re-spells product rows to their party row's spelling, and separately lists
 products whose party has no row at all (nothing to normalise TO; somebody has to
 add the party).
@@ -8501,9 +8502,9 @@ the tables — it says in one line whether that person can grant Admin, which ga
 stops them, and **who can**, so "ask one of these people" replaces guessing.
 
 Read-only diagnosis:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/_admin_grant_check.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/_admin_grant_check.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_admin_grant_check.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_admin_grant_check.sql>
 
 📌 **The dropdown design default is written down** (2026-09-09, v0.9.179) —
 "Type Search and select, fallback or no fallback depends on the field". It lives
@@ -8569,42 +8570,42 @@ consolidated files handed round, where the number is a revision. (A link to the
 view. The view is **dropped and rebuilt**, not replaced — `create or replace`
 can only append, and 0116's narrower definition has to stay replayable after
 this; `security_invoker` is re-asserted, and `check:views` passes. Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/Spare_1.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/Spare_1.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/Spare_1.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/Spare_1.sql>
 
 ⚠️ **PENDING: `daily_review.sql`** (2026-09-09, v0.9.163) — 0153 replaces the
 frequent-failure test with the procedure's own rule (`_status.sql` row 77).
 Until it runs, Review 2 still applies a **six-month** window, still reads the
 count **one short** of the rule, and still has **no same-part path** at all.
 Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/daily_review.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/daily_review.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/daily_review.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/daily_review.sql>
 
 ⚠️ **PENDING: `performance.sql`** (2026-09-09, v0.9.162) — 0152 drops the
 `parts_category_check` constraint, which aborted the Item Master upload 173 rows
 in and left the table half-written (`_status.sql` row 115). The importer fix
 ships with the app and needs no SQL; this one stops the whole CLASS of failure,
 so an unexpected category word can never refuse a row again. Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/performance.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/performance.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/performance.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/performance.sql>
 
 ⚠️ **PENDING: `tracker.sql`** (2026-09-08, v0.9.158) — the Tracker catches up
 with this file: eight items added (0150), the three parked decisions and the
 13485 findings. Additive and idempotent by title; nothing already on the list is
 closed, renamed or touched. Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/tracker.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/tracker.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/tracker.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/tracker.sql>
 (It also carries the Air Liquide ID item from 0146, if that has not been run.)
 
 ⚠️ **PENDING: `tracker.sql`** (2026-09-08, v0.9.152) — one seeded item, *"Collect
 every engineer's Air Liquide ID"*, owned by **Devika** (0146). Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/tracker.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/tracker.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/tracker.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/tracker.sql>
 It is a row somebody could equally add on the page in twenty seconds; the
 migration exists so it also travels with the bundle.
 
@@ -8812,7 +8813,7 @@ and `EXPLAIN ANALYZE` for the three failing shapes — including a **short seria
 on its own**, which is 0129's documented trap (four characters give a trigram
 index almost no selectivity). Read-only; `check:ui` refuses it if it ever gains
 a write.
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_search_diagnose.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_search_diagnose.sql>
 
 **A DUPLICATE INDEX, FOUND BY THE DIAGNOSTIC ON ITS FIRST RUN.**
 `products_party_name_group_idx` (0160, mine) and `products_party_name_eq` (0052)
@@ -9051,7 +9052,7 @@ appear on the Tracker with nothing anywhere to say why.
 **It is one file and nothing depends on it**, which is probably why it keeps
 slipping: no screen is broken while it is unrun, the Tracker simply does not
 carry the six items.
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/tracker.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/tracker.sql>
 
 <details><summary>What was applied</summary>
 
@@ -9104,7 +9105,7 @@ is not an answer, so the field became a picker and the perf fault went with it.
 falls back to the Party Master if the view is not applied yet, so this is safe to
 merge before the SQL is run.
 
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/performance.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/performance.sql>
 
 **THIRD assertion this session to fail for pinning an implementation detail** —
 `options={partyMaster.values}` broke the moment the installation fallback made it
@@ -9115,7 +9116,7 @@ what the code MUST DO, never the shape it currently does it in.
 TIMING OUT FOR ANYONE WHO IS NOT AN ADMINISTRATOR.** Reported: *"Sivarani is
 unable to download KPI Report"*, `canceling statement due to statement timeout`
 on a range holding 455 calls. `_status.sql` row 121.
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/performance.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/performance.sql>
 
 **The measurement is the point, and it is why nothing caught this.** On a
 database seeded to the live shape — 24,000 calls, 55,000 visits, 12,000 spare
@@ -9332,7 +9333,7 @@ bundle that had never been run was indistinguishable from one that had — every
 other row in the report tests an object, and rows are not objects. Without it
 this bundle would have gone on reading as applied, and the six open points would
 simply never have appeared on the Tracker with nothing to say why.
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/tracker.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/tracker.sql>
 
 **Everything else in the report reads `yes`**, including two that had been
 expected to stay NO and are now settled: **pg_cron is enabled** (Review 2
@@ -9347,9 +9348,9 @@ and all six activities' field sets, `indoor_job_accessories`,
 `indoor_job_parts`, `indoor_job_checks`, the `IND<YY>-<NNNN>` series, five
 permissions and two guard triggers. Until it runs, the page is in the menu for
 nobody and `_status.sql` row 120 reads NO. Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/indoor.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/indoor.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/indoor.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/indoor.sql>
 
 **Two axes, and keeping them apart is the decision the whole shape rests on.**
 `kind` says WHOSE PROPERTY the unit is — which is what turns the custody duties
@@ -9416,7 +9417,7 @@ the auto-apply pipeline, Indoor Service Phase 1 now the activities are settled,
 the condemn/salvage decision, the optional party tidy-up, and the pre-existing
 unlabelled error in the `spare_bulk_approval` suite. Additive and idempotent by
 title; closes nothing.
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/tracker.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/tracker.sql>
 
 **A seventh item was removed before the file ever ran.** It was "confirm the
 super-admin revocation actually took", and the `_status.sql` output answered it
@@ -9491,7 +9492,7 @@ the least this codebase can express; there is no "no access" ROLE, and locking
 the account out entirely means deactivating the User Master row, which was NOT
 assumed. 0156 sits AFTER 0008 in the module, so replaying the bundle re-seeds
 and then revokes rather than restoring a super admin.
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/rbac.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/rbac.sql>
 
 ⚠️ **PENDING: `rbac.sql`** (2026-09-09, v0.9.172) — 0155 adds the **Zoho
 Migration** role (`_status.sql` row 117): Technical Support's reach, taken from
@@ -9499,16 +9500,16 @@ that role's STORED row rather than restated, so the two cannot drift; plus the
 report and master-list sub-pages spelled out, because Roles & Permissions shows
 a row per sub-page. Read-only by what it does not hold. Until it runs the role
 exists in the app's dropdown but no login can be given it usefully. Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/rbac.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/rbac.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/rbac.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/rbac.sql>
 
 ⚠️ **PENDING: `rbac.sql`** (2026-09-09, v0.9.160) — 0151 catches the stored role
 rows up with the pages (`_status.sql` row 114). Until it runs, **Spare Insights
 is invisible to everyone but an administrator**. Read it:
-<https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/rbac.sql> ·
+<https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/rbac.sql> ·
 copy it:
-<https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/rbac.sql>
+<https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/rbac.sql>
 
 </details>
 
@@ -10646,7 +10647,7 @@ reading the column default.
 for this round, so rows 93-103 are *expected* to read `yes` and nothing in this
 file is evidence that they do. The live project cannot be reached from the
 sandbox. Run
-[`_status.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_status.sql)
+[`_status.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_status.sql)
 before diagnosing anything here — that is the check, and this is only a note.
 
 Two rows are expected to stay `NO` and are NOT missing migrations:
@@ -10663,11 +10664,11 @@ What the two bundles brought:
 
 | bundle | brings | rows |
 | --- | --- | --- |
-| [`objective.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/objective.sql) ([raw](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/objective.sql)) | 0130 the objectives register, 0132 Re-Calc + evidence, 0133 the serial filter (the Indian Extend), 0134 the machines as rows, 0135 the installation base as a Product Master listing with the filter stated, 0136 quarterly periods + objectives 8-11 + the stated assumptions, 0137 the settable solve cut-off + the closure date in the export, 0138 closure on the visit date + the admin lock, 0139 a cut-off PER MONTH | 93, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106 |
-| [`performance.sql`](https://github.com/neurolooom-eng/RITHI_CRM/blob/main/supabase/apply/performance.sql) ([raw](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/performance.sql)) | 0128 the KPI Field & Installation export (columns A–AB), 0131 Phase 2 (AC–AG + Pending Days), 0129 `products.serial_key` | 94 |
+| [`objective.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/objective.sql) ([raw](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/objective.sql)) | 0130 the objectives register, 0132 Re-Calc + evidence, 0133 the serial filter (the Indian Extend), 0134 the machines as rows, 0135 the installation base as a Product Master listing with the filter stated, 0136 quarterly periods + objectives 8-11 + the stated assumptions, 0137 the settable solve cut-off + the closure date in the export, 0138 closure on the visit date + the admin lock, 0139 a cut-off PER MONTH | 93, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106 |
+| [`performance.sql`](https://github.com/Servicealms/RITHI_CRM/blob/main/supabase/apply/performance.sql) ([raw](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/performance.sql)) | 0128 the KPI Field & Installation export (columns A–AB), 0131 Phase 2 (AC–AG + Pending Days), 0129 `products.serial_key` | 94 |
 
 ⚠️ **This is a note, not evidence.** Run
-[`_status.sql`](https://raw.githubusercontent.com/neurolooom-eng/RITHI_CRM/main/supabase/apply/_status.sql)
+[`_status.sql`](https://raw.githubusercontent.com/Servicealms/RITHI_CRM/main/supabase/apply/_status.sql)
 before diagnosing anything here — this file has twice claimed the opposite of
 what was applied.
 

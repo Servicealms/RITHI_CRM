@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.278',
+    date: '2026-11-27',
+    title: 'RITHI has a new address: servicealms.github.io/RITHI_CRM',
+    changes: [
+      'The application now lives at https://servicealms.github.io/RITHI_CRM/ — update bookmarks and home-screen shortcuts. The old address no longer receives updates.',
+      'Links in the handbook to SQL files now point to the new repository, Servicealms/RITHI_CRM.',
+    ],
+  },
+  {
     version: '0.10.277',
     date: '2026-11-26',
     title: 'PM Calls: the Missed PM rule hides cancelled calls too, and reaches Pending Calls and search',

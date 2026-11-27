@@ -15,7 +15,7 @@
 //   node scripts/create-auth-users.mjs --invite        # + email each an invite link
 //   node scripts/create-auth-users.mjs --csv people.csv # from a CSV with an `email` column
 //   node scripts/create-auth-users.mjs a@x.com b@y.com  # just these addresses
-//   node scripts/create-auth-users.mjs --redirect https://neurolooom-eng.github.io/RITHI_CRM/
+//   node scripts/create-auth-users.mjs --redirect https://servicealms.github.io/RITHI_CRM/
 //
 // Modes:
 //   default  — creates accounts with email already CONFIRMED and a random

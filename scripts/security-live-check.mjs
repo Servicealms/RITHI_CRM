@@ -13,7 +13,7 @@
 // ===========================================================================
 import { readdirSync, readFileSync } from 'node:fs';
 
-const SITE = 'https://neurolooom-eng.github.io/RITHI_CRM/';
+const SITE = 'https://servicealms.github.io/RITHI_CRM/';
 const src = readFileSync('src/lib/supabase.ts', 'utf8');
 const URL = /DEFAULT_SUPABASE_URL = '([^']+)'/.exec(src)?.[1];
 const KEY = /DEFAULT_SUPABASE_ANON = '([^']+)'/.exec(src)?.[1];
