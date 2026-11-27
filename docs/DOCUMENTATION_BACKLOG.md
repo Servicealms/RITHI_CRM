@@ -23,6 +23,12 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.286 — Call Status search on the call registers (2026-11-27)
+- Asked: "Similar to Engineer Name search, add Call Status also in filter."
+- Field / Installation / PM: a Call Status picker beside Engineer: Unattended, Unsolved, Solved - Report Pending (value "Report pending"), Solved, Reopened, Cancelled -- the state the register shows (dbToCall: cancelled_at -> Cancelled, else reopened_at -> Reopened, else open_state).
+- Server: Cancelled -> open_state = 'Cancelled'; Reopened -> reopened_at not null; others -> open_state = value and reopened_at null; then each row is kept only if its shown state equals the pick (so a reopened call whose latest visit reads "cancel" is only under Reopened). ANDed with the other terms. Device-copy fallback and the sheet path filter on the shown state.
+- Write up: HOW_TO_USE call registers' search line; the register-search FRS (with v0.10.284's engineer search).
+
 ## v0.10.285 — Device Cache Status: open calls; PM Calls subtitle removed (2026-11-27)
 - Device Cache Status: new columns Open calls / Open calls downloaded (0499: device_cache_status.open_calls / open_calls_at; device_cache_report() rebuilt with them last, 0380's body otherwise; _status.sql row 405). Each device reports the count of its open-calls copy and when it was downloaded -- nothing else. Blank for a device on a build before 0.10.285. A project without 0499 still accepts the rest of the report.
 - Call registers' header: subtitles removed -- PM ("Preventive-maintenance visits (call_type = P M VISIT). Bulk-load monthly; back-dating supported.", the user: "Remove this statement"), Field and Installation ("Live ... register — new calls get a UCN and are written back.", the user: "Remove Duplicate Info"); the status line's "⟳ synced Xs ago" removed (the same time reads beside Refresh); "Loading calls from the Google Sheet…" shown only on the sheet path, and a failed read on the database path says "Could not load calls" (the user: "This is no longer true").
