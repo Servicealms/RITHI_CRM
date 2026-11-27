@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.285',
+    date: '2026-11-27',
+    title: 'Device Cache Status shows the open calls; tidier call register headers',
+    changes: [
+      'Device Cache Status has two more columns: how many open calls each device holds, and when they were downloaded.',
+      'The Field, Installation and PM registers no longer repeat themselves: the line under the title is gone, and so is the second "synced … ago" (the time beside Refresh stays).',
+      'The registers no longer say "Loading calls from the Google Sheet…" — they read the database.',
+    ],
+  },
+  {
     version: '0.10.284',
     date: '2026-11-27',
     title: 'Call registers: search by engineer',

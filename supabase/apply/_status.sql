@@ -2483,7 +2483,13 @@ with checks(sort_order, bundle, provides, present) as (
     (404, 'A device''s copy of the open calls can ask whether anything changed', 'field_calls, installation_calls and pm_calls each carry an index on sys_updated_on (0498), so the 15-minute "was any call written after my copy?" lookup every device makes stays one cheap read. NO means that lookup scans the three call tables. Restore: sys_columns.sql (0498)',
         to_regclass('public.field_calls_sys_updated_on_idx') is not null
         and to_regclass('public.installation_calls_sys_updated_on_idx') is not null
-        and to_regclass('public.pm_calls_sys_updated_on_idx') is not null)
+        and to_regclass('public.pm_calls_sys_updated_on_idx') is not null),
+    (405, 'Devices report their open calls too', 'device_cache_status.open_calls / open_calls_at, and device_cache_report() returning them (0499). Since v0.10.283 every device keeps the open calls its user may see and says how many it holds and when they were downloaded. NO means device_cache.sql has not been re-run since. Restore: device_cache.sql (0499)',
+        exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'device_cache_status' and column_name = 'open_calls_at')
+        and exists (select 1 from pg_proc p
+                     where p.oid = to_regprocedure('public.device_cache_report()')
+                       and pg_get_function_result(p.oid) like '%open_calls_at%'))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

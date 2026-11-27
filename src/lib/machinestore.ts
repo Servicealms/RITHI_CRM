@@ -304,6 +304,10 @@ export async function reportDeviceCache(opts: { force?: boolean } = {}): Promise
     // THE PART MASTER the spare pickers read (0380).
     parts: storedListInfo('spareProducts')?.count ?? 0,
     parts_at: iso(storedListInfo('spareProducts')?.at ?? null),
+    // THE OPEN CALLS (0499; the user, 2026-11-27: "Add it to the device cache
+    // report"): how many, and when downloaded -- nothing else about them.
+    open_calls: calls.status().machines,
+    open_calls_at: iso(calls.status().at),
   };
   const sig = JSON.stringify(payload);
   try {

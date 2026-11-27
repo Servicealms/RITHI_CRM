@@ -77,6 +77,10 @@ const COLUMNS: Column<Row>[] = [
   // build older than 0.10.105, which does not report it.
   { key: 'parts', header: 'Parts', width: 90, wrap: false, render: (r) => (r.parts_at ? count(r.parts ?? null) : '') },
   { key: 'parts_at', header: 'Parts stored', width: 230, render: (r) => when(r.parts_at ?? null) },
+  // THE OPEN CALLS (0499). Blank on a device running a build older than
+  // 0.10.283, which keeps none, or 0.10.285, which does not report them.
+  { key: 'open_calls', header: 'Open calls', width: 100, wrap: false, render: (r) => (r.open_calls_at ? count(r.open_calls ?? null) : '') },
+  { key: 'open_calls_at', header: 'Open calls downloaded', width: 230, render: (r) => when(r.open_calls_at ?? null) },
   { key: 'problem', header: 'Problem', width: 300, sortable: false,
     render: (r) => [
       r.storage_ok === false ? 'This browser will not keep a copy (private window, or site data blocked)' : '',

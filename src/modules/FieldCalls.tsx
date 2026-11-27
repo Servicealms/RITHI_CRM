@@ -500,7 +500,8 @@ export const FIELD_CONFIG: CallSheetConfig = {
   callType: 'FIELD',
   singular: 'Field Call',
   title: 'Field Call Register',
-  subtitle: 'Live Field Call register — new calls get a UCN and are written back.',
+  // No subtitle: it repeated the title (the user, 2026-11-27: "Remove Duplicate Info").
+  subtitle: '',
   icon: '📡',
   collection: C.fieldCalls,
   storageKey: 'fieldCalls',
@@ -513,7 +514,8 @@ export const INST_CONFIG: CallSheetConfig = {
   callType: 'INSTALLATION CALL',
   singular: 'Installation Call',
   title: 'Installation Call Register',
-  subtitle: 'Live Installation Call register — new calls get a UCN and are written back.',
+  // No subtitle: it repeated the title (the user, 2026-11-27: "Remove Duplicate Info").
+  subtitle: '',
   icon: '🔧',
   collection: C.instCalls,
   storageKey: 'instCalls',
@@ -527,7 +529,8 @@ export const PM_CONFIG: CallSheetConfig = {
   callType: 'P M VISIT',
   singular: 'PM Call',
   title: 'Preventive (PM) Calls',
-  subtitle: 'Preventive-maintenance visits (call_type = P M VISIT). Bulk-load monthly; back-dating supported.',
+  // No subtitle (the user, 2026-11-27: "Remove this statement").
+  subtitle: '',
   icon: '🗓️',
   collection: C.pmcalls,
   storageKey: 'pmCalls',
@@ -811,7 +814,9 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       return;
     }
     setBusy(true);
-    setBanner({ tone: 'info', text: 'Loading calls from the Google Sheet…' });
+    // NOT "from the Google Sheet" on the database path (the user, 2026-11-27:
+    // "This is no longer true"): the busy state says it is loading.
+    if (!onDb) setBanner({ tone: 'info', text: 'Loading calls from the Google Sheet…' });
     try {
       const rows = await listFieldCalls('', limit, config.tab);
       // Replace the synced cache; keep locally-pending rows.
@@ -837,7 +842,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           : `Synced ${rows.length} ${config.singular.toLowerCase()}s${capped ? ` — most recent ${limit}; use “Load more” for older` : ''}.`,
       });
     } catch (e) {
-      setBanner({ tone: 'error', text: `Could not reach the sheet: ${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ tone: 'error', text: `${onDb ? 'Could not load calls' : 'Could not reach the sheet'}: ${e instanceof Error ? e.message : String(e)}` });
     } finally {
       setBusy(false);
     }
@@ -1496,11 +1501,8 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
             >
               {source === 'db' ? '● Database connected' : source === 'sheet' ? '● Sheet connected' : '○ Not connected'}
             </span>
-            {configured && lastSync && (
-              <span className="conn-dot conn-off" title={`Last synced from the ${source === 'db' ? 'database' : 'sheet'}`}>
-                ⟳ synced {timeAgo(lastSync)}
-              </span>
-            )}
+            {/* NO "synced Xs ago" here (the user, 2026-11-27: "Remove Duplicate
+                Info"): the same time already reads beside Refresh (syncedAt). */}
           </>
         }
         actions={

@@ -1706,7 +1706,9 @@ const MODULES = {
     needs: ['profiles', 'rbac'],
     files: ['0249_device_cache_status.sql', '0253_device_cache_complaints.sql',
             // The Part Master too (2026-10-05).
-            '0380_device_cache_parts.sql'],
+            '0380_device_cache_parts.sql',
+            // Devices report their open calls too (0499).
+            '0499_device_cache_open_calls.sql'],
   },
   permissions: {
     title: 'Per-screen permission keys: today\'s grants copied across',
