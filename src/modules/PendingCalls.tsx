@@ -4,8 +4,9 @@ import { SelectPicker } from '../components/ui/SelectPicker';
 import { useNavigate } from 'react-router-dom';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Toolbar, SearchBox, FacetChips } from '../components/ui/ui';
-import { listPendingCalls, reallocateCalls, callFamily, supabaseConfigured, getPmHideRules, type CallState, type CallFamily } from '../lib/supabase';
-import { hiddenByMissedPmRule, pmHideOn, pmHideWhat, NO_PM_HIDE, type PmHideRules } from '../lib/missedPm';
+import { listPendingCalls, deviceOpenCalls, reallocateCalls, callFamily, supabaseConfigured, getPmHideRules, type CallState, type CallFamily } from '../lib/supabase';
+import { formatDayTime } from '../lib/dates';
+import { hiddenByMissedPmRule, pmHideOn, NO_PM_HIDE, type PmHideRules } from '../lib/missedPm';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
 import { allowsAllottee, useAccessScope, useTeamEngineers } from '../lib/access';
 import { csvExport, fmtLongDate, fmtLongSmart, timeAgo } from '../lib/format';
@@ -102,6 +103,18 @@ export function PendingCalls() {
     if (!supabaseConfigured()) return;
     setBusy(true);
     setMsg({ tone: 'info', text: 'Loading pending calls…' });
+    // OPEN FROM THIS DEVICE FIRST (the user, 2026-11-27: open calls cached like
+    // the Product Database): the copy shows at once, the server's list replaces
+    // it when it arrives, and if the server cannot be reached the copy stays,
+    // saying how old it is. Saving (Allot) still goes to the server.
+    let fromDevice: { rows: Record<string, unknown>[]; at: number | null } | null = null;
+    try {
+      fromDevice = await deviceOpenCalls();
+      if (fromDevice && fromDevice.rows.length) {
+        setRows(fromDevice.rows.slice(0, want).map((c, i) => ({ ...c, id: String(c._id ?? c.ucn ?? i) })) as Row[]);
+        setMsg({ tone: 'info', text: `Showing the ${fromDevice.rows.length} open calls kept on this device — checking the server…` });
+      }
+    } catch { fromDevice = null; }
     try {
       const r = await listPendingCalls('', want);
       setRows(r.map((c, i) => ({ ...c, id: String(c._id ?? c.ucn ?? i) })) as Row[]);
@@ -110,6 +123,13 @@ export function PendingCalls() {
       setMsg({ tone: 'ok', text: `${r.length} pending call${r.length === 1 ? '' : 's'} — nothing here has been closed yet.` });
     } catch (e) {
       const text = e instanceof Error ? e.message : String(e);
+      if (fromDevice && fromDevice.rows.length) {
+        // The device's copy stays on screen: older, but not nothing.
+        setLoadFailed(false);
+        setMsg({ tone: 'info', text: `Could not reach the server — showing the ${fromDevice.rows.length} open calls kept on this device${
+          fromDevice.at ? `, as of ${formatDayTime(new Date(fromDevice.at).toISOString())}` : ''}. Allotting needs a connection.` });
+        return;
+      }
       setLoadFailed(true);
       setMsg({
         tone: 'error',
@@ -123,7 +143,7 @@ export function PendingCalls() {
   const moreAvailable = rows.length >= limit;
   // THE PM HIDE RULE (Admin Config; the user, 2026-11-26: "2. Yes" -- Pending
   // Calls follows it too): a PM call the PM register hides is not listed or
-  // counted here either, and a line says how many.
+  // counted here either. No line says how many (the user, 2026-11-27: "Remove the line").
   const [pmRule, setPmRule] = useState<PmHideRules>(NO_PM_HIDE);
   useEffect(() => {
     if (!supabaseConfigured()) return;
@@ -133,7 +153,6 @@ export function PendingCalls() {
   const shown = useMemo(() => (pmHideOn(pmRule) ? rows.filter((r) => !ruleHides(r)) : rows),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [rows, pmRule]);
-  const hiddenByRule = rows.length - shown.length;
   // ENGINEER WISE, as the Field Call and Spare registers already do it: a chip
   // per name with what they are carrying, and a click to see only theirs. The
   // register grouped by engineer but had no way to pick one.
@@ -277,12 +296,6 @@ export function PendingCalls() {
         </p>
       )}
 
-      {hiddenByRule > 0 && (
-        <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
-          {hiddenByRule}{moreAvailable ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden ({pmHideWhat(pmRule)})
-          by the rules on <b>Admin Config → PM Calls</b>.
-        </p>
-      )}
       <DataTable<Row>
         columns={COLUMNS}
         rows={visible}

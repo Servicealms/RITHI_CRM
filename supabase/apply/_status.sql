@@ -2479,7 +2479,11 @@ with checks(sort_order, bundle, provides, present) as (
         and to_regclass('public.dccr_call_history_summary') is not null
         and coalesce((select 'security_invoker=on' = any (c.reloptions) or 'security_invoker=true' = any (c.reloptions)
                         from pg_class c where c.oid = to_regclass('public.dccr_call_history_summary')), false)
-        and exists (select 1 from public.app_roles where role = 'admin' and (jsonb_array_length(permissions) = 0 or permissions ? 'mod:/dccr-history')))
+        and exists (select 1 from public.app_roles where role = 'admin' and (jsonb_array_length(permissions) = 0 or permissions ? 'mod:/dccr-history'))),
+    (404, 'A device''s copy of the open calls can ask whether anything changed', 'field_calls, installation_calls and pm_calls each carry an index on sys_updated_on (0498), so the 15-minute "was any call written after my copy?" lookup every device makes stays one cheap read. NO means that lookup scans the three call tables. Restore: sys_columns.sql (0498)',
+        to_regclass('public.field_calls_sys_updated_on_idx') is not null
+        and to_regclass('public.installation_calls_sys_updated_on_idx') is not null
+        and to_regclass('public.pm_calls_sys_updated_on_idx') is not null)
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

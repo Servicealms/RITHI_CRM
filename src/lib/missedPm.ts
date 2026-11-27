@@ -46,7 +46,4 @@ export function hiddenByMissedPmRule(rules: PmHideRules, regDate: unknown, added
   if (s === 'Cancelled') return rules.cancelled;
   return rules.unsolved && s !== 'Solved';
 }
-/** What the rules hide, in words, for the line that says how many were hidden. */
-export const pmHideWhat = (r: PmHideRules) => (r.all ? 'every Missed PM call'
-  : [r.unsolved && 'not solved', r.cancelled && 'cancelled'].filter(Boolean).join(' or '));
 export const MISSED_PM_TITLE = 'Added On after the month it is registered for';

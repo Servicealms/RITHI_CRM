@@ -10199,6 +10199,9 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
     eq('the Missed PM chips go when every Missed PM call is hidden, and their filter with them',
       /\{isPm && !pmHideRule\.all && \(\s*<FacetChips\s*options=\{missedPmCounts\}/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8'))
         && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes('!missedPmFilter || pmHideRule.all ||'), true);
+    eq('the call registers search by engineer, picked from a list and matched whole on the server',
+      readFileSync('src/lib/supabase.ts', 'utf8').includes("if (terms.engineer) q = q.ilike('allocated_to', _san(terms.engineer));")
+        && /<SelectPicker className="call-search-engineer" value=\{srch\.engineer\}[\s\S]{0,120}options=\{allotTeam\.names\}/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8')), true);
     eq('search reads a reopened call as Reopened, as the registers do',
       /r\.cancelled_at \? 'Cancelled' : r\.reopened_at \? 'Reopened' : r\.open_state/.test(readFileSync('src/lib/supabase.ts', 'utf8')), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);

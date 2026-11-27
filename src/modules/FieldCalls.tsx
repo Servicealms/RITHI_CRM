@@ -30,7 +30,7 @@ import {
   updateFieldCall,
 } from '../lib/sheets';
 import { formatDay, formatDayTime } from '../lib/dates';
-import { supabaseConfigured, getPmHideRules, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
+import { supabaseConfigured, deviceOpenCalls, callFamily, getPmHideRules, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
 import { useAuditMode } from '../lib/auditMode';
 import { useCallFieldMasters } from './callFields';
 import { StateBadge, Ucn, callStatusText } from '../lib/callstate';
@@ -38,7 +38,7 @@ import { useUserNames, nameForUserId } from '../lib/userNames';
 import { logAudit } from '../lib/audit';
 import './fieldcalls.css';
 import { partial, searchScope } from '../lib/exportscope';
-import { isMissedPm, hiddenByMissedPmRule, pmHideOn, pmHideWhat, NO_PM_HIDE, type PmHideRules, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
+import { isMissedPm, hiddenByMissedPmRule, NO_PM_HIDE, type PmHideRules, MISSED_PM_LABEL, MISSED_PM_TITLE } from '../lib/missedPm';
 import {
   FC_CONTRACT_TYPE,
   FIELD_HEADERS,
@@ -665,7 +665,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // is the courtesy), so the two cannot drift apart into a lie.
   const lockByRight = (fields: FieldDef[]): FieldDef[] => lockCallFields(fields, P, can);
 
-  const [srch, setSrch] = useState({ ucn: '', productName: '', serial: '', partyName: '', q: '' });
+  const [srch, setSrch] = useState({ ucn: '', productName: '', serial: '', partyName: '', engineer: '', q: '' });
   // A SEARCH RETURNS AT MOST SEARCH_CAP CALLS -- the server's own cap on one
   // response -- so a search that comes back with exactly that many may have
   // more behind it. It used to say "1000 matches" as if that were the answer,
@@ -859,11 +859,33 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // THE DEVICE'S OPEN CALLS for this register, under the search terms when a
+  // search is showing, or NULL when this device holds no copy (or none match
+  // nothing to show beats a list that looks like the register and is not).
+  const deviceFallback = async (active: boolean): Promise<{ rows: Rec[]; text: string } | null> => {
+    try {
+      const fam = config.callType ? callFamily(config.callType) : '';
+      const dev = await deviceOpenCalls((t) => !fam || callFamily(t) === fam);
+      if (!dev || !dev.rows.length) return null;
+      const has = (v: unknown, t?: string) => !t || String(v ?? '').toLowerCase().includes(t.trim().toLowerCase());
+      const rows = (active
+        ? dev.rows.filter((r) => has(r.ucn, srch.ucn) && has(r.serial, srch.serial) && has(r.partyName, srch.partyName)
+            && (!srch.engineer || String(r.allocatedTo ?? '').trim().toLowerCase() === srch.engineer.trim().toLowerCase())
+            && has(r.productName, srch.productName)
+            && (!srch.q || ['ucn', 'callNumber', 'partyName', 'serial', 'productName', 'allocatedTo', 'city', 'state', 'standardComplaint', 'complaintReported', 'customerName']
+              .some((k) => has(r[k], srch.q))))
+        : dev.rows) as Rec[];
+      const as = dev.at ? `, as of ${formatDayTime(new Date(dev.at).toISOString())}` : '';
+      return { rows, text: `Could not reach the server — showing the ${rows.length} open ${config.singular.toLowerCase()}s kept on this device${as}${
+        active ? ' that match your search' : ''}. Solved and cancelled calls, and saving, need a connection.` };
+    } catch { return null; }
+  };
+
   // Server-side search (Supabase). Debounced: any active term re-queries the
   // whole register on the server (RLS-scoped); empty terms show the recent set.
   useEffect(() => {
     if (!onDb) return;
-    const active = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName);
+    const active = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName || srch.engineer);
     const applyRows = (rows: Rec[]) => {
       db.removeWhere(config.collection, (r) => !!(r as Rec)._synced);
       db.insertMany(config.collection,
@@ -887,7 +909,12 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
             : `${rows.length} match${rows.length === 1 ? '' : 'es'} for your search (server-side).`)
           : `Showing ${rows.length} ${config.singular.toLowerCase()}s${rows.length >= loadLimit ? ' — Load more for older' : ''}; search finds any call.` });
       } catch (e) {
-        setBanner({ tone: 'error', text: `Search failed: ${e instanceof Error ? e.message : String(e)}` });
+        // NO SIGNAL: THE OPEN CALLS KEPT ON THIS DEVICE (the user, 2026-11-27).
+        // Open calls only -- solved and cancelled ones need the server -- and a
+        // search is matched on the device the way the server would match it.
+        const dev = await deviceFallback(active);
+        if (dev) { applyRows(dev.rows); setBanner({ tone: 'info', text: dev.text }); }
+        else setBanner({ tone: 'error', text: `Search failed: ${e instanceof Error ? e.message : String(e)}` });
       } finally { setBusy(false); }
     }, active ? 350 : 0);
     return () => window.clearTimeout(t);
@@ -1161,6 +1188,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
         has(row.productName, srch.productName) &&
         has(row.serial, srch.serial) &&
         has(row.partyName, srch.partyName) &&
+        (!srch.engineer || String(row.allocatedTo ?? '').trim().toLowerCase() === srch.engineer.trim().toLowerCase()) &&
         (!q || ['ucn', 'callNumber', 'partyName', 'city', 'state', 'productName', 'serial', 'standardComplaint', 'complaintReported', 'allocatedTo', 'customerName'].some(
           (k) => String(row[k] ?? '').toLowerCase().includes(q),
         ))
@@ -1193,8 +1221,8 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   const missedOk = (row: Rec) => !isPm || !missedPmFilter || pmHideRule.all || missedOf(row) === missedPmFilter;
   // THE PM HIDE RULES (Admin Config; the user, 2026-11-26 and -27: unsolved
   // Missed PM calls, and "have both Rules" -- every Missed PM call): left out of
-  // this register while on. Said on screen (hiddenByRule), so a shorter list
-  // never reads as fewer calls.
+  // this register while on. NO LINE SAYS HOW MANY (the user, 2026-11-27:
+  // "Remove the line"); Admin Config -> PM Calls shows which rules are on.
   const [pmHideRule, setPmHideRule] = useState<PmHideRules>(NO_PM_HIDE);
   useEffect(() => {
     if (!isPm || !supabaseConfigured()) return;
@@ -1203,9 +1231,6 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
     return () => { live = false; };
   }, [isPm]);
   const ruleHides = (row: Rec) => isPm && row._pending !== true && hiddenByMissedPmRule(pmHideRule, row.regDate, row.addedOn, row.callState);
-  const hiddenByRule = useMemo(() => (isPm && pmHideOn(pmHideRule) ? listedRows.filter(ruleHides).length : 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [listedRows, pmHideRule, isPm]);
   const visibleRows = useMemo(
     () => listedRows.filter((row) => pendingOk(row) && missedOk(row) && !ruleHides(row)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1291,7 +1316,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
 
   // More rows exist beyond what is loaded (only in the unfiltered browse set),
   // so the count is a lower bound — shown as "N+".
-  const searching = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName);
+  const searching = !!(srch.q || srch.ucn || srch.serial || srch.partyName || srch.productName || srch.engineer);
   const moreAvailable = configured && !searching && cached.filter((r) => r._synced).length >= loadLimit;
   // One definition, used by the header. The database pages in 800s; the sheet
   // has to be re-read, so it asks for 300 more and refreshes.
@@ -1532,12 +1557,6 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           more={moreAvailable || (searching && searchCapped)}
         />
       )}
-      {isPm && hiddenByRule > 0 && (
-        <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
-          {hiddenByRule}{moreAvailable || (searching && searchCapped) ? '+' : ''} Missed PM call{hiddenByRule === 1 ? ' is' : 's are'} hidden
-          ({pmHideWhat(pmHideRule)}) by the rules on <b>Admin Config → PM Calls</b>.{pmHideRule.all ? '' : ' A solved Missed PM call is shown.'}
-        </p>
-      )}
 
       {allotBlocked && (
         <p className="muted" style={{ margin: '4px 2px 0', fontSize: 12.5 }}>
@@ -1606,6 +1625,11 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
               <input className="input" placeholder="Product" value={srch.productName} onChange={(e) => setSrch1('productName', e.target.value)} />
               <input className="input" placeholder="Serial" value={srch.serial} onChange={(e) => setSrch1('serial', e.target.value)} />
               <input className="input" placeholder="Party" value={srch.partyName} onChange={(e) => setSrch1('partyName', e.target.value)} />
+              {/* ENGINEER, PICKED FROM A LIST (the user, 2026-11-27): the names this
+                  person may allot to -- every active engineer for an office role,
+                  the team for a manager -- matched whole on the server. */}
+              <SelectPicker className="call-search-engineer" value={srch.engineer} onChange={(v) => setSrch1('engineer', v)}
+                placeholder="Engineer" options={allotTeam.names} />
               <input className="input call-search-global" placeholder="🔎 Global" value={srch.q} onChange={(e) => setSrch1('q', e.target.value)} />
             </div>
             <button

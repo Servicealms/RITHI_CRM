@@ -20,6 +20,33 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.284',
+    date: '2026-11-27',
+    title: 'Call registers: search by engineer',
+    changes: [
+      'The Field, Installation and PM registers have an Engineer search beside UCN, Product, Serial and Party: a type-to-search list of the engineers you can allot to. It searches the whole register for calls allocated to that engineer, together with any other search you have filled in.',
+    ],
+  },
+  {
+    version: '0.10.283',
+    date: '2026-11-27',
+    title: 'Open calls are kept on each device, like the Product Database',
+    changes: [
+      'Each phone and laptop now keeps a copy of the open calls the signed-in person may see. It is checked every 15 minutes and when you come back to the app, and downloaded again whenever a call has changed on the server. It is wiped when you sign out.',
+      'Pending Calls opens from that copy straight away, then shows the server\u2019s list when it arrives. With no signal, the copy stays on screen and says how old it is.',
+      'The Field, Installation and PM registers, and the search at the top, fall back to the open calls on the device when the server cannot be reached. Solved and cancelled calls, and every save, still need a connection.',
+      'The coloured UCNs on other screens read an open call\u2019s status from the copy, so they need no request for it.',
+    ],
+  },
+  {
+    version: '0.10.282',
+    date: '2026-11-27',
+    title: 'PM Calls: no line counting the Missed PM calls the rules hide',
+    changes: [
+      'The PM register and Pending Calls no longer show a line saying how many Missed PM calls the Admin Config rules hid. Which rules are on is shown on Admin Config → PM Calls.',
+    ],
+  },
+  {
     version: '0.10.281',
     date: '2026-11-27',
     title: 'PM Calls: three tick boxes for hiding Missed PM calls',

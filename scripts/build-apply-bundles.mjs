@@ -1744,7 +1744,7 @@ const MODULES = {
     // definition word for word. LAST in the module, or 0244 would run after it.
     // 0460: the indexes a device's copy asks "anything changed?" with -- on
     // sys_updated_on, which 0244 creates, so after it and before the tail.
-    files: ['0244_sys_columns.sql', '0460_device_copy_sees_server_changes.sql', '0245_sys_columns_view_tail.sql'],
+    files: ['0244_sys_columns.sql', '0460_device_copy_sees_server_changes.sql', '0498_call_copy_sees_server_changes.sql', '0245_sys_columns_view_tail.sql'],
   },
   lockdown: {
     title: 'What the public key can reach',

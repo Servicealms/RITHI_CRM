@@ -85,7 +85,7 @@ export function supabaseConfigured(): boolean {
 // and cannot be imported by a node script at all.
 import { allRows, distinctValues, PG_PAGE } from './paging';
 import { partyFieldOptions, type PartyFieldOptions } from './partyRules';
-import { localMachines, localParties, refreshMachineRegister, refreshPartyRegister, clearMachineRegister } from './machinestore';
+import { localMachines, localParties, refreshMachineRegister, refreshPartyRegister, clearMachineRegister, localOpenCalls, openCallsStatus } from './machinestore';
 import { currentItemStatus, coverEndingIn, monthBounds } from './coverToday';
 import * as mc from './machinecache';
 import { planComplaintKeys, encodeComplaintEntry, type ExistingComplaint } from './complaints';
@@ -308,7 +308,7 @@ export async function listCalls(callType = '', limit = 20000): Promise<Record<st
 // Server-side register search. Field-specific terms AND together (each an
 // ilike on its column); the global term ORs across the common columns. RLS
 // already scopes the result to what the user may see.
-export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string }
+export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string }
 const _san = (t: string) => t.replace(/[%,()]/g, ' ').trim();
 export async function searchCalls(callType: string, terms: CallSearch, limit = 1000): Promise<Record<string, unknown>[]> {
   let q = orderCalls(must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null), callType).limit(limit);
@@ -316,6 +316,10 @@ export async function searchCalls(callType: string, terms: CallSearch, limit = 1
   if (terms.serial) q = q.ilike('serial', `%${_san(terms.serial)}%`);
   if (terms.partyName) q = q.ilike('party_name', `%${_san(terms.partyName)}%`);
   if (terms.productName) q = q.ilike('product_name', `%${_san(terms.productName)}%`);
+  // THE ENGINEER IS PICKED FROM A LIST (the user, 2026-11-27: "Add Engineer
+  // Search ... Preferably Drop down"), so it is matched WHOLE -- an ilike with no
+  // wildcard, i.e. equal ignoring case -- never as a fragment of another name.
+  if (terms.engineer) q = q.ilike('allocated_to', _san(terms.engineer));
   const g = _san(terms.q ?? '');
   if (g) q = q.or(['ucn', 'call_number', 'party_name', 'serial', 'product_name', 'allocated_to', 'city', 'state', 'standard_complaint', 'complaint_reported', 'customer_name'].map((c) => `${c}.ilike.%${g}%`).join(','));
   const { data, error } = await q;
@@ -2755,6 +2759,20 @@ export async function addStockRecordFiles(
   return (data ?? []).length === files.length ? { ok: true } : { ok: false, error: 'Not saved — your role may not attach files to this record.' };
 }
 
+// THE OPEN CALLS KEPT ON THIS DEVICE (machinestore.ts; the user, 2026-11-27),
+// in the shape listPendingCalls() gives -- the app's call shape plus `state` --
+// newest first, or NULL when this device holds no copy yet. `at` is when the
+// copy was downloaded, so a screen can say how old what it shows is.
+export async function deviceOpenCalls(match: (callType: string) => boolean = () => true):
+  Promise<{ rows: Record<string, unknown>[]; at: number | null } | null> {
+  const local = await localOpenCalls();
+  if (!local) return null;
+  const rows = local.filter((r) => match(String(r.call_type ?? '')))
+    .sort((a, b) => Number(b.id) - Number(a.id))
+    .map((r) => ({ ...dbToCall(r), state: r.reopened_at ? 'Reopened' : String(r.open_state ?? '') }));
+  return { rows, at: openCallsStatus().at };
+}
+
 // Pending (not solved) calls, optionally for one call type — the Pending Calls
 // register. Rows come back in the app's call shape plus `state`.
 export async function listPendingCalls(callType = '', limit = 20000): Promise<Record<string, unknown>[]> {
@@ -2942,9 +2960,19 @@ export async function globalSearchKind(kind: HitKind, raw: string): Promise<Sear
   };
   switch (kind) {
     case 'call': {
+      // NO SIGNAL: the open calls kept on this device are searched instead
+      // (the user, 2026-11-27) -- open calls only, so a solved call needs one.
       const found = await rows(c.from('calls').select('ucn,call_number,call_type,party_name,product_name,serial,status,open_state,reg_date,added_on,cancelled_at,reopened_at')
         .or(like(['ucn', 'call_number', 'party_name', 'serial', 'product_name']))
-        .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(n));
+        .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(n))
+        .catch(async (e) => {
+          const local = await localOpenCalls();
+          if (!local) throw e;
+          const t2 = t.toLowerCase();
+          return local.filter((r) => ['ucn', 'call_number', 'party_name', 'serial', 'product_name']
+            .some((k) => String(r[k] ?? '').toLowerCase().includes(t2)))
+            .sort((a, b) => Number(b.id) - Number(a.id)).slice(0, n) as Record<string, unknown>[];
+        });
       // THE PM HIDE RULE reaches search too (the user, 2026-11-26: "2. Yes"):
       // a PM call it hides on the PM register is not offered here either.
       // The call's state as every register reads it (dbToCall): a REOPENED call
@@ -3659,8 +3687,25 @@ export async function setAutoReview(on: boolean): Promise<AutoReviewState> {
 // RLS applies, so a caller gets states only for calls they may see; the rest
 // come back absent and render uncoloured rather than guessed.
 export async function listCallStates(ucns: string[]): Promise<Record<string, string>> {
-  const want = [...new Set(ucns.filter(Boolean))];
+  let want = [...new Set(ucns.filter(Boolean))];
   const out: Record<string, string> = {};
+  // THE OPEN CALLS KEPT ON THIS DEVICE ANSWER FIRST (the user, 2026-11-27: the
+  // call-status colours from the device copy), by call_state's own rule; only
+  // what the copy does not hold -- solved and cancelled calls -- is asked of
+  // the server. A call solved since the copy's last check (15 minutes at most)
+  // keeps its open colour until then.
+  try {
+    const local = await localOpenCalls();
+    if (local) {
+      const byUcn = new Map(local.map((r) => [String(r.ucn ?? ''), r]));
+      want = want.filter((u) => {
+        const r = byUcn.get(u);
+        if (!r) return true;
+        out[u] = r.reopened_at ? 'Reopened' : String(r.last_status || r.open_state || '');
+        return false;
+      });
+    }
+  } catch { /* no copy: ask the server for all of them */ }
   const CHUNK = 200;                       // keep the URL inside PostgREST's limits
   for (let i = 0; i < want.length; i += CHUNK) {
     const { data, error } = await must().from('call_state')

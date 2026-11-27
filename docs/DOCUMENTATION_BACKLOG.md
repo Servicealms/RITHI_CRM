@@ -22,3 +22,26 @@ hide boxes) are already documented.
 - What changed, and every rule/decision behind it.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
+
+## v0.10.284 — Engineer search on the call registers (2026-11-27)
+- Asked: "Add Engineer Search in all Calls Page like UCN, Party .. Preferably Drop down to select From."
+- Field / Installation / PM registers: an Engineer picker (type-to-search, PickList) beside UCN / Product / Serial / Party. Options = useTeamEngineers(): every active User Master name for an office role, self + reports for a manager, self for an engineer (the Call Allocated To list).
+- Server search: allocated_to ILIKE the picked name with no wildcard (equal ignoring case, never a fragment), ANDed with the other terms; the device-copy fallback and the sheet path match the same way.
+- Pending Calls already has engineer chips; not changed.
+- Write up: HOW_TO_USE call registers' search line; FRS for the register search (beside FRS-131).
+
+## v0.10.283 — Open calls kept on each device (2026-11-27)
+- Asked: "Similar to Customer, Party, Product Database, can we also cache Calls?" Chosen: OPEN calls only; used by the call registers, Pending Calls, the search box and the call-status colours. (My Workload was also chosen but reads no calls -- nothing to do there.)
+- Store: machinestore.ts register `open-calls` (IndexedDB), downloaded from `pending_calls` (not the historical import), id-keyset, under the reader's RLS; keyed by the signed-in user, wiped on sign-out. Used 30 min; every 15 min / tab focus / signal back it asks `calls` (not pending_calls -- a solved call leaves that view) whether any row has sys_updated_on after the copy's latest, and re-downloads if so. Replaced only by a complete download. Indexes: 0498 (sys_columns module), _status.sql row 404.
+- READ ONLY: every save (visit, edit, allot, cancel) still goes to the server; no offline saving.
+- Pending Calls: shows the device copy at once, replaced by the server list; on failure keeps the copy with "Could not reach the server ... as of <time>".
+- Field / Installation / PM registers: server as before; on failure, the device's open calls of that register (search terms matched on the device), with a banner; solved/cancelled calls need a connection.
+- Search box: on server failure, searches the device copy (ucn, call no, party, serial, product).
+- Call-status colours (listCallStates): UCNs in the copy answered from it (call_state's rule); others asked of the server. A call solved since the last check keeps its open colour for up to 15 minutes.
+- Not in Device Cache Status's report yet (machines / parties / lists only).
+- Write up: HOW_TO_USE (offline / device copy section, Pending Calls, the registers, search); URS/FRS for the device copy (alongside the machine-register requirement); module guide for Pending Calls.
+
+## v0.10.282 — No "N Missed PM calls hidden" line (2026-11-27)
+- The PM register and Pending Calls no longer show how many Missed PM calls the hide rules left out (the user: "Remove the line"). The rules themselves are unchanged (all / unsolved / cancelled boxes, FRS-131.24); Admin Config → PM Calls still shows which are on, and is NOT hidden in Audit Mode.
+- Asked for (not built): making the rules a Non-Auditable Requirement hidden in Audit Mode while still hiding the calls. Declined because it would show an auditor a PM register with Missed PM calls removed and no trace of why. Open alternative offered: switch the rules off while Audit Mode is on.
+- Write up: HOW_TO_USE PM register "Hiding Missed PM calls" (drop "says how many it left out"); FRS-131.24 (drop "saying how many and what"); the Admin Config card text is already updated.
