@@ -1110,7 +1110,10 @@ console.log('\n-- who a new call is allotted to: the machine wins, the party ans
   eq('...so the call takes its year from it', row.record_year, 2024);
   const shaped = shapeHistoryRow(row);
   const at = (h: string) => shaped[formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === h))];
-  eq('the format has the register\'s 37 columns and Drive Link', CALL_HISTORY_FORMAT.length, 38);
+  eq('the format has the register\'s columns less the three emails, and Drive Link', CALL_HISTORY_FORMAT.length, 35);
+  eq('...no email column is in it', CALL_HISTORY_FORMAT.some((c) => /email|manager/i.test(c.header)), false);
+  eq('...keys are named from the heading, so adding a column moves no other',
+    [formatKey(0), formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link'))], ['fmt_ucnumber', 'fmt_drivelink']);
   eq('...Drive Link sits after Service Report',
     CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link') - CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Service Report'), 1);
   const link = shapeHistoryRow({ extra: { 'Drive Link': 'https://drive.google.com/file/d/abc/view' } });
@@ -1125,7 +1128,7 @@ console.log('\n-- who a new call is allotted to: the machine wins, the party ans
   eq('...the Field Call form\'s four sections come first, in its order',
     HISTORY_SECTIONS.slice(0, 4), ['Registration', 'Customer & Product', 'Warranty & Contract', 'Complaint']);
   eq('the drawer lists only the headings no column shows',
-    otherExtra({ 'Contract Number': 'MC1', 'CALL PENDING REASON': 'x', 'Zone Code': 'Z9', Empty: '' }), [['Zone Code', 'Z9']]);
+    otherExtra({ 'Contract Number': 'MC1', 'CALL PENDING REASON': 'x', 'Zone Code': 'Z9', Empty: '', 'Engineer Email': 'a@b', 'Regional Manager': 'c@d' }), [['Zone Code', 'Z9']]);
   eq('...anything else opens nothing', [driveHref('javascript:alert(1)'), driveHref('42Reportingv2_Images/x.jpg'), driveHref('/admin')],
     [undefined, undefined, undefined]);
   eq('...a heading kept in extra is read back', at('Contract Number'), 'MC5340');

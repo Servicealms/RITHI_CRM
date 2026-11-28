@@ -125,6 +125,9 @@
 .ch-tabs-row { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
 .ch-tabs-row .dccr-tabs { flex: 1 1 auto; margin-bottom: 0; }
 .ch-filter-slot { display: inline-flex; align-items: center; gap: 6px; }
+/* The search row takes the whole width, so it wraps only when the page is
+   genuinely too narrow -- not because it was given half of it. */
+.call-search.ch-search { flex: 1 1 100%; }
 .call-search .call-search-engineer { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-status { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-product { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }

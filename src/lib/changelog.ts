@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.301',
+    date: '2026-11-28',
+    title: 'Call History: one search row, no email columns, columns in order',
+    changes: [
+      'The search row — UCN, Product, Serial, Party, Engineer, Call Status, Global, Filters and Reset filters — now uses the whole width, so it stays on one line on a normal screen.',
+      'Engineer Email, Reporting Manager and Regional Manager are no longer shown anywhere in Call History — not in the list, the pop-up or the download.',
+      'Drive Link no longer jumps to the first column: the columns are back in the register’s order. A column layout you had saved on this page is reset once.',
+    ],
+  },
+  {
     version: '0.10.300',
     date: '2026-11-28',
     title: 'Call History: a tidier page',

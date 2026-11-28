@@ -23,6 +23,13 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.301 — Call History: one search row; email columns out; stable column keys (2026-11-28)
+- Asked (screenshot): "Why is it still wraped to next line? Removed Email Columns from Source itself - Engineer Email, Reporting Manager Email, Regional Manager Email."
+- Wrap: the search row (.call-search.ch-search) now takes the whole toolbar width (flex 1 1 100%) and holds Reset filters; it fitted one line at 1660px in a render with the real CSS.
+- Engineer Email / Reporting Manager / Regional Manager removed from CALL_HISTORY_FORMAT (35 columns now: 34 of the register + Drive Link) -- not in list, pop-up or Excel/CSV; NOT_SHOWN keeps them out of "Other columns in the file" too. A file carrying them still keeps them in `extra`, unshown.
+- Drive Link appeared FIRST: format keys were positional (fmt_<index>), so inserting a column shifted every later key and a saved layout read the newcomer as unknown. Keys are now named from the heading (fmt_<squashed header>); storageKey call-history-v3 resets saved layouts once.
+- Write up: with v0.10.290 (the format's column list).
+
 ## v0.10.300 — Call History layout tidied (2026-11-28)
 - Asked (screenshot): "Load More Stays only alongside the Page Name. Global Search Bar can be smaller and moved to the Above Row. Export can be moved to the Row where Year is mentioned. Move Filters also to the Same Row as other Filters are."
 - Call History only (DCCR History unchanged): table toolbar keeps only "N shown of M"; Load more only in the page header; Excel / CSV on the year-tab row (.ch-tabs-row); Global 170px (.call-search-global-sm) in the search row; the table's ⚑ Filters (and Group) rendered into the search row through a new DataTable prop `controlsSlot` (a portal; absent = above the table as everywhere else).

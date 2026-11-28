@@ -66,7 +66,7 @@ const CONFIG: Record<HistoryKind, HistoryConfig> = {
     title: 'Call History', icon: '📜', uploadKey: 'call_history', summaryMigration: '0495',
     subtitle: "The calls before RITHI (up to 2025), stored year by year: what has been loaded, and each year's calls on a tab of its own. History only — nothing in RITHI is created from them. Each machine's history is on Machine History. The DCCR register's calls are on DCCR History.",
     // A new key: the old layout's saved columns are not this format's.
-    storageKey: 'call-history-format', fileName: 'call-history', sheet: 'Call History',
+    storageKey: 'call-history-v3', fileName: 'call-history', sheet: 'Call History',
     report: 'Call History — calls before RITHI (up to 2025)', audit: 'report.call_history',
     sources: true, duplicates: true, yearTabs: true,
     summaryNote: 'Each year is stored on its own: a call in two yearly sheets is counted in each year; two sources of the same year are one call, counted once, and the other is its Duplicate. No serial: stored, but not listed on Machine History, which finds a history call by its serial.',
@@ -516,7 +516,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
             {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('csv')}>⭳ CSV</button>}
           </div>
           <Toolbar>
-            <div className="call-search">
+            <div className="call-search ch-search">
               <input className="input" placeholder="UCN No" value={hs.ucn} onChange={(e) => setHs1('ucn', e.target.value)} />
               <SelectPicker className="call-search-product" value={hs.product} onChange={(v) => setHs1('product', v)}
                 placeholder="Product" options={opt('product')} />
@@ -528,9 +528,9 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
                 placeholder="Call Status" options={opt('status')} />
               <input className="input call-search-global call-search-global-sm" placeholder="🔎 Global" value={hs.q} onChange={(e) => setHs1('q', e.target.value)} />
               <span className="ch-filter-slot" ref={setFilterSlot} />
+              <button className="btn btn-sm btn-ghost" onClick={() => setHs(BLANK)} disabled={!hsSet}
+                title="Clear every search on this year">✕ Reset filters</button>
             </div>
-            <button className="btn btn-sm btn-ghost" onClick={() => setHs(BLANK)} disabled={!hsSet}
-              title="Clear every search on this year">✕ Reset filters</button>
           </Toolbar>
         </>
       )}
@@ -585,7 +585,8 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
 // call and still in the list's columns and the download; only the pop-up
 // leaves them out. "Recorded by RITHI" (Register, Source, Year, Duplicate) is
 // gone from it too ("I dont want this").
-const HIDDEN_IN_POPUP = new Set(['Engineer Email', 'Reporting Manager', 'Regional Manager']);
+// (Taken out of the format altogether since -- the user removed them from the source.)
+const HIDDEN_IN_POPUP = new Set<string>();
 
 function DetailRows({ rows }: { rows: [string, React.ReactNode][] }) {
   return (
