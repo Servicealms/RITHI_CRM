@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.311',
+    date: '2026-11-28',
+    title: 'Field, Installation and PM calls: the Service Report on the status row, and a Drive link',
+    changes: [
+      'On an opened Field, Installation or PM call, the 📄 Service Report button now sits on the Call Status row, at its right.',
+      'Beside it, a Drive button opens the report directly in Google Drive, in a new tab. It appears when the report is a Google Drive link.',
+    ],
+  },
+  {
     version: '0.10.310',
     date: '2026-11-28',
     title: 'Bulk Uploads: Drive report links onto live visits, by UID',

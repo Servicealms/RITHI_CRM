@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.311 — Service Report on the status row; Drive button (2026-11-28)
+- Asked (screenshot): "Add one more link to open it in Drive Directly. Next to the Service Report - Add it with Drive Symbol"; "move the Service Report to the Same row as Call Status"; "Do this change in Field, Installation, PM Calls" (one screen, FieldCalls.tsx).
+- The 📄 Service Report button (and "No service report was filed") moved from the actions row into the call-status-hero, at its right (light chips on the dark bar). New "Drive" chip with an inline Drive mark (no external image): an <a> to the report URL via safeUrl, new tab, shown only when the URL is drive.google.com / docs.google.com.
+- Write up: HOW_TO_USE call registers (opened call: where the report and the Drive button are).
+
 ## v0.10.310 — Drive report links mapped to live visits by UID (2026-11-28)
 - Asked: "I want to be able to Map Drive Links to the Live calls as well. I has built Bulk Report Mapping, But i dont think that will work... I want to upload Drive Report Links." Chose: by the visit UID; keep an existing link (skip); a UID with no visit held back.
 - 0505 (reports module): map_report_drive_links(jsonb [{uid, link}]) SECURITY DEFINER, asks has_perm('bulk.upload'), not executable by anon. Writes reports.manual_report only; "has a link" = http(s) in manual_report or data 'Manual Report' (manualReportLink's test); a non-link manual_report (AppSheet path) is filled and its old value kept in source_ref when empty. Never inserts; updated_at / call_status / visit_at untouched (reports_touch_call re-derives the same state). Returns counts + up to 500 UIDs per outcome. _status.sql row 411; suite report_drive_links_test.

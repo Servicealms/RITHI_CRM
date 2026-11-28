@@ -31,6 +31,7 @@ import {
   updateFieldCall,
 } from '../lib/sheets';
 import { formatDay, formatDayTime } from '../lib/dates';
+import { safeUrl } from '../lib/safeUrl';
 import { supabaseConfigured, deviceOpenCalls, callFamily, getPmHideRules, callDatesFor, type CallDates, searchCalls, callByUcn, reopenCall, closeReopenedCall, cancelCall, restoreCall, reallocateCalls, sbLogComplaintSuggestion, serviceReportForCall, refreshCallsParty, refreshCallsProduct, type CallServiceReport } from '../lib/supabase';
 import { useAuditMode } from '../lib/auditMode';
 import { useCallFieldMasters } from './callFields';
@@ -81,6 +82,24 @@ const CALL_ALL_FIELDS = [
 // Warranty/contract fields freeze (read-only) once loaded from Product Database.
 // Item Status comes from the machine, like its warranty and contract, so it is
 // filled from Product Database and locked rather than chosen on the call.
+
+/** Is this a Google Drive / Docs address? */
+const isDriveUrl = (u: string) => /^https:\/\/(drive|docs)\.google\.com\//i.test(String(u ?? '').trim());
+/** A small Drive mark: three coloured edges of a triangle, drawn here (no
+ *  external image), sized to the text beside it. */
+function DriveIcon() {
+  return (
+    <svg width="14" height="12" viewBox="0 0 87 78" aria-hidden="true" style={{ verticalAlign: '-1px' }}>
+      <path d="M6 66l4 7c1 1 2 3 3 3h60l-11-19H0c0 2 1 3 2 4z" fill="#0066da" />
+      <path d="M44 25L29 0c-1 1-3 2-4 4L2 44c-1 1-2 3-2 4h29z" fill="#00ac47" />
+      <path d="M73 76c1 0 3-2 3-3l3-5 15-26c1-1 2-3 2-4H58l6 12z" fill="#ea4335" />
+      <path d="M44 25L58 0c-1-1-3-1-4-1H34c-2 0-3 1-5 1z" fill="#00832d" />
+      <path d="M58 48H29L14 74c1 1 3 2 5 2h48c1 0 3-1 5-2z" fill="#2684fc" />
+      <path d="M73 27L59 4c-1-1-3-2-4-4L44 25l14 23h29c0-1 0-3-1-4z" fill="#ffba00" />
+    </svg>
+  );
+}
+
 export const FREEZE_KEYS = ['itemStatus', 'warrantyNumber', 'warrantyStart', 'warrantyEnd', 'contractNumber', 'contractStart', 'contractEnd', 'contractType'];
 export function buildCreateFields(prefill: FormValues | undefined): FieldDef[] {
   // Call Number is never typed: a call registered from a request carries the
@@ -1760,20 +1779,13 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
                   : pendingReasonOf(drawer.row as Rec)
                     ? <span className="call-status-hero-why">Pending: {pendingReasonOf(drawer.row as Rec)}</span>
                     : null}
-              </div>
-            )}
-            {drawer.mode === 'view' && callActions(drawer.row as Rec).length > 0 && (
-              <div className="call-actions-top">
-                {callActions(drawer.row as Rec).map((a) => (
-                  <button key={a.key} className={`btn btn-sm${a.primary ? ' btn-primary' : ''}`} title={a.title} onClick={a.run}>
-                    {a.icon} {a.label}
-                  </button>
-                ))}
-                {isSolved(drawer.row as Rec) && <span className="muted" style={{ alignSelf: 'center' }}>🔒 Closed — {String((drawer.row as Rec).lastStatus || 'Solved')}</span>}
-                {/* The signed report, on the call it closed. It sits with the
-                    actions because that is what somebody opening a closed call
-                    came for -- and it says WHICH visit filed it, since a call
-                    closed twice has a later visit that filed none. */}
+                {/* THE SIGNED REPORT, ON THE STATUS ROW (the user, 2026-11-28:
+                    "move the Service Report to the Same row as Call Status";
+                    Field, Installation and PM -- one screen). It says WHICH
+                    visit filed it, since a call closed twice has a later visit
+                    that filed none. Pushed to the row's right end. */}
+                <span className="call-status-hero-gap" />
+                <span className="svc-pair">
                 {drawerClosed && svcReport && (
                   <button
                     type="button"
@@ -1790,11 +1802,34 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
                     📄 Service Report{svcReport.visitAt ? ` · ${fmtLongDate(svcReport.visitAt)}` : ''}
                   </button>
                 )}
+                {/* OPEN IT IN DRIVE ITSELF (the user, 2026-11-28: "Add one more
+                    link to open it in Drive Directly. Next to the Service
+                    Report - Add it with Drive Symbol"). Only for a Drive
+                    address -- a report kept anywhere else is opened by the
+                    button beside it. A new tab, never this one. */}
+                {drawerClosed && svcReport && isDriveUrl(svcReport.url) && (
+                  <a className="svc-report-link svc-drive-link" style={{ alignSelf: 'center' }}
+                    href={safeUrl(svcReport.url)} target="_blank" rel="noopener noreferrer"
+                    title="Open the service report in Google Drive, in a new tab">
+                    <DriveIcon /> Drive
+                  </a>
+                )}
+                </span>
                 {drawerClosed && !svcReport && (
                   <span className="muted" style={{ alignSelf: 'center', fontSize: 12.5 }}>
                     {svcReportBusy ? 'Looking for the service report…' : '📄 No service report was filed on this call.'}
                   </span>
                 )}
+              </div>
+            )}
+            {drawer.mode === 'view' && callActions(drawer.row as Rec).length > 0 && (
+              <div className="call-actions-top">
+                {callActions(drawer.row as Rec).map((a) => (
+                  <button key={a.key} className={`btn btn-sm${a.primary ? ' btn-primary' : ''}`} title={a.title} onClick={a.run}>
+                    {a.icon} {a.label}
+                  </button>
+                ))}
+                {isSolved(drawer.row as Rec) && <span className="muted" style={{ alignSelf: 'center' }}>🔒 Closed — {String((drawer.row as Rec).lastStatus || 'Solved')}</span>}
               </div>
             )}
             {drawer.mode === 'create' && configured && (

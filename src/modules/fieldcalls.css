@@ -786,6 +786,13 @@ th.rbac-col-admin { color: var(--text-muted); }
 .call-status-hero-label { font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
 .call-status-hero .state-chip { font-size: 15px; padding: 5px 14px; font-weight: 700; }
 .call-status-hero-why { font-size: 13px; }
+/* The service report and its Drive link sit at the right of the status row,
+   light chips on the dark bar (2026-11-28). */
+.call-status-hero-gap { flex: 1 1 auto; }
+.svc-pair { display: inline-flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+.call-status-hero .svc-report-link { background: var(--surface); color: var(--text); }
+.call-status-hero .svc-report-link:hover { background: var(--primary); color: #fff; }
+.call-status-hero .muted { color: var(--surface); opacity: .75; }
 
 /* THE MISSED PM FLAG (the user, 2026-10-16), PM register. A SOLID amber with
    white text, the same in both themes as a code must be -- never red, blue,
