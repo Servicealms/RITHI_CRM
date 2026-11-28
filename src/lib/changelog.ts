@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.291',
+    date: '2026-11-28',
+    title: 'Call History: a Drive Link column',
+    changes: [
+      'Call History has a Drive Link column, after Service Report, on the screen and in the Excel / CSV download.',
+      'It shows the Drive Link your uploaded file carries, as an “Open in Drive” link that opens in a new tab. A bare Drive file id opens as that file. Anything that is not a web address is shown as text and opens nothing.',
+    ],
+  },
+  {
     version: '0.10.290',
     date: '2026-11-28',
     title: 'Call History in the F/I Call Register format',

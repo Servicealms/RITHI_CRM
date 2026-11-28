@@ -2,7 +2,7 @@
 // uploads. No test runner in this repo, so: `npm run check:uploads`.
 import { shapeUpload, byColumnSet, UPLOADS, masterUpload, toDate, toTs, coerce, uploadGroups,
   planConsumptionVisits } from '../src/lib/uploads';
-import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow } from '../src/lib/callHistoryFormat';
+import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref } from '../src/lib/callHistoryFormat';
 import { parseDateParts, toIsoDate, toIsoTimestamp, parseAnyDate } from '../src/lib/dates';
 import { findHeaderFor, strict, loose, squash } from '../src/lib/headers';
 import { toDate as coverDate, toTimestamp as coverTs } from '../src/lib/coverImport';
@@ -1110,7 +1110,17 @@ console.log('\n-- who a new call is allotted to: the machine wins, the party ans
   eq('...so the call takes its year from it', row.record_year, 2024);
   const shaped = shapeHistoryRow(row);
   const at = (h: string) => shaped[formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === h))];
-  eq('the format has the register\'s 37 columns', CALL_HISTORY_FORMAT.length, 37);
+  eq('the format has the register\'s 37 columns and Drive Link', CALL_HISTORY_FORMAT.length, 38);
+  eq('...Drive Link sits after Service Report',
+    CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link') - CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Service Report'), 1);
+  const link = shapeHistoryRow({ extra: { 'Drive Link': 'https://drive.google.com/file/d/abc/view' } });
+  eq('...the file\'s Drive Link is read back as written',
+    link[formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link'))], 'https://drive.google.com/file/d/abc/view');
+  eq('...a web address opens, a bare Drive id becomes its file link',
+    [driveHref('https://drive.google.com/file/d/abc/view'), driveHref('1AbCdEfGhIjKlMnOpQrStUvWxYz012')],
+    ['https://drive.google.com/file/d/abc/view', 'https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012/view']);
+  eq('...anything else opens nothing', [driveHref('javascript:alert(1)'), driveHref('42Reportingv2_Images/x.jpg'), driveHref('/admin')],
+    [undefined, undefined, undefined]);
   eq('...a heading kept in extra is read back', at('Contract Number'), 'MC5340');
   eq('...matched as the importer matches headings', at('CALL PENDING REASON'), 'Awaiting part');
   eq('...a date written as text reads day-first', at('Complaint Date'), '2023-12-29');

@@ -1,5 +1,5 @@
 // ===========================================================================
-// THE CALL HISTORY FORMAT -- the F/I Call Register's 37 columns, in its order
+// THE CALL HISTORY FORMAT -- the F/I Call Register's 37 columns (and Drive Link), in its order
 // and under its headings (the user, 2026-11-28, uploading
 // "24_v0 - F_I Call Register - Field 24.csv": "I need the Call History in this
 // Format").
@@ -21,7 +21,7 @@
 import { squash } from './headers';
 import { parseDateParts } from './dates';
 
-export type FormatKind = 'text' | 'date' | 'datetime';
+export type FormatKind = 'text' | 'date' | 'datetime' | 'link';
 export interface FormatColumn {
   /** The heading, exactly as the register writes it -- misspelling included. */
   header: string;
@@ -70,6 +70,11 @@ export const CALL_HISTORY_FORMAT: FormatColumn[] = [
   { header: 'Complaint Observation', extra: ['Complaint Observation'] },
   { header: 'Job Done', extra: ['Job Done'] },
   { header: 'Service Report', extra: ['Service Report'] },
+  // ONE MORE, BESIDE IT (the user, 2026-11-28: "one more Column for 'Drive
+  // Link' - Which should present as a Drive Link"; asked, the files will CARRY
+  // it -- no lookup). Service Report is an AppSheet path, not a link; this is
+  // the file's own Drive URL, kept in `extra` like the others, opened as a link.
+  { header: 'Drive Link', extra: ['Drive Link', 'Drive URL', 'Google Drive Link', 'Drive'], kind: 'link' },
   { header: 'Call Solved Date & Time', column: 'solved_at', kind: 'datetime' },
   { header: 'Call Canceled Date', extra: ['Call Canceled Date', 'Call Cancelled Date'], kind: 'date' },
 ];
@@ -110,7 +115,22 @@ export function shapeHistoryRow<T extends Record<string, unknown>>(r: T): T & Re
     const own = c.column ? r[c.column] : null;
     if (c.column && (own != null && String(own).trim() !== '' || !c.extra)) { out[formatKey(i)] = own ?? ''; return; }
     const v = fromExtra(r.extra, c.extra ?? [c.header]);
-    out[formatKey(i)] = v && c.kind && c.kind !== 'text' ? extraDate(v) : v;
+    out[formatKey(i)] = v && (c.kind === 'date' || c.kind === 'datetime') ? extraDate(v) : v;
   });
   return out as T & Record<string, unknown>;
+}
+
+// A bare Drive file id: Google's are 25+ characters of letters, digits, - and _
+// (the same test as reportMapping's), with no dot or slash to be a file name.
+const DRIVE_ID = /^[A-Za-z0-9_-]{25,}$/;
+
+/** The link a Drive Link cell opens: a web address as given, a bare Drive file
+ *  id as its file link, anything else none -- the text still shows. Only
+ *  http(s): a stored value never becomes a script or an in-app path. */
+export function driveHref(v: unknown): string | undefined {
+  const s = String(v ?? '').trim();
+  if (!s || /[\u0000-\u001f\u007f\s]/.test(s)) return undefined;
+  if (/^https?:\/\/[^/]/i.test(s)) return s;
+  if (DRIVE_ID.test(s)) return `https://drive.google.com/file/d/${s}/view`;
+  return undefined;
 }
