@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.315 — Product Status Check: choose the calls; financial impact (2026-11-28)
+- Asked: "Give me option to Change only Specific Calls ... OGP but actually CMC - not Costing me anything ... AMC and OGP are almost the Same - Spare is Chargeable ... give me the Groups for which i can Change and Also if there is no Spare Request against that Call, Still no financial Impact."
+- Screen only (fix_product_status already takes a list): group chips by "stored -> correct" (multi-select), impact chips (All / No financial impact / Financial impact), row tick boxes, Select all shown, Select shown with no financial impact, Update selected (confirm says how many have an impact). Charging: OGP, AMC charged; WGP, CMC free; anything else unknown (= impact). Impact = charging changes AND spare_requests > 0. Columns "Spare charging (now -> at registration)" and "Financial impact"; the report downloads what is shown, scope on the About sheet.
+- Write up: with v0.10.313 (NAR-031.5 -> update the chosen calls).
+
 ## v0.10.314 — Open only on the server (2026-11-28)
 - Asked: "The All Calls / Open Calls Toggle should be a Server Search."
 - supabase.ts onlyOpen(q): cancelled_at is null AND (open_state is null OR open_state not in (Solved, Cancelled) OR reopened_at not null) -- dbToCall's shown state. listCalls(callType, limit, openOnly) and searchCalls({..., openOnly}); listFieldCalls passes it through. FieldCalls: the browse load, Load more, Refresh and every search send openOnly; toggling it re-queries. The client-side filter stays (harmless) for the device fallback and the sheet path.
