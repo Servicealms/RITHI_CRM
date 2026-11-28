@@ -63,6 +63,7 @@ import { TRAINING_METHODOLOGY as TRAINING_METHODOLOGY_FOR_CHECK, TRAINING_FORM a
 import { parseTrainingDoc as parseTrainingDocForCheck } from '../src/lib/trainingDoc';
 import { unassignedScreens as unassignedScreensForCheck, coverage as coverageForCheck } from '../src/lib/validationDoc';
 import { RISKS as RISKS_FOR_DOC_CHECK } from '../src/lib/validation';
+import { financialImpact } from '../src/lib/productStatus';
 
 let fail = 0;
 // CODE ONLY, COMMENTS STRIPPED.
@@ -11175,6 +11176,27 @@ console.log('\n-- every requirement carries a version and a date (Rev 3.2, 2026-
     }
     eq(`every ${pre} requirement in ${f} has a version and a date`, missing, []);
   }
+}
+
+// THE PRODUCT STATUS CHECK'S FINANCIAL RULE, case by case as the user gave it
+// (2026-11-28). spares: [requested, consumed].
+console.log('\n-- Product Status Check: the financial rule --');
+{
+  const imp = (from: string, to: string, req: number, cons: number) => financialImpact(from, to, req, cons).impact;
+  // Non-impacting, even with spares.
+  eq('OGP -> CMC has no impact', imp('OGP', 'CMC', 2, 3), false);
+  eq('OGP -> AMC has no impact', imp('OGP', 'AMC', 2, 3), false);
+  eq('WGP -> CMC has no impact', imp('WGP', 'CMC', 2, 3), false);
+  // Impact, with a spare requested or consumed.
+  eq('CMC -> OGP has an impact when a spare was requested', imp('CMC', 'OGP', 1, 0), true);
+  eq('CMC -> AMC has an impact when a spare was consumed', imp('CMC', 'AMC', 0, 1), true);
+  eq('WGP -> OGP has an impact', imp('WGP', 'OGP', 1, 1), true);
+  eq('WGP -> AMC has an impact', imp('WGP', 'AMC', 1, 0), true);
+  // The exception: no spare requested or consumed.
+  eq('...each of the four has none with no spare requested or consumed',
+    [imp('CMC', 'OGP', 0, 0), imp('CMC', 'AMC', 0, 0), imp('WGP', 'OGP', 0, 0), imp('WGP', 'AMC', 0, 0)], [false, false, false, false]);
+  // A status it cannot place is never waved through.
+  eq('an unplaceable status with spares counts as an impact', imp('CONTRACT (TYPE NOT RECORDED)', 'OGP', 1, 0), true);
 }
 
 console.log(fail ? `\n${fail} FAILED\n` : '\nall passed\n');

@@ -23,6 +23,12 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.317 — Product Status Check: the financial rule (2026-11-28)
+- The user's rule: NON-IMPACTING OGP->CMC, OGP->AMC, WGP->CMC; IMPACT CMC->OGP, CMC->AMC, WGP->OGP, WGP->AMC, EXCEPT non-impacting when "No Spares Requested / Consumed".
+- Generalised in src/lib/productStatus.ts financialImpact(): impact = stored FREE (WGP/CMC) -> correct CHARGED (OGP/AMC), or either unplaceable, AND (spares requested > 0 OR consumed > 0). check:ui holds every case the user listed.
+- 0507 (product_database_2): product_status_mismatches()/product_status_report() dropped and re-made with spares_requested (all spare_requests on the UCN) and spares_consumed (spare_consumption qty > 0 + spare_consumption_history qty > 0). Columns "Spares requested on the call" / "Spares consumed on the call" on the screen and report.
+- Write up: NAR-031 (the rule); HOW_TO_USE Product Status Check.
+
 ## v0.10.316 — Registers: 2,000 to open and per Load more (2026-11-28)
 - Asked: "Load all Registers with 2000 Rows to start with - The Max it can load in 1 Go and every Load more should be set to the Max it can load in 1 go."
 - paging.ts REGISTER_PAGE = 2000 and readSliced(page, offset, want, 1000) -- a 2,000 page read as 1,000-row requests (PostgREST cap), stopping at a short slice. Applied: FieldCalls (RECENT_LIMIT 800 -> 2000, +2000), AuditLog (500), DailyCallReview (500), CallReview (500, client), PartyMaster, Reports, ProductMaster, CustomerFeedback, MaterialReturns, SpareConsumption, SpareRequests, HandStock (1000 -> 2000); readUpTo callers keep 1,000-row slices (want = max(loaded, PAGE)). CoverRegister already opened with 2 x 1,000; its Load more now stays 2,000 instead of doubling (check:ui assertion changed with it). Already 2,000: CallHistory, PendingCalls, RequestCallRegistration.
