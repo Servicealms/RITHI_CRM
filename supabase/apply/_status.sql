@@ -2510,7 +2510,10 @@ with checks(sort_order, bundle, provides, present) as (
                                 or has_table_privilege('anon', c.oid, 'select')))),
     (408, 'Call History emptied once for a clean re-load', 'Call History was emptied ONCE (0502, the user 2026-11-28: "Delete everything and re-load"), and the record that it was is kept in one_time_data_fixes, so re-running the bundle never empties it again. NO means 0502 has not run (Call History still holds what was loaded before), or its record is missing -- and then a re-run WOULD empty it again. Restore: daily_review.sql (0502)',
         to_regclass('public.one_time_data_fixes') is not null
-        and exists (select 1 from public.one_time_data_fixes where name = '0502_call_history_emptied'))
+        and exists (select 1 from public.one_time_data_fixes where name = '0502_call_history_emptied')),
+    (409, 'Call History emptied a second time', 'Call History was emptied a second time (0503, the user 2026-11-28: "clean it again"), once, with its own record in one_time_data_fixes, so re-running the bundle never empties it again. NO means 0503 has not run, or its record is missing -- and then a re-run WOULD empty it again. Restore: daily_review.sql (0503)',
+        to_regclass('public.one_time_data_fixes') is not null
+        and exists (select 1 from public.one_time_data_fixes where name = '0503_call_history_emptied_again'))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

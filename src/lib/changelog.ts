@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.293',
+    date: '2026-11-28',
+    title: 'Call History emptied again',
+    changes: [
+      'Call History has been emptied a second time — every year and every source — for another clean re-load. DCCR History was not touched.',
+      'As before, this was done once: uploading again is safe.',
+    ],
+  },
+  {
     version: '0.10.292',
     date: '2026-11-28',
     title: 'Call History emptied for a clean re-load',
