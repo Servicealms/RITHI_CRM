@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable, type Column } from '../components/table/DataTable';
-import { PageHeader, SectionCard, Toolbar, SearchBox, Drawer } from '../components/ui/ui';
+import { PageHeader, SectionCard, Toolbar, SearchBox, Modal } from '../components/ui/ui';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useAuth } from '../lib/auth';
 import { csvExport, fmtLongDate } from '../lib/format';
@@ -208,9 +208,9 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   const [view, setView] = useState<'calls' | 'uploads'>('calls');
   const showUploads = !cfg.yearTabs || view === 'uploads';
   const showCalls = !cfg.yearTabs || view === 'calls';
-  // THE CALL, OPENED (the user: "When i click on the Row, I want the Inform to
-  // come up in a Drawer or Pop Up"): every column of the format, what RITHI
-  // recorded about the load, and anything else the file carried.
+  // THE CALL, OPENED -- in a POP-UP (the user, 2026-11-28: "Make it a Pop up
+  // window instead of a Drawer"): the format's columns in sections, less the
+  // three it hides, and anything else the file carried.
   const [opened, setOpened] = useState<Row | null>(null);
   const BLANK = { ucn: '', product: '', serial: '', party: '', engineer: '', status: '', q: '' };
   const [hs, setHs] = useState(BLANK);
@@ -480,13 +480,20 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       </>}
 
       {opened && (
-        <Drawer open onClose={() => setOpened(null)} title={`Call History — ${String(opened.ucn ?? '')}`} storeKey="call-history-call" width={640}>
+        <Modal open onClose={() => setOpened(null)} title={`Call History — ${String(opened.ucn ?? '')}`} width={760}>
           <CallDetail row={opened} />
-        </Drawer>
+        </Modal>
       )}
     </div>
   );
 }
+
+// NOT SHOWN IN THE OPENED CALL (the user, 2026-11-28: "I want to Hide certain
+// fields - Engineer Email, Reporting Manager, Regional Manager"). Kept with the
+// call and still in the list's columns and the download; only the pop-up
+// leaves them out. "Recorded by RITHI" (Register, Source, Year, Duplicate) is
+// gone from it too ("I dont want this").
+const HIDDEN_IN_POPUP = new Set(['Engineer Email', 'Reporting Manager', 'Regional Manager']);
 
 function DetailRows({ rows }: { rows: [string, React.ReactNode][] }) {
   return (
@@ -524,25 +531,15 @@ function CallDetail({ row }: { row: Row }) {
       {HISTORY_SECTIONS.map((sec) => (
         <details key={sec} open>
           <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>{sec}</summary>
-          <DetailRows rows={CALL_HISTORY_FORMAT.flatMap((c, i) => (c.section === sec ? [[c.header, shown(i)] as [string, React.ReactNode]] : []))} />
+          <DetailRows rows={CALL_HISTORY_FORMAT.flatMap((c, i) => (c.section === sec && !HIDDEN_IN_POPUP.has(c.header) ? [[c.header, shown(i)] as [string, React.ReactNode]] : []))} />
         </details>
       ))}
-      <details open>
-        <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>Recorded by RITHI</summary>
-        <DetailRows rows={[
-          ['Register (chosen at upload)', String(row.register ?? '')],
-          ['Source', String(row.source ?? '')],
-          ['Year', row.record_year == null ? 'Undated' : String(row.record_year)],
-          ['Duplicate', row.duplicate ? 'Duplicate — the same UC No. + Call No. also came from another source this year' : ''],
-        ]} />
-      </details>
       {others.length > 0 && (
         <details open>
           <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>Other columns in the file</summary>
           <DetailRows rows={others} />
         </details>
       )}
-      <p className="muted" style={{ fontSize: 12, margin: 0 }}>History only: nothing in RITHI was created from this call. Its status and dates are the file’s own.</p>
     </div>
   );
 }

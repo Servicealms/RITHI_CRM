@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.298',
+    date: '2026-11-28',
+    title: 'Call History: a call opens in a pop-up',
+    changes: [
+      'Clicking a call in Call History opens it in a pop-up window instead of a side drawer, still in its sections.',
+      'The pop-up no longer shows Engineer Email, Reporting Manager or Regional Manager, nor the “Recorded by RITHI” section (Register, Source, Year, Duplicate) and its note.',
+      'Those columns are still in the list and the Excel / CSV download.',
+    ],
+  },
+  {
     version: '0.10.297',
     date: '2026-11-28',
     title: 'Call History: a call opens in sections, like the Field Call form',

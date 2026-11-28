@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.298 — Call History: the call opens in a pop-up (2026-11-28)
+- Asked (with a screenshot of "Recorded by RITHI"): "I dont want this. Make it a Pop up window instead of a Drawer. I want to Hide certain fields - Engineer Email, Reporting Manager, Regional Manager."
+- Drawer -> Modal (760 wide). Removed from it: the Recorded by RITHI section (Register, Source, Year, Duplicate) and the "History only" note; Engineer Email, Reporting Manager, Regional Manager (HIDDEN_IN_POPUP). All still in the list's columns and the Excel/CSV. Sections and "Other columns in the file" unchanged.
+- Write up: with v0.10.294 (supersedes its drawer wording).
+
 ## v0.10.297 — Call History drawer in sections (2026-11-28)
 - Asked: "Segregate it into Sections like the Field Call Form - In Call History also."
 - Drawer only (list + download keep the register's order). HISTORY_SECTIONS in callHistoryFormat.ts; each format column has a `section`. The Field Call form's four, same fields: Registration (UC Number, Call Number, Call Registeration Date, Complaint Date, Call Type), Customer & Product (Party, City, State, Product, Serial, Item Status, Region), Warranty & Contract (Warranty No/Start/End, Contract No/Start/End, Contract Type), Complaint (Standard Complaint, Complaint Reported, Call Allocated To, Breakdown Date, Engineer Email, Reporting Manager, Regional Manager). Then Call Status (Call Acceptance, Open/Close, Call Status, CALL PENDING REASON, Call Solved, Call Canceled) and Visit & Report (Visiting Service Engineer, Visit Date & Time, Complaint Observation, Job Done, Service Report, Drive Link). Then Recorded by RITHI, Other columns in the file. Each foldable (<details>).
