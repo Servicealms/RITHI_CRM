@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, SectionCard, Toolbar, SearchBox } from '../components/ui/ui';
 import { SelectPicker } from '../components/ui/SelectPicker';
@@ -256,6 +256,13 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   // window instead of a Drawer"): the format's columns in sections, less the
   // three it hides, and anything else the file carried.
   const [opened, setOpened] = useState<Row | null>(null);
+  const [colours, setColours] = useState<boolean>(() => {
+    try { return localStorage.getItem(COLOUR_KEY) === 'on'; } catch { return false; }
+  });
+  const toggleColours = () => setColours((c) => {
+    try { localStorage.setItem(COLOUR_KEY, c ? 'off' : 'on'); } catch { /* private window */ }
+    return !c;
+  });
   // THE TABLE'S FILTERS IN THE SEARCH ROW (the user, 2026-11-28: "Move Filters
   // also to the Same Row as other Filters are"): the table renders them here.
   const [filterSlot, setFilterSlot] = useState<HTMLSpanElement | null>(null);
@@ -387,6 +394,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   if (!supabaseConfigured()) return <div style={{ padding: 24 }} className="muted">Connect the database in Settings first.</div>;
 
   return (
+    <ColourOn.Provider value={colours}>
     <div>
       <PageHeader
         title={cfg.title} icon={cfg.icon}
@@ -525,6 +533,10 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
               </button>
             ))}
           </div>
+            <label className="row" style={{ gap: 6, alignItems: 'center', fontSize: 13, cursor: 'pointer' }}
+              title="Colour the UC No. and Call Status by the call's status">
+              <input type="checkbox" checked={colours} onChange={toggleColours} /> 🎨 Colours
+            </label>
             {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('xlsx')}>⭳ Excel</button>}
             {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('csv')}>⭳ CSV</button>}
           </div>
@@ -588,6 +600,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
         <CallDetail row={opened} onClose={() => setOpened(null)} />
       )}
     </div>
+    </ColourOn.Provider>
   );
 }
 
@@ -595,9 +608,18 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
 // Solved / Unsolved Colour Coding"): RITHI's own -- Unattended red, Unsolved
 // blue, Report pending pink, Solved green, Cancelled grey -- with a call the
 // old system closed without a completed report in LIGHT GREEN.
+// COLOUR CODING IS SWITCHED, OFF BY DEFAULT (the user, 2026-11-28: "I want to
+// Remove the Colour Coding in Call History, But give me a Toggle button to
+// enable or Disable Colour Coding for now"). One switch on the page, read by
+// both chips through this context, remembered on this device.
+const ColourOn = createContext(false);
+const COLOUR_KEY = 'rithi.callhistory.colours';
+
 function HistoryStatus({ status }: { status: unknown }) {
+  const on = useContext(ColourOn);
   const text = historyStatusLabel(status);
   if (!text) return <span className="muted">—</span>;
+  if (!on) return <span>{text}</span>;
   if (isLightSolved(text)) {
     return <span className="state-chip" style={{ background: HISTORY_SOLVED_LIGHT.bg, color: HISTORY_SOLVED_LIGHT.fg }}
       title={`Closed in the old system without a completed report — ${text}`}>{text}</span>;
@@ -607,7 +629,9 @@ function HistoryStatus({ status }: { status: unknown }) {
 /** The UC No., carrying its call's status colour as it does everywhere. */
 function HistoryUcn({ ucn, status }: { ucn: unknown; status: unknown }) {
   const text = String(ucn ?? '').trim();
+  const on = useContext(ColourOn);
   if (!text) return <span className="muted">—</span>;
+  if (!on) return <span>{text}</span>;
   const c = isLightSolved(historyStatusLabel(status)) ? HISTORY_SOLVED_LIGHT : stateColour(status);
   if (!c) return <span className="ucn-plain">{text}</span>;
   return <span className="ucn-chip" style={{ background: c.bg, color: c.fg }} title={`${text} — ${historyStatusLabel(status)}`}>{text}</span>;
