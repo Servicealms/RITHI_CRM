@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.288 — Reset filters on the call registers (2026-11-28)
+- Asked: "Add Reset Filter Option."
+- Field / Installation / PM: "✕ Reset filters" beside Open only / Re-opened. Clears UCN, Product, Serial, Party, Engineer, Call Status and Global; Re-opened off; Engineer, Pending Reason and Missed PM chips back to All; Open only back to its opening state (ON for an engineer, OFF otherwise). Disabled when nothing differs from that. Column filters inside the table are not touched.
+- Write up: HOW_TO_USE call registers' search/filter line.
+
 ## v0.10.287 — Product dropdown on the call registers (2026-11-27)
 - Asked: "Add Product filter dropdown too."
 - The register's Product search box became a type-to-search picker of useMaster('product') -- the stored product list the call form offers (6 h on the device).

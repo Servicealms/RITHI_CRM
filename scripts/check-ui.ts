@@ -10209,6 +10209,9 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
     eq('the call registers search by product, picked from the Product list and matched whole',
       readFileSync('src/lib/supabase.ts', 'utf8').includes("if (terms.productName) q = q.ilike('product_name', _san(terms.productName));")
         && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes("placeholder=\"Product\" options={productNames}"), true);
+    eq('Reset filters clears every search and filter on a call register, Open only back to how it opens',
+      /const resetFilters = \(\) => \{\s*setSrch\(BLANK_SEARCH\);\s*setOpenOnly\(openOnlyDefault\); setReopenedOnly\(false\);\s*setEngineerFilter\(''\); setPendingReasonFilter\(''\); setMissedPmFilter\(''\);/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8'))
+        && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes("const BLANK_SEARCH = { ucn: '', productName: '', serial: '', partyName: '', engineer: '', status: '', q: '' };"), true);
     eq('search reads a reopened call as Reopened, as the registers do',
       /r\.cancelled_at \? 'Cancelled' : r\.reopened_at \? 'Reopened' : r\.open_state/.test(readFileSync('src/lib/supabase.ts', 'utf8')), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);

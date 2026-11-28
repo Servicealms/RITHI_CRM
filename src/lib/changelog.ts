@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.288',
+    date: '2026-11-28',
+    title: 'Call registers: Reset filters',
+    changes: [
+      'The Field, Installation and PM registers have a ✕ Reset filters button: it clears every search box and dropdown (UCN, Product, Serial, Party, Engineer, Call Status, Global), the Re-opened toggle and the Engineer, Pending Reason and Missed PM chips, and puts Open only back to how the register opens.',
+    ],
+  },
+  {
     version: '0.10.287',
     date: '2026-11-27',
     title: 'Call registers: Product is a dropdown',
