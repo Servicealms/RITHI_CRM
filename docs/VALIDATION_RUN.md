@@ -4,10 +4,10 @@
 (`npm run validate -- "<psql args>"`). Each run REPLACES this file; the
 defect register in `src/lib/validation.ts` is what accumulates.
 
-- **Run at** 2026-11-27T11:13:54.164Z
-- **Took** 195s
-- **Commit** `3f23595` on `claude/jolly-bell-nq82yi`
-- **Version** 0.10.280
+- **Run at** 2026-11-28T08:08:22.556Z
+- **Took** 183s
+- **Commit** `53ab1e3` on `claude/jolly-bell-nq82yi`
+- **Version** 0.10.289
 
 ## Result
 
@@ -15,7 +15,7 @@ defect register in `src/lib/validation.ts` is what accumulates.
 | --- | --- | --- |
 | Database suites | 215 | 215 |
 | Automated checks | 22 | 23 |
-| Labelled `expect ERROR` outcomes matched | 526 | 526 |
+| Labelled `expect ERROR` outcomes matched | 527 | 527 |
 
 **How a suite is judged.** Each suite runs on its OWN copy of a database
 built from every migration, because run against one shared database they
@@ -29,13 +29,13 @@ stopped working produces a suite that runs clean.
 
 | | Result | |
 | --- | --- | --- |
-| `502 migrations applied to a fresh database` | ✅ pass |  |
+| `506 migrations applied to a fresh database` | ✅ pass |  |
 
 ## Automated checks
 
 | | Result | |
 | --- | --- | --- |
-| `check:bundles` | ✅ pass | no NEW object is split across modules (694 checked, 37 known and listed) |
+| `check:bundles` | ✅ pass | no NEW object is split across modules (695 checked, 37 known and listed) |
 | `check:columns` | ✅ pass | every column of all 39 registers exists |
 | `check:cover-party` | ✅ pass | all passed |
 | `check:dberror` | ✅ pass | all passed |
@@ -44,7 +44,7 @@ stopped working produces a suite that runs clean.
 | `check:machine` | ✅ pass | all passed |
 | `check:mapping` | ✅ pass | all passed |
 | `check:nar003` | ✅ pass | all passed |
-| `check:orders` | ✅ pass |   ✓ 231 order columns across 80 relations |
+| `check:orders` | ✅ pass |   ✓ 233 order columns across 81 relations |
 | `check:paging` | ❌ **FAIL** |   ✓ no copy and a failed refresh says FAILED, so the screen can say so ·   ✗ ...with the product it is one machine ·   ✗ ...a status filter is the worked-out status · 2 FAILED |
 | `check:picklist` | ✅ pass | all passed |
 | `check:picklist:open` | ✅ pass | all passed |
@@ -53,7 +53,7 @@ stopped working produces a suite that runs clean.
 | `check:reports` | ✅ pass | all passed |
 | `check:safe-updates` | ✅ pass | no WHERE-less update or delete in any of the 413 functions |
 | `check:scheduled-export` | ✅ pass | all passed |
-| `check:status` | ✅ pass | every one of the 401 _status.sql rows reads yes on a fully-applied database (1 skipped) |
+| `check:status` | ✅ pass | every one of the 405 _status.sql rows reads yes on a fully-applied database (1 skipped) |
 | `check:ui` | ✅ pass | all passed |
 | `check:uploads` | ✅ pass | all passed |
 | `check:upserts` | ✅ pass | every upsert target is inferable, and its table accepts the update |

@@ -8178,12 +8178,25 @@ begin
 end $$;
 
 -- THE FIVE SYSTEM COLUMNS (0244), attached to the parent: the columns and the
--- stamp reach every year's table from it, and each year's table gets its own
--- key. On a fresh apply sys_columns runs later and does the same.
+-- stamp reach every year's table from it. EACH YEAR'S TABLE GETS ITS OWN sys_id
+-- KEY HERE TOO, not only through sys_columns_attach(): a project that applies
+-- this file alone (the migrations workflow runs only new files) still has the
+-- 0244 helper that predates partitioned tables. On a fresh apply sys_id is not
+-- there yet; sys_columns runs later and adds it, keys included.
 do $$
+declare p record;
 begin
-  if to_regprocedure('public.sys_columns_attach(regclass)') is null then return; end if;
-  perform public.sys_columns_attach('public.call_history'::regclass);
+  if to_regprocedure('public.sys_columns_attach(regclass)') is not null then
+    perform public.sys_columns_attach('public.call_history'::regclass);
+  end if;
+  if not exists (select 1 from pg_attribute where attrelid = 'public.call_history'::regclass
+                  and attname = 'sys_id' and not attisdropped) then return; end if;
+  for p in select c.oid::regclass as t, c.relname as n from pg_inherits i join pg_class c on c.oid = i.inhrelid
+            where i.inhparent = 'public.call_history'::regclass loop
+    if to_regclass(format('public.%I', p.n || '_sys_id_key')) is null then
+      execute format('create unique index %I on %s (sys_id)', p.n || '_sys_id_key', p.t);
+    end if;
+  end loop;
 end $$;
 
 comment on table public.call_history is
