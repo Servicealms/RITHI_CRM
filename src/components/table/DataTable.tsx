@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { SelectPicker } from '../ui/SelectPicker';
 import { groupTree, NO_GROUP, type GroupNode } from './group';
 import { useAuth } from '../../lib/auth';
@@ -54,6 +55,11 @@ export interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   emptyText?: string;
   toolbar?: ReactNode;
+  /** Where the Filters (and Group) controls render, when the page wants them
+   *  in its own search row rather than above the table (Call History,
+   *  2026-11-28: "Move Filters also to the Same Row as other Filters are").
+   *  Null or absent: above the table, as everywhere else. */
+  controlsSlot?: HTMLElement | null;
   onLoadMore?: () => void | Promise<void>; // renders a Load more in the footer
   moreAvailable?: boolean;                  // whether another page may exist
   loadingMore?: boolean;
@@ -158,6 +164,7 @@ export function DataTable<T>({
   onRowClick,
   emptyText = 'No records yet.',
   toolbar,
+  controlsSlot,
   onLoadMore,
   moreAvailable,
   loadingMore,
@@ -871,10 +878,12 @@ export function DataTable<T>({
       {bulkBar && picked.size > 0 && (
         <div className="dt-bulk">{bulkBar([...picked], () => setPicked(new Set()))}</div>
       )}
-      {(toolbar || filtersControl || groupControl) && (
+      {controlsSlot && (filtersControl || groupControl)
+        && createPortal(<>{groupControl}{filtersControl}</>, controlsSlot)}
+      {(toolbar || (!controlsSlot && (filtersControl || groupControl))) && (
         <div className="dt-toolbar">
           {toolbar}
-          {(filtersControl || groupControl) && (
+          {!controlsSlot && (filtersControl || groupControl) && (
             <>
               <div className="spacer" />
               {groupControl}

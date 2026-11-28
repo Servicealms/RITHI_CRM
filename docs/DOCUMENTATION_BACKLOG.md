@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.300 — Call History layout tidied (2026-11-28)
+- Asked (screenshot): "Load More Stays only alongside the Page Name. Global Search Bar can be smaller and moved to the Above Row. Export can be moved to the Row where Year is mentioned. Move Filters also to the Same Row as other Filters are."
+- Call History only (DCCR History unchanged): table toolbar keeps only "N shown of M"; Load more only in the page header; Excel / CSV on the year-tab row (.ch-tabs-row); Global 170px (.call-search-global-sm) in the search row; the table's ⚑ Filters (and Group) rendered into the search row through a new DataTable prop `controlsSlot` (a portal; absent = above the table as everywhere else).
+- Write up: HOW_TO_USE Call History (where Load more / downloads / Filters are).
+
 ## v0.10.299 — Call History: delete a whole upload (2026-11-28)
 - Asked: "Till i Finalize the Uploads, i might need to clean it up quite often, Give me a Button to Clear it, Add it to Actions list in Roles & Permission so that i can remove at my Will - the Whole Upload - So keep it at Upload Level". Replaces a one-time migration per clean-up (0502/0503).
 - 0504 (daily_review): call_history.upload_batch + upload_file (text, default ''), index; the Call History upload stamps ONE batch number (UploadDef.batch, 0483's mechanism) and the file name (new UploadDef.batchFile) on every row. View call_history_uploads (security_invoker): one row per batch -- file, calls, first/last loaded, loaded_by (latest), years, sources, registers. Policy ch_delete: (select has_perm('call_history.delete')); grant delete to authenticated, never anon.

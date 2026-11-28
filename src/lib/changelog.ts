@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.300',
+    date: '2026-11-28',
+    title: 'Call History: a tidier page',
+    changes: [
+      'Load more is now only beside the page name.',
+      'The Excel and CSV downloads sit on the year row, at its right.',
+      'The Global search is smaller and on the same row as UCN, Product, Serial, Party, Engineer and Call Status, together with the table’s Filters button.',
+    ],
+  },
+  {
     version: '0.10.299',
     date: '2026-11-28',
     title: 'Call History: delete a whole upload',
