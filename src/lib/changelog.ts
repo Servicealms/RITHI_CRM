@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.317',
+    date: '2026-11-28',
+    title: 'Product Status Check: the financial rule',
+    changes: [
+      'No financial impact: OGP → CMC, OGP → AMC, WGP → CMC (and any change from chargeable to free, or within the same charging).',
+      'Financial impact: CMC → OGP, CMC → AMC, WGP → OGP, WGP → AMC — except when no spare was requested and none consumed on the call, which makes them no impact too.',
+      'Each call now shows how many spares were requested and how many consumed on it (consumption in RITHI and the historical consumption).',
+    ],
+  },
+  {
     version: '0.10.316',
     date: '2026-11-28',
     title: 'Registers open with 2,000 rows, and Load more adds 2,000',

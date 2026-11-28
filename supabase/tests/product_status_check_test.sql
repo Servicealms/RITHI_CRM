@@ -82,6 +82,10 @@ select (select late_ref from rep where ucn = 'PSC-1') = 'PSC-MC-NEW'
 select (select cover_ref from rep where ucn = 'PSC-2') = 'PSC-SA-1' and (select late_ref from rep where ucn = 'PSC-2') = ''
        as "...and a call judged on cover that existed names that cover, with nothing entered late";
 
+select (select spares_requested from rep where ucn = 'PSC-2') = 1 and (select spares_consumed from rep where ucn = 'PSC-2') = 0
+   and (select spares_requested from rep where ucn = 'PSC-1') = 0
+       as "each call carries its spares requested and consumed (0507)";
+
 \echo '--- Audit Mode: refused ---'
 update public.app_settings set value = 'on' where key = 'audit_mode';
 set role authenticated;

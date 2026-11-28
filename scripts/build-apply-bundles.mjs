@@ -1664,7 +1664,10 @@ const MODULES = {
             '0492_cover_active_means_started_views.sql',
             // Product Status Check (0506): every call's status against its cover
             // as it stood when the call was registered; the report and the fix.
-            '0506_product_status_check.sql'],
+            '0506_product_status_check.sql',
+            // ...the spares requested and consumed on each call, for the
+            // financial rule (0507).
+            '0507_product_status_spares.sql'],
   },
   feedback_checks: {
     title: 'Feedback Without a Report',

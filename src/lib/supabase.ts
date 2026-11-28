@@ -6095,6 +6095,8 @@ export interface ProductStatusRow {
   ucn: string; register: string; reg_date: string | null; reg_at: string | null; party_name: string; product_name: string;
   serial: string; stored_status: string; correct_status: string; spare_requests: number; spare_request_refs: string;
   cover_ref: string; late_ref: string; late_note: string; late_entered_at: string | null;
+  /** Every spare request on the call, and every spare consumed on it (0507). */
+  spares_requested: number; spares_consumed: number;
 }
 /** The whole Product Status Check report, in one response (0506). */
 export async function productStatusReport(): Promise<ProductStatusRow[]> {

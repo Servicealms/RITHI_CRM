@@ -7,7 +7,7 @@ import { xlsxDownload, xlsxCell, xlsxText } from '../lib/xlsx';
 import { formatDay, formatDayTime, todayLocal } from '../lib/dates';
 import { logAudit } from '../lib/audit';
 import { COMPLETE } from '../lib/exportscope';
-import { coverCode } from '../lib/fieldcall';
+import { financialImpact } from '../lib/productStatus';
 import { supabaseConfigured, productStatusReport, fixProductStatus, type ProductStatusRow } from '../lib/supabase';
 
 // ===========================================================================
@@ -21,33 +21,16 @@ import { supabaseConfigured, productStatusReport, fixProductStatus, type Product
 // before I update." Hidden in Audit Mode; the database refuses it there too.
 // ===========================================================================
 
-// SPARE CHARGING (the user, 2026-11-28: "It is showing OGP but it is actually
-// CMC - It is not Costing me anything. Similarly - AMC and OGP are almost the
-// Same - Spare is Chargeable ... if there is no Spare Request against that
-// Call, Still no financial Impact"). A spare is CHARGED under OGP and AMC and
-// FREE under WGP and CMC; anything else (a contract with no type) is UNKNOWN,
-// and unknown is treated as a possible impact, never assumed away.
-type Charge = 'Charged' | 'Free' | 'Unknown';
-const chargeOf = (status: string): Charge => {
-  const c = coverCode(status);
-  return c === 'OGP' || c === 'AMC' ? 'Charged' : c === 'WGP' || c === 'CMC' ? 'Free' : 'Unknown';
-};
-
 type Row = ProductStatusRow & {
   id: string; group: string; charge: string; impact: boolean; impact_note: string;
 };
+// THE FINANCIAL RULE (the user, 2026-11-28) -- productStatus.ts, tested in check:ui.
 const shape = (r: ProductStatusRow, i: number): Row => {
-  const before = chargeOf(r.stored_status); const after = chargeOf(r.correct_status);
-  const same = before === after && before !== 'Unknown';
-  const impact = !same && r.spare_requests > 0;
+  const j = financialImpact(r.stored_status, r.correct_status, r.spares_requested ?? 0, r.spares_consumed ?? 0);
   return {
     ...r, id: `${r.ucn}-${i}`,
     group: `${r.stored_status || '(blank)'} → ${r.correct_status}`,
-    charge: `${before} → ${after}`,
-    impact,
-    impact_note: impact
-      ? `Spare charging changes, and ${r.spare_requests} spare request${r.spare_requests === 1 ? '' : 's'} on the call`
-      : same ? 'None — spare charging is the same' : 'None — no spare request on the call',
+    charge: j.charge, impact: j.impact, impact_note: j.note,
   };
 };
 
@@ -65,6 +48,8 @@ const COLUMNS: { key: keyof ProductStatusRow; header: string; date?: 'day' | 'ti
   { key: 'late_note', header: 'Note' },
   { key: 'late_entered_at', header: 'Entry time', date: 'time' },
   { key: 'spare_requests', header: 'Spare requests to update' },
+  { key: 'spares_requested', header: 'Spares requested on the call' },
+  { key: 'spares_consumed', header: 'Spares consumed on the call' },
   { key: 'charge' as keyof ProductStatusRow, header: 'Spare charging (now → at registration)' },
   { key: 'impact_note' as keyof ProductStatusRow, header: 'Financial impact' },
   { key: 'spare_request_refs', header: 'Spare requests (OR No.)' },
@@ -139,7 +124,7 @@ export function ProductStatusCheck() {
           { Item: 'Calls', Value: String(rows.length) },
           { Item: 'Spare requests to update', Value: String(rows.reduce((n, r) => n + r.spare_requests, 0)) },
           { Item: 'Scope', Value: [groups.size ? `groups: ${[...groups].join('; ')}` : 'every group', impactView === 'all' ? '' : impactView === 'none' ? 'no financial impact only' : 'financial impact only'].filter(Boolean).join(' · ') },
-          { Item: 'Financial impact', Value: 'Spares are charged under OGP and AMC and free under WGP and CMC. A change has a financial impact only where the charging changes AND the call has a spare request.' },
+          { Item: 'Financial impact', Value: 'Spares are free under WGP and CMC and charged under OGP and AMC. Impact: the call read free (WGP / CMC) and the correct status is charged (OGP / AMC) -- CMC to OGP, CMC to AMC, WGP to OGP, WGP to AMC -- unless no spare was requested or consumed on the call. Every other change (e.g. OGP to CMC, OGP to AMC, WGP to CMC) has none.' },
           { Item: 'Checked', Value: checkedAt ? formatDayTime(checkedAt) : '' },
         ] },
       ], COMPLETE);
