@@ -2,6 +2,7 @@
 // uploads. No test runner in this repo, so: `npm run check:uploads`.
 import { shapeUpload, byColumnSet, UPLOADS, masterUpload, toDate, toTs, coerce, uploadGroups,
   planConsumptionVisits } from '../src/lib/uploads';
+import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow } from '../src/lib/callHistoryFormat';
 import { parseDateParts, toIsoDate, toIsoTimestamp, parseAnyDate } from '../src/lib/dates';
 import { findHeaderFor, strict, loose, squash } from '../src/lib/headers';
 import { toDate as coverDate, toTimestamp as coverTs } from '../src/lib/coverImport';
@@ -1093,6 +1094,30 @@ console.log('\n-- who a new call is allotted to: the machine wins, the party ans
   eq('...the solved date reads day-first', String(row.call_solved_at ?? '').slice(0, 10), '2025-01-02');
   eq('...the month-only warranty start stays text', row.warranty_start_text, 'Nov-2015');
   eq('...the spare category is carried', row.spare_category, 'SPARE');
+}
+
+// THE F/I CALL REGISTER INTO CALL HISTORY (the user, 2026-11-28: "I need the
+// Call History in this Format"). Its "Call Registeration Date" is misspelt and
+// used to match nothing, so the call date went into `extra` and, with no Year
+// chosen, the call to Undated. The other 21 headings are read back from `extra`.
+{
+  const def = UPLOADS.find((d) => d.key === 'call_history')!;
+  const res = shapeUpload(def, [{ 'UC Number': '24A03F0001', 'Call Number': 'R6874', 'Call Registeration Date': '03-Jan-2024 10:43:51',
+    'Complaint Date': '29 Dec 23', 'Product Serial Number': 'INXT 0337', 'Contract Number': 'MC5340', 'CALL PENDING REASON': 'Awaiting part',
+    'Call Allocated To': 'SHAHABAS' }]);
+  const row = def.afterAsked!((res.rows ?? [])[0] ?? {});
+  eq('the misspelt Call Registeration Date is the call date', !!row.call_at && !Number.isNaN(Date.parse(String(row.call_at))), true);
+  eq('...so the call takes its year from it', row.record_year, 2024);
+  const shaped = shapeHistoryRow(row);
+  const at = (h: string) => shaped[formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === h))];
+  eq('the format has the register\'s 37 columns', CALL_HISTORY_FORMAT.length, 37);
+  eq('...a heading kept in extra is read back', at('Contract Number'), 'MC5340');
+  eq('...matched as the importer matches headings', at('CALL PENDING REASON'), 'Awaiting part');
+  eq('...a date written as text reads day-first', at('Complaint Date'), '2023-12-29');
+  eq('...a column is read from the column', [at('Product Serial Number'), at('Call Allocated To')], ['INXT 0337', 'SHAHABAS']);
+  eq('...a heading the file did not carry is blank', at('Call Canceled Date'), '');
+  eq('...an old load whose date is only in extra still shows it',
+    shapeHistoryRow({ call_at: null, extra: { 'Call Registeration Date': '03-Jan-2024 10:43:51' } })[formatKey(2)], '2024-01-03T10:43:51');
 }
 
 console.log(fail ? `\n${fail} FAILED\n` : '\nall passed\n');

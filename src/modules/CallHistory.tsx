@@ -12,6 +12,7 @@ import { loadFailure } from '../lib/dberror';
 import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
+import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow } from '../lib/callHistoryFormat';
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
@@ -59,7 +60,8 @@ const CONFIG: Record<HistoryKind, HistoryConfig> = {
   call: {
     title: 'Call History', icon: '📜', uploadKey: 'call_history', summaryMigration: '0495',
     subtitle: "The calls before RITHI (up to 2025), stored year by year: what has been loaded, and each year's calls on a tab of its own. History only — nothing in RITHI is created from them. Each machine's history is on Machine History. The DCCR register's calls are on DCCR History.",
-    storageKey: 'call-history', fileName: 'call-history', sheet: 'Call History',
+    // A new key: the old layout's saved columns are not this format's.
+    storageKey: 'call-history-format', fileName: 'call-history', sheet: 'Call History',
     report: 'Call History — calls before RITHI (up to 2025)', audit: 'report.call_history',
     sources: true, duplicates: true, yearTabs: true,
     summaryNote: 'Each year is stored on its own: a call in two yearly sheets is counted in each year; two sources of the same year are one call, counted once, and the other is its Duplicate. No serial: stored, but not listed on Machine History, which finds a history call by its serial.',
@@ -105,6 +107,32 @@ const ALL_EXPORT: { key: string; header: string }[] = [
   { key: 'loaded_at', header: 'Loaded At' },
 ];
 
+// CALL HISTORY IN THE F/I CALL REGISTER'S FORMAT (the user, 2026-11-28: "I
+// need the Call History in this Format"): its 37 columns, in its order and
+// under its headings, on the screen and in the download -- then RITHI's own
+// four (the Call Type chosen at upload, Source, Year, Duplicate). DCCR History
+// keeps its own columns. See callHistoryFormat.ts for where each value is read.
+const FORMAT_COLUMNS: Column<Row>[] = [
+  ...CALL_HISTORY_FORMAT.map((c, i): Column<Row> => ({
+    key: formatKey(i), header: c.header,
+    width: c.kind ? 120 : /Party|Complaint|Job|Observation|Report|Reason/.test(c.header) ? 200 : 130,
+    wrap: c.header === 'UC Number' ? false : undefined,
+    render: c.kind === 'date' ? (r) => day(r[formatKey(i)])
+      : c.kind === 'datetime' ? (r) => (r[formatKey(i)] ? formatDayTime(r[formatKey(i)]) : '')
+      : undefined,
+  })),
+  { key: 'register', header: 'Register (chosen at upload)', width: 110 },
+  { key: 'source', header: 'Source', width: 110 },
+  { key: 'record_year', header: 'Year', width: 70 },
+  { key: 'duplicate', header: 'Duplicate', width: 90, render: (r) => (r.duplicate ? 'Duplicate' : '') },
+];
+const FORMAT_EXPORT: { key: string; header: string }[] = [
+  ...CALL_HISTORY_FORMAT.map((c, i) => ({ key: formatKey(i), header: c.header })),
+  { key: 'register', header: 'Register (chosen at upload)' }, { key: 'source', header: 'Source' },
+  { key: 'record_year', header: 'Year' }, { key: 'duplicate', header: 'Duplicate' },
+  { key: 'loaded_at', header: 'Loaded At' },
+];
+
 const groupKey = (g: { record_year: number | null; source: string; register: string }) => `${g.record_year ?? ''}|${g.source}|${g.register}`;
 
 export function CallHistory() { return <HistoryScreen kind="call" />; }
@@ -114,8 +142,8 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   const cfg = CONFIG[kind];
   const def = UPLOADS.find((d) => d.key === cfg.uploadKey);
   const keep = (k: string) => (cfg.sources || k !== 'source') && (cfg.duplicates || k !== 'duplicate');
-  const COLUMNS = ALL_COLUMNS.filter((c) => keep(String(c.key)));
-  const EXPORT = ALL_EXPORT.filter((c) => keep(c.key));
+  const COLUMNS = cfg.yearTabs ? FORMAT_COLUMNS : ALL_COLUMNS.filter((c) => keep(String(c.key)));
+  const EXPORT = cfg.yearTabs ? FORMAT_EXPORT : ALL_EXPORT.filter((c) => keep(c.key));
   const { can } = useAuth();
   const mayUpload = can('bulk.upload');
   const mayExport = can('export.data');
@@ -186,7 +214,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
     try {
       const got = await listCallHistory(kind, filter, from, from + PAGE - 1);
       if (mine !== seq.current) return; // a newer filter has been asked for
-      const page = got.rows.map((r) => ({ ...r, id: String(r.id) } as Row));
+      const page = got.rows.map((r) => ({ ...(cfg.yearTabs ? shapeHistoryRow(r) : r), id: String(r.id) } as Row));
       setRows((prev) => (append ? [...prev, ...page] : page));
       setTotal(got.total);
     } catch (e) {
@@ -248,12 +276,13 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       const all = await allCallHistory(kind, filter, cap);
       if (!all.length) return;
       const name = `${cfg.fileName}-${todayLocal()}`;
-      const shaped = (r: Record<string, unknown>): Record<string, unknown> => ({ ...r, duplicate: r.duplicate ? 'Duplicate' : '' });
+      const shaped = (r: Record<string, unknown>): Record<string, unknown> =>
+        ({ ...(cfg.yearTabs ? shapeHistoryRow(r) : r), duplicate: r.duplicate ? 'Duplicate' : '' });
       if (fileKind === 'csv') {
         csvExport(`${name}.csv`, EXPORT, all.map((r) => {
           const s = shaped(r);
           return Object.fromEntries(EXPORT.map((c) => [c.key,
-            c.key === 'call_at' || c.key === 'solved_at' || c.key === 'loaded_at' ? (s[c.key] ? formatDayTime(s[c.key]) : '') : xlsxText(s[c.key])]));
+            c.key === 'call_at' || c.key === 'solved_at' || c.key === 'loaded_at' ? (s[c.key] ? formatDayTime(s[c.key]) : '') : xlsxText(s[c.key] ?? '')]));
         }), cappedAt(all.length, cap));
       } else {
         xlsxDownload(`${name}.xlsx`, [
