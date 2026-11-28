@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Toolbar } from '../components/ui/ui';
@@ -31,7 +32,7 @@ import { safeUrl } from '../lib/safeUrl';
 // ===========================================================================
 
 const CACHE_KEY = 'reports';
-const PAGE = 1000;
+const PAGE = REGISTER_PAGE;
 type Row = Record<string, unknown> & { id: string };
 const j = (r: Row, k: string) => String(((r.data as Record<string, unknown>) ?? {})[k] ?? '');
 
@@ -161,7 +162,7 @@ export function Reports() {
     if (!supabaseConfigured()) return;
     setBusy(true);
     try {
-      const data = await queryReports({}, 0, PAGE);
+      const data = await readSliced((l, o) => queryReports({}, o, l), 0, PAGE);
       const r = toRows(data, 0);
       setRows(r); setOffset(r.length); setMore(r.length === PAGE);
       setLastSync(saveCache(CACHE_KEY, r));
@@ -202,7 +203,7 @@ export function Reports() {
     const t = window.setTimeout(async () => {
       setBusy(true);
       try {
-        const data = await queryReports(filter, 0, PAGE);
+        const data = await readSliced((l, o) => queryReports(filter, o, l), 0, PAGE);
         setRows(toRows(data, 0)); setOffset(data.length); setMore(data.length === PAGE);
         setMsg({ tone: 'ok', text: `${data.length}${data.length === PAGE ? '+' : ''} visits matched (live).` });
       } catch (e) {
@@ -216,7 +217,7 @@ export function Reports() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const data = await queryReports(hasFilter ? filter : {}, offset, PAGE);
+      const data = await readSliced((l, o) => queryReports(hasFilter ? filter : {}, o, l), offset, PAGE);
       const merged = [...rows, ...toRows(data, rows.length)];
       setRows(merged); setOffset(offset + data.length); setMore(data.length === PAGE);
       if (!hasFilter) setLastSync(saveCache(CACHE_KEY, merged));

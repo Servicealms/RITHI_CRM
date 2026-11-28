@@ -1883,8 +1883,10 @@ console.log('\n-- the evidence workbook --');
     // FOR, not one page — else a full 2,000-row open reads as the end.
     eq('...and "more" is judged against the whole opening request',
       /more: r\.length >= OPEN_PAGES \* PAGE\[t\]/.test(cov), true);
-    eq('...and Load more doubles what it fetches',
-      /step: feed\.step \* 2/.test(cov), true);
+    // A STEADY 2,000 PER LOAD MORE (the user, 2026-11-28: "every Load more
+    // should be set to the Max it can load in 1 go") -- it used to double.
+    eq('...and Load more fetches a steady 2,000, never more',
+      /step: OPEN_PAGES \}\);/.test(cov) && !/step: feed\.step \* 2/.test(cov), true);
     // The user, 2026-10-02: "Move Load More to Top like all other Pages in
     // both Contract and Warranty Pages". One button, in the heading beside the
     // count; neither table offers its own.
@@ -10284,7 +10286,7 @@ console.log('\n-- module review batch 3: paging that keeps its place, searches t
                          ['CustomerFeedback', 'listFeedbackRows']] as const) {
     const src = readFileSync(`src/modules/${f}.tsx`, 'utf8');
     eq(`${f}: the refresh re-reads every page loaded, not page one`,
-      new RegExp(`readUpTo\\(${fn}, offsetRef\\.current, PAGE\\)`).test(src) && /offsetRef\.current = offset;/.test(src), true);
+      new RegExp(`readUpTo\\(${fn}, Math\\.max\\(offsetRef\\.current, PAGE\\)\\)`).test(src) && /offsetRef\.current = offset;/.test(src), true);
   }
   const hs3 = readFileSync('src/modules/HandStock.tsx', 'utf8');
   // (0384) Hand Stock no longer pages: one request brings the whole balance,
@@ -10466,7 +10468,7 @@ console.log('\n-- module review batch 3: paging that keeps its place, searches t
   const dcr = rd('src/modules/DailyCallReview.tsx');
   eq('#10 Daily Complaint Review: every load takes a number', /const seq = \+\+loadSeq\.current;/.test(dcr), true);
   eq('#10 ...and a superseded one stops after each read',
-    (dcr.match(/await listCallReviews\(f, [^\n]*\n\s*if \(!current\(\)\) return;/g) ?? []).length, 2);
+    (dcr.match(/await readSliced\(\(l, o\) => listCallReviews\(f, [^\n]*\n\s*if \(!current\(\)\) return;/g) ?? []).length, 2);
   eq('#10 ...and Load more does not append to a newer load', /if \(seq !== loadSeq\.current\) return;/.test(dcr), true);
   // #11 / #12 the KPI cards follow the product chip, and cover goes through coverCode.
   const kpi = rd('src/modules/KpiAnalytics.tsx');

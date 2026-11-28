@@ -139,3 +139,31 @@ export async function readUpTo<T>(
   }
   return { rows, more };
 }
+
+// ---------------------------------------------------------------------------
+// EVERY REGISTER OPENS WITH, AND LOADS MORE BY, 2,000 ROWS (the user,
+// 2026-11-28: "Load all Registers with 2000 Rows to start with - The Max it can
+// load in 1 Go and every Load more should be set to the Max it can load in 1
+// go"). PostgREST answers at most PG_PAGE (1,000) rows per request, silently,
+// so a screen's page of 2,000 is read in slices by readSliced -- asking for
+// 2,000 in one request would return 1,000 and read as the end of the register.
+// ---------------------------------------------------------------------------
+export const REGISTER_PAGE = 2000;
+
+/** `want` rows from `offset`, read `size` at a time in order, stopping at the
+ *  first short slice (the end). Never more than `want`. */
+export async function readSliced<T>(
+  page: (limit: number, offset: number) => Promise<T[]>,
+  offset: number,
+  want: number,
+  size = PG_PAGE,
+): Promise<T[]> {
+  const out: T[] = [];
+  while (out.length < want) {
+    const n = Math.min(size, want - out.length);
+    const got = await page(n, offset + out.length);
+    out.push(...got);
+    if (got.length < n) break;
+  }
+  return out;
+}

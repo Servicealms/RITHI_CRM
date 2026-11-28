@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { readUpTo } from '../lib/paging';
+import { readUpTo, readSliced, REGISTER_PAGE } from '../lib/paging';
 import { DataTable, type Column } from '../components/table/DataTable';
 import { PageHeader, Toolbar, SearchBox } from '../components/ui/ui';
 import { csvExport, fmtLongDate, timeAgo } from '../lib/format';
@@ -63,7 +63,7 @@ export function CustomerFeedback() {
   const scope = useAccessScope();
   const onDb = supabaseConfigured();
   const cached = onDb ? loadCache<Row>(CACHE_KEY) : null;
-  const PAGE = 1000;
+  const PAGE = REGISTER_PAGE;
   const [rows, setRows] = useState<Row[]>(cached?.rows ?? []);
   const [search, setSearch] = useState('');
   // "Can I segregate the Uploaded ones and the Ones that were entered in the
@@ -91,7 +91,7 @@ export function CustomerFeedback() {
     if (!onDb) return;
     setBusy(true); setMsg({ tone: 'info', text: 'Loading customer feedback…' });
     try {
-      const { rows: r, more: hasMore } = await readUpTo(listFeedbackRows, offsetRef.current, PAGE);
+      const { rows: r, more: hasMore } = await readUpTo(listFeedbackRows, Math.max(offsetRef.current, PAGE));
       const mapped = r.map((x, i) => ({ ...x, id: `${g(x, 'call_number')}-${i}` } as Row));
       setRows(mapped); setOffset(mapped.length); setMore(hasMore); setLastSync(saveCache(CACHE_KEY, mapped));
       setMsg({ tone: mapped.length ? 'ok' : 'info', text: mapped.length ? `Synced ${mapped.length} feedback records.` : 'No customer feedback recorded yet.' });
@@ -110,7 +110,7 @@ export function CustomerFeedback() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const r = await listFeedbackRows(PAGE, offset);
+      const r = await readSliced((l, o) => listFeedbackRows(l, o), offset, PAGE);
       const mapped = r.map((x, i) => ({ ...x, id: `${g(x, 'call_number')}-${offset + i}` } as Row));
       const merged = [...rows, ...mapped];
       setRows(merged); setOffset(offset + r.length); setMore(r.length === PAGE); setLastSync(saveCache(CACHE_KEY, merged));

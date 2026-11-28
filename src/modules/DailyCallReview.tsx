@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -93,7 +94,7 @@ const OPT = (arr: string[]) => ['', ...arr];
 // pulled down whole: the per-call report lookups (0047) run for every row a
 // query returns, so a page is the difference between a quarter of a second
 // and a stalled screen.
-const PAGE = 500;
+const PAGE = REGISTER_PAGE;
 
 // THE WORKLISTS LOAD IN FULL, NOT A PAGE AT A TIME (the user, 2026-09-20:
 // "In Review Desk - Load all Calls in 1 Go, Or at a Minimum Load Recent 1000").
@@ -361,7 +362,7 @@ export function DailyCallReview() {
     const current = () => seq === loadSeq.current;
     setBusy(true);
     try {
-      const page = (await listCallReviews(f, 0, PAGE)) as ReviewRow[];
+      const page = (await readSliced((l, o) => listCallReviews(f, o, l), 0, PAGE)) as ReviewRow[];
       if (!current()) return;
       // A WORKLIST IS LOADED WHOLE; the Review Register keeps its Load more,
       // which is an explicit choice on a 4,000-row register rather than a
@@ -376,7 +377,7 @@ export function DailyCallReview() {
         // saying so. Painting each page keeps the figure honest while it grows.
         setRows(all);
         while (all.length < MAX_DESK) {
-          const next = (await listCallReviews(f, all.length, PAGE)) as ReviewRow[];
+          const next = (await readSliced((l, o) => listCallReviews(f, o, l), all.length, PAGE)) as ReviewRow[];
           if (!current()) return;
           all = all.concat(next);
           setRows(all);
@@ -433,7 +434,7 @@ export function DailyCallReview() {
     // A page asked for under one load is not appended to the next one's rows.
     const seq = loadSeq.current;
     try {
-      const next = (await listCallReviews(applied, rows.length, PAGE)) as ReviewRow[];
+      const next = (await readSliced((l, o) => listCallReviews(applied, o, l), rows.length, PAGE)) as ReviewRow[];
       if (seq !== loadSeq.current) return;
       setRows((r) => [...r, ...next]);
       setMore(next.length === PAGE);
@@ -590,7 +591,7 @@ export function DailyCallReview() {
     try {
       const all: ReviewRow[] = [];
       for (let off = 0; ; off += PAGE) {
-        const page = (await listCallReviews(applied, off, PAGE)) as ReviewRow[];
+        const page = (await readSliced((l, o) => listCallReviews(applied, o, l), off, PAGE)) as ReviewRow[];
         all.push(...page);
         if (page.length < PAGE) break;
         setMsg({ tone: 'info', text: `Read ${all.length.toLocaleString()} of ${exportCount.toLocaleString()}…` });

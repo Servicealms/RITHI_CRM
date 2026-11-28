@@ -1,3 +1,4 @@
+import { REGISTER_PAGE } from '../lib/paging';
 import { useEffect, useMemo, useState, type ReactNode, useRef } from 'react';
 import { startBackgroundSync } from '../lib/cache';
 import { SelectPicker } from '../components/ui/SelectPicker';
@@ -806,7 +807,9 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // (so older calls are found without loading everything). The 300-cap + "Load
   // more" only exist for the legacy Google-Sheet path.
   const onDb = supabaseConfigured();
-  const RECENT_LIMIT = 800;
+  // 2,000 to open and per Load more (the user, 2026-11-28); listCalls reads
+  // it in slices of 1,000, PostgREST's cap.
+  const RECENT_LIMIT = REGISTER_PAGE;
   const [loadLimit, setLoadLimit] = useState(onDb ? RECENT_LIMIT : 300);
   const [prefill, setPrefill] = useState<FormValues | undefined>(undefined);
   const [prefillKey, setPrefillKey] = useState(0);
@@ -1362,7 +1365,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   // One definition, used by the header. The database pages in 800s; the sheet
   // has to be re-read, so it asks for 300 more and refreshes.
   const loadMore = () => {
-    if (onDb) setLoadLimit((l) => l + 800);
+    if (onDb) setLoadLimit((l) => l + REGISTER_PAGE);
     else { const n = loadLimit + 300; setLoadLimit(n); void refresh(n); }
   };
 

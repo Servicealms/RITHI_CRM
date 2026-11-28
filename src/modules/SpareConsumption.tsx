@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { readUpTo } from '../lib/paging';
+import { readUpTo, readSliced, REGISTER_PAGE } from '../lib/paging';
 import { PickList } from '../components/ui/PickList';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { DataTable, type Column } from '../components/table/DataTable';
@@ -51,7 +51,7 @@ export function SpareConsumption() {
   const scope = useAccessScope();
   const onDb = supabaseConfigured();
   const cached = onDb ? loadCache<Row>(CACHE_KEY) : null;
-  const PAGE = 1000;
+  const PAGE = REGISTER_PAGE;
   const [rows, setRows] = useState<Row[]>(cached?.rows ?? []);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
@@ -246,7 +246,7 @@ export function SpareConsumption() {
     if (onDb) {
       setBusy(true); setMsg({ tone: 'info', text: 'Loading spare consumption…' });
       try {
-        const { rows: r, more: hasMore } = await readUpTo(listConsumptionRows, offsetRef.current, PAGE);
+        const { rows: r, more: hasMore } = await readUpTo(listConsumptionRows, Math.max(offsetRef.current, PAGE));
         // The table needs a stable string key, but the DB id is what an
         // adjustment updates — keep both.
         const mapped = r.map((x, i) => ({ ...x, _dbId: x.id, id: `${pick(x, UCN_KEYS)}-${i}` } as Row));
@@ -279,7 +279,7 @@ export function SpareConsumption() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const r = await listConsumptionRows(PAGE, offset);
+      const r = await readSliced((l, o) => listConsumptionRows(l, o), offset, PAGE);
       // _dbId is what an adjustment updates, and a voided line is the ONLY way
       // to correct consumption (0049 blocks deletion). Without it every row
       // past the first page answered "This line has no database id — Refresh",
