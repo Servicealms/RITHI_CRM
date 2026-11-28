@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.303',
+    date: '2026-11-28',
+    title: 'Call History: All years is the first tab',
+    changes: [
+      'All years is now the first tab on Call History, followed by each year from the newest down, then Undated. The page opens on All years.',
+    ],
+  },
+  {
     version: '0.10.302',
     date: '2026-11-28',
     title: 'Call History: Product, Engineer and Call Status lists fill after an upload',
