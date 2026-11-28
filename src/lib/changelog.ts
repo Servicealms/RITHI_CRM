@@ -20,6 +20,18 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.313',
+    date: '2026-11-28',
+    title: 'Product Status Check: every call against its cover at registration',
+    changes: [
+      'A new screen, Administration → Product Status Check, checks every call’s Item Status against what it was when the call was registered: the warranty or contract that had been entered by then and was running that day (warranty WGP, else the contract’s cover, else OGP).',
+      'A contract or warranty entered after the call was registered does not count, even when it is back-dated to cover the day. Each mismatch names such an entry — its MC / SA number, a note that it was entered after the call was registered, and its entry time — and the cover that did count.',
+      'Each mismatch also lists the spare requests on the call whose status would change.',
+      'Download the report (Excel or CSV) first; then Update all writes each call’s status at registration, and its spare requests follow.',
+      'Administrators to begin with; hidden in Audit Mode.',
+    ],
+  },
+  {
     version: '0.10.312',
     date: '2026-11-28',
     title: 'Call registers: every filter on one row; Call History gets the Drive button',

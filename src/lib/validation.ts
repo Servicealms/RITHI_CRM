@@ -214,6 +214,7 @@ export const CHECKLIST: ChecklistSection[] = [
 // Neither entry is a defect on its own. Both are questions for a person, which
 // is the point of writing them where a person will read them.
 export const MODULES_WITHOUT_REQUIREMENT: Record<string, string> = {
+  '/product-status-check': 'Non-auditable by the system owner\u2019s decision (2026-11-28): its requirement is NAR-031, hidden in Audit Mode with the screen, so it carries no URS.',
   // NON-AUDITABLE BY DECISION (the user, 2026-10-04). Governed by NAR-008, not
   // by a URS: it is not offered as evidence against any clause, and it is
   // hidden with its screen while Audit Mode is on.
@@ -995,6 +996,18 @@ const MOVED_IDS: ReadonlySet<string> = new Set([...MOVED_TO_NON_AUDITABLE.urs, .
 export const isMovedToNonAuditable = (id: string): boolean => MOVED_IDS.has(id);
 
 export const NON_AUDITABLE: NonAuditableReq[] = [
+  {
+    id: 'NAR-031',
+    version: '0.10.313', date: '2026-11-28',
+    title: "Product Status Check -- every call's Item Status against its cover at registration; non-auditable, hidden in Audit Mode",
+    classification: 'Non-Auditable Requirement (user-originated; no regulatory clause claimed) \u2014 hidden while Audit Mode is on',
+    auditHidden: true,
+    modules: ['/product-status-check'],
+    text: "NAR-031.1 Administration shall offer Product Status Check (/product-status-check), opened by mod:/product-status-check, which 0506 merges into admin and technical_support. NAR-031.2 It shall list every call whose stored Item Status (by cover_code) differs from its status at registration: of the warranties and contracts ENTERED by the call's registration moment (entry time at or before reg_at, else the end of its registration day; an entry with no entry time counts), the one running on the registration date -- warranty WGP, else the contract's cover, else OGP; no product or serial OGP. NAR-031.3 Each row shall name the cover counted, and any warranty or contract covering that date but entered after the call was registered with its number, the note that it was entered after registration, and its entry time; and the spare requests on the call whose own status would change, by OR number. NAR-031.4 The list shall be downloadable (Excel / CSV, export.data) before anything is changed. NAR-031.5 Update all shall write each listed call's status at registration (the status only) for a holder of calls.edit or calls.edit.customer, and the spare requests on each call shall follow (0268), reporting how many of each changed. NAR-031.6 While Audit Mode is on, the screen shall not be shown and the database shall refuse both the check and the update.",
+    rationale: "The system owner, 2026-11-28: \"At the time of Call Registration - What is the Status of the Product? - List all Mismatches and Update it - Do this in a Separate Screen. Non Auditable, so should hide when i enable Audit Mode. When i update all Affected Spare Request should also show and Update - But i should be able to get this as a Report before I update.\" And the rule by example: a contract entered on 21 Nov, back-dated to 11 Nov, did not cover a call registered on 20 Nov.",
+    risk: 'Medium',
+    refs: ['supabase/migrations/0506_product_status_check.sql', 'src/modules/ProductStatusCheck.tsx', 'supabase/tests/product_status_check_test.sql'],
+  },
   {
     id: 'NAR-030',
     version: '0.10.274', date: '2026-11-26',

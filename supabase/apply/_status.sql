@@ -2523,6 +2523,12 @@ with checks(sort_order, bundle, provides, present) as (
         to_regprocedure('public.map_report_drive_links(jsonb)') is not null
         and not has_function_privilege('anon', 'public.map_report_drive_links(jsonb)', 'execute')
         and has_function_privilege('authenticated', 'public.map_report_drive_links(jsonb)', 'execute')),
+    (412, 'Product Status Check: each call against its cover at registration', 'product_status_mismatches() and fix_product_status(text[]) (0506): every call''s Item Status against the cover entered by and running on its registration, the spare requests it would move, and the update; refused in Audit Mode, without mod:/product-status-check, and to the public key. NO means the Product Status Check screen cannot list or update. Restore: product_database_2.sql (0506)',
+        to_regprocedure('public.product_status_mismatches()') is not null
+        and to_regprocedure('public.fix_product_status(text[])') is not null
+        and not has_function_privilege('anon', 'public.product_status_mismatches()', 'execute')
+        and not has_function_privilege('anon', 'public.fix_product_status(text[])', 'execute')
+        and not has_function_privilege('authenticated', 'public._product_status_judged()', 'execute')),
     (410, 'A Call History upload can be deleted as a whole', 'Each Call History upload carries a batch number and file name (call_history.upload_batch / upload_file, 0504), call_history_uploads lists them (as its reader), and a DELETE policy lets only a holder of call_history.delete remove one. NO means the Uploads tab cannot list or delete uploads. Restore: daily_review.sql (0504)',
         exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'upload_batch')
         and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'upload_file')

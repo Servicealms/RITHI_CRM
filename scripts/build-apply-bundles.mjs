@@ -1661,7 +1661,10 @@ const MODULES = {
             '0490_product_status_refreshed_daily.sql',
             // A cover is ACTIVE from its start date, not only until its end
             // (the user, 2026-11-19): the Product Database view and 2.0.
-            '0492_cover_active_means_started_views.sql'],
+            '0492_cover_active_means_started_views.sql',
+            // Product Status Check (0506): every call's status against its cover
+            // as it stood when the call was registered; the report and the fix.
+            '0506_product_status_check.sql'],
   },
   feedback_checks: {
     title: 'Feedback Without a Report',

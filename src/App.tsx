@@ -64,6 +64,7 @@ import { FeedbackWithoutReport } from './modules/FeedbackWithoutReport';
 import { VisitDateCheck } from './modules/VisitDateCheck';
 import { InstallCallsUnmapped } from './modules/InstallCallsUnmapped';
 import { CallHistory, DccrHistory } from './modules/CallHistory';
+import { ProductStatusCheck } from './modules/ProductStatusCheck';
 import { ReportsHub } from './modules/ReportsHub';
 import { SpareInsights } from './modules/SpareInsights';
 import { Workload } from './modules/Workload';
@@ -300,6 +301,7 @@ function Shell() {
         <Route path="/spare-insights" element={<SpareInsights />} />
         <Route path="/machine-history" element={<MachineHistory />} />
         <Route path="/call-history" element={<CallHistory />} />
+        <Route path="/product-status-check" element={<ProductStatusCheck />} />
         <Route path="/dccr-history" element={<DccrHistory />} />
         <Route path="/part-search" element={<PartSearch />} />
         <Route path="/exports" element={<ReportsHub />} />

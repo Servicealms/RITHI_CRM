@@ -105,6 +105,22 @@ export const MODULE_GUIDE: ModuleGuideEntry[] = [
     ],
   },
   {
+    route: '/product-status-check',
+    purpose: "Every call's Item Status against its cover at the moment it was registered — the mismatches, a report, and one update for the calls and their spare requests.",
+    does: [
+      'Check every call: the status it carries against the warranty or contract that had been entered, and was running, when it was registered',
+      'See, for each mismatch, the cover counted, any contract or warranty entered after the call was registered (with its entry time), and the spare requests that would change',
+      'Download the report (Excel or CSV) before changing anything',
+      'Update all: each call gets its status at registration; its spare requests follow',
+    ],
+    records: ['field_calls', 'installation_calls', 'pm_calls', 'spare_requests', 'audit_log'],
+    rules: [
+      'A contract or warranty entered after the call was registered did not count then, even when back-dated to cover the day',
+      'Only the status changes — the warranty and contract numbers on the call are left as they are',
+      'Not available in Audit Mode',
+    ],
+  },
+  {
     route: '/dccr-history',
     purpose: "The old DCCR register's calls (2025 and before), apart from Call History: what has been loaded, by year and call type, the calls themselves, and the upload.",
     does: [
