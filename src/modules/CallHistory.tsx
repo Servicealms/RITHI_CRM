@@ -17,6 +17,7 @@ import { CALL_HISTORY_FORMAT, HISTORY_SECTIONS, formatKey, shapeHistoryRow, driv
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   listCallHistoryUploads, deleteCallHistoryUpload, type CallHistoryUpload,
+  callHistorySpares, type HistorySpare,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
 } from '../lib/supabase';
 import './fieldcalls.css';
@@ -628,6 +629,17 @@ function CallDetail({ row }: { row: Row }) {
     return String(v);
   };
   const others = otherExtra(row.extra);
+  // THE SPARES CONSUMED ON THIS CALL, by its UC No. (both consumption tables).
+  const [spares, setSpares] = useState<HistorySpare[] | null>(null);
+  const [sparesErr, setSparesErr] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    setSpares(null); setSparesErr(null);
+    callHistorySpares(String(row.ucn ?? ''))
+      .then((x) => { if (live) setSpares(x); })
+      .catch((e) => { if (live) setSparesErr(e instanceof Error ? e.message : String(e)); });
+    return () => { live = false; };
+  }, [row.ucn]);
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       {HISTORY_SECTIONS.map((sec) => (
@@ -636,6 +648,35 @@ function CallDetail({ row }: { row: Row }) {
           <DetailRows rows={CALL_HISTORY_FORMAT.flatMap((c, i) => (c.section === sec && !HIDDEN_IN_POPUP.has(c.header) ? [[c.header, shown(i)] as [string, React.ReactNode]] : []))} />
         </details>
       ))}
+      <details open>
+        <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>
+          Spares consumed{spares ? ` (${spares.length})` : ''}
+        </summary>
+        {sparesErr && <div className="sheet-banner sheet-banner-error"><span>Could not read the spares: {sparesErr}</span></div>}
+        {!sparesErr && spares === null && <p className="muted" style={{ margin: 0 }}>Loading…</p>}
+        {spares && spares.length === 0 && <p className="muted" style={{ margin: 0 }}>No spare is recorded against this UC No.</p>}
+        {spares && spares.length > 0 && (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="assoc-table" style={{ width: '100%' }}>
+              <thead>
+                <tr><th>Part</th><th style={{ textAlign: 'right' }}>Qty</th><th>Date</th><th>Engineer</th><th>Recorded as</th><th>Remarks</th></tr>
+              </thead>
+              <tbody>
+                {spares.map((x, i) => (
+                  <tr key={i}>
+                    <td>{x.part}</td>
+                    <td style={{ textAlign: 'right' }}>{x.qty ?? ''}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{x.at ? formatDay(x.at) : ''}</td>
+                    <td>{x.engineer}</td>
+                    <td>{x.from === 'Historical' ? `Historical${x.how ? ` · ${x.how}` : ''}` : `RITHI${x.how ? ` · ${x.how}` : ''}`}</td>
+                    <td>{x.remarks}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </details>
       {others.length > 0 && (
         <details open>
           <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>Other columns in the file</summary>

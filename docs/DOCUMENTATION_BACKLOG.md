@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.304 — Call History: spares consumed on each call (2026-11-28)
+- Asked: "I want to link the Consumption for these Historical Calls. I Think the Data is already there." Probe _call_history_consumption_link.sql (live, 2026-11-28): spare_consumption_history 39,724 lines, 38,073 name a Call History UCN, 0 a live call, 1,647 neither; spare_consumption 11,335 lines, 624 name a Call History UCN, 10,681 a live call. Calls with historical consumption: 2022 3,119 / 18,414, 2023 4,663 / 6,483, 2024 5,162 / 6,652, 2025 5,165 / 6,739.
+- No data change: linked at read time by UC No. (exact). callHistorySpares(ucn) reads both tables (up to 500 lines each), under the reader's RLS (sch_read / cons_read). Pop-up section "Spares consumed (n)": Part, Qty, Date, Engineer, Recorded as (Historical / RITHI · source), Remarks.
+- Write up: HOW_TO_USE Call History (the pop-up's spares); the requirement for the link.
+
 ## v0.10.303 — Call History: All years first (2026-11-28)
 - Asked: "Move All Years as the first tab then go Descending." Tabs: All years, years newest first, Undated; opens on All years (the first tab).
 - Also: supabase/apply/_call_history_open_calls_migrated.sql (read-only, counts only, one grid) -- per year x loaded-as register x file Call Status x file Open/Close: in the same live register by UCN / another / none, found by Call Number only, and the live copy's state. Asked: "All Open Calls from Previous year were migrated to the Current Call register ... check and Confirm".

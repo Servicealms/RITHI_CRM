@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.304',
+    date: '2026-11-28',
+    title: 'Call History: the spares consumed on each call',
+    changes: [
+      'A call opened in Call History now shows the spares consumed on it — part, quantity, date, engineer, how it was recorded and remarks.',
+      'They are found by the call’s UC No. in both places a spare is recorded: the historical consumption already loaded, and anything booked in RITHI. Nothing was copied or changed to do this.',
+      'You see the lines your role may see elsewhere in RITHI.',
+    ],
+  },
+  {
     version: '0.10.303',
     date: '2026-11-28',
     title: 'Call History: All years is the first tab',

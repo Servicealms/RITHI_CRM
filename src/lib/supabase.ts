@@ -6019,6 +6019,39 @@ export async function deleteCallHistoryUpload(batch: string): Promise<number> {
   return count ?? 0;
 }
 
+/** The spares consumed on one Call History call, from both places a spare is
+ *  recorded: the historical consumption (spare_consumption_history) and
+ *  RITHI's own (spare_consumption). LINKED BY UC No. -- both tables already
+ *  carry it (the user, 2026-11-28: "I want to link the Consumption for these
+ *  Historical Calls. I Think the Data is already there"; 38,073 of 39,724
+ *  historical lines name a Call History call). Read under the reader's own
+ *  row-level security, so a reader sees the lines they may see elsewhere. */
+export interface HistorySpare {
+  from: 'Historical' | 'RITHI'; part: string; qty: number | null; at: string | null;
+  engineer: string; how: string; remarks: string; call_number: string;
+}
+export async function callHistorySpares(ucn: string): Promise<HistorySpare[]> {
+  const k = ucn.trim();
+  if (!k) return [];
+  const c = must();
+  const [h, r] = await Promise.all([
+    c.from('spare_consumption_history').select('part,qty,consumed_at,engineer,source,remarks,call_number')
+      .eq('ucn', k).order('consumed_at', { ascending: true, nullsFirst: false }).order('id').limit(500),
+    c.from('spare_consumption').select('part,qty,created_at,engineer,source,remarks,call_number')
+      .eq('ucn', k).order('created_at', { ascending: true }).order('id').limit(500),
+  ]);
+  if (h.error) throw new Error(errMsg(h.error));
+  if (r.error) throw new Error(errMsg(r.error));
+  return [
+    ...(h.data ?? []).map((x) => ({ from: 'Historical' as const, part: String(x.part ?? ''), qty: x.qty == null ? null : Number(x.qty),
+      at: (x.consumed_at as string | null) ?? null, engineer: String(x.engineer ?? ''), how: String(x.source ?? ''),
+      remarks: String(x.remarks ?? ''), call_number: String(x.call_number ?? '') })),
+    ...(r.data ?? []).map((x) => ({ from: 'RITHI' as const, part: String(x.part ?? ''), qty: x.qty == null ? null : Number(x.qty),
+      at: (x.created_at as string | null) ?? null, engineer: String(x.engineer ?? ''), how: String(x.source ?? ''),
+      remarks: String(x.remarks ?? ''), call_number: String(x.call_number ?? '') })),
+  ];
+}
+
 export async function countTable(table: string): Promise<number | null> {
   const c = getSupabase(); if (!c) return null;
   const { count, error } = await c.from(table).select('*', { count: 'exact', head: true });
