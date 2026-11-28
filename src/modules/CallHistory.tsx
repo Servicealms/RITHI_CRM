@@ -46,7 +46,10 @@ import './dccr.css';
 // ===========================================================================
 
 type Row = Record<string, unknown> & { id: string };
-const PAGE = 500;
+// 2,000 calls a page, first load and every Load more, on every year tab and on
+// DCCR History (the user, 2026-11-28: "Load More should load 2000 in one go").
+// listCallHistory reads it in two slices of 1,000 -- PostgREST's cap.
+const PAGE = 2000;
 const day = (v: unknown) => (v ? formatDay(v) : '');
 const NOT_RECORDED = '(not recorded)';
 

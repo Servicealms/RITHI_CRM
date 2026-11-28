@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.296',
+    date: '2026-11-28',
+    title: 'Call History loads 2,000 calls at a time',
+    changes: [
+      'Call History now shows 2,000 calls when it opens, and each Load more adds 2,000, on every year tab and with any search. DCCR History, which shares the page, does the same.',
+    ],
+  },
+  {
     version: '0.10.295',
     date: '2026-11-28',
     title: 'Call History: who loaded a call, and when, only on the summary',

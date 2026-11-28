@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.296 — Call History pages of 2,000 (2026-11-28)
+- Asked: "Load More should load 2000 in one go in Call History Page [Including all Sub Pages]."
+- PAGE 500 -> 2000 (first load and each Load more; every year tab, Undated, All years, any search; DCCR History shares the component). listCallHistory reads a page in slices of 1,000 (PostgREST's silent cap) under the same order, exact count from the first slice, stops on a short slice.
+- Write up: HOW_TO_USE Call History (2,000 at a time).
+
 ## v0.10.295 — Call History: load who/when only on the summary (2026-11-28)
 - Asked: "Dont keep tab of Who Uploaded or When it was Uploaded in the View - Move it to the Summary or Log."
 - loaded_at / loaded_by taken off each call's row on the client (withoutLoad): not in the drawer, the list's column picker or the Excel/CSV ("Loaded At" dropped). The summary (Uploads & summary tab) keeps Last loaded / By per year x source x call type. Still stored on the row (the summary is counted from it). DCCR History unchanged.
