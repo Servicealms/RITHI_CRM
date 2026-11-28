@@ -20,6 +20,18 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.289',
+    date: '2026-11-28',
+    title: 'Call History: stored year by year, a tab per year, and the Field Call search',
+    changes: [
+      'Each year of Call History is now stored on its own. A call that appears in two yearly sheets is kept in each year, as that year\u2019s file had it — it is no longer folded into the later year as a Duplicate.',
+      'The Call History page has a tab per year (newest first), an Undated tab for calls with no year, and All years. Field, Installation and PM calls share one list.',
+      'Its search is the Field Call register\u2019s: UCN, Product, Serial, Party, Engineer, Call Status and Global, against the whole year. Product, Engineer and Call Status list what the history actually holds, with how many calls carry each.',
+      'An upload with no Year chosen puts each call in the year of its own call date.',
+      'The Product and Engineer searches on the call registers now find a name that contains brackets or commas.',
+    ],
+  },
+  {
     version: '0.10.288',
     date: '2026-11-28',
     title: 'Call registers: Reset filters',

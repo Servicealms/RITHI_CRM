@@ -194,6 +194,10 @@ export interface UploadDef {
    *  per-cell mapping cannot see (a blank cell and an absent column arrive
    *  identically). The Standard Complaint's Products column is the case. */
   finish?: (row: Record<string, unknown>, headers: string[]) => void;
+  /** A last change to each row AFTER the asked values are on it -- for a value
+   *  that depends on what was asked (Call History's year: the one chosen, else
+   *  the call's own). */
+  afterAsked?: (row: Record<string, unknown>) => Record<string, unknown>;
   /** Headings `finish` READS, with what each becomes -- so the report lists
    *  them as recognised rather than "kept on the row" (the user, 2026-09-30:
    *  "Still the products are kept on the row during upload, fix it" -- the
@@ -1373,7 +1377,18 @@ export const UPLOADS: UploadDef[] = [
   // Workflow. Store it separately ... no upstream or Down stream"). The file's
   // own status and solved date, as written; nothing follows from a row.
   { key: 'call_history', label: 'Call History — calls before RITHI (up to 2025)', group: 'Calls',
-    table: 'call_history', conflict: 'ucn,call_no', extraInto: 'extra',
+    // KEYED BY YEAR TOO (0501): each year's calls are stored apart, so the same
+    // call in two yearly sheets is two records, and a re-load of one year's file
+    // corrects that year only.
+    table: 'call_history', conflict: 'ucn,call_no,record_year', extraInto: 'extra',
+    // THE YEAR ROUTES THE ROW to its year's table, before any database trigger
+    // runs, so the upload gives it: the Year chosen, else the year of the call's
+    // own call date (India), else none -- the "undated" table.
+    afterAsked: (row) => {
+      if (row.record_year !== undefined && row.record_year !== null && String(row.record_year).trim() !== '') return row;
+      const t = row.call_at ? Date.parse(String(row.call_at)) : NaN;
+      return Number.isFinite(t) ? { ...row, record_year: new Date(t + 5.5 * 3600 * 1000).getUTCFullYear() } : row;
+    },
     // WHERE AND WHICH YEAR, asked on the screen (0432): the same call can come
     // from two systems, or from two yearly sheets as an Old Call, and the
     // latest year's record is the one shown -- the other kept and flagged.

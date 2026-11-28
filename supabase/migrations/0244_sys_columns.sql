@@ -198,7 +198,21 @@ begin
       (select string_agg(format('alter column %I drop expression', g), ', ') from unnest(gens) g));
   end if;
 
-  if to_regclass(format('public.%I', rel || '_sys_id_key')) is null then
+  -- A PARTITIONED table (call_history, 0501) cannot carry a unique key that
+  -- leaves out its partition key: each of its partitions gets its own instead.
+  -- The columns and the stamping trigger above and below go on the parent, which
+  -- hands them to every partition.
+  if (select c.relkind from pg_class c where c.oid = p_table) = 'p' then
+    declare part record;
+    begin
+      for part in select c.oid::regclass as t, c.relname as n
+                    from pg_inherits i join pg_class c on c.oid = i.inhrelid where i.inhparent = p_table loop
+        if to_regclass(format('public.%I', part.n || '_sys_id_key')) is null then
+          execute format('create unique index %I on %s (sys_id)', part.n || '_sys_id_key', part.t);
+        end if;
+      end loop;
+    end;
+  elsif to_regclass(format('public.%I', rel || '_sys_id_key')) is null then
     execute format('create unique index %I on %s (sys_id)', rel || '_sys_id_key', p_table);
   end if;
 
@@ -226,7 +240,9 @@ begin
   for r in
     select c.oid::regclass as t
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
-     where n.nspname = 'public' and c.relkind = 'r'
+     -- A partitioned table is attached as itself; its partitions are not
+     -- attached one by one (a column cannot be added to a partition).
+     where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relispartition
        and c.relname not in (
          -- the ten number counters (indoor_dc_counters, 0321): a row there has no author
          'call_number_seq', 'ffr_counters', 'indoor_dc_counters', 'indoor_job_counters',

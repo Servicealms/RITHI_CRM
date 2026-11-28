@@ -48,7 +48,7 @@ insert into public.call_history (ucn, call_no, call_type, register) values ('CTF
 update public.call_history set call_status = 'Solved' where ucn = 'CTF-H1';
 select (select register from public.call_history where ucn = 'CTF-H1') = 'Installation' as "an update that names no register keeps it";
 insert into public.call_history (ucn, call_no, call_type, register) values ('CTF-H2', '1', 'FIELD', 'Field')
-  on conflict (ucn, call_no) do update set register = excluded.register;
+  on conflict (ucn, call_no, record_year) do update set register = excluded.register;
 select (select register from public.call_history where ucn = 'CTF-H2') = 'Field' as "a re-load corrects it";
 select public.call_register_of('P M VISIT') = 'PM' and public.call_register_of('pm') = 'PM'
    and public.call_register_of('Installation') = 'Installation' and public.call_register_of(null) = 'Field'

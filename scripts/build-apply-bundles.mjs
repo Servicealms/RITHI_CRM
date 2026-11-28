@@ -609,7 +609,11 @@ const MODULES = {
             '0495_call_history_screen.sql',
             // DCCR History is its own table and screen, apart from Call History
             // (the user, 2026-11-27: "2 Separate ... Containers").
-            '0496_dccr_history_apart.sql'],
+            '0496_dccr_history_apart.sql',
+            // The Call History search's dropdowns: what the history holds (0500).
+            '0500_call_history_choices.sql',
+            // Call History stored year by year: partitioned by record_year (0501).
+            '0501_call_history_by_year.sql'],
   },
   notifications: {
     title: 'Notifications',
