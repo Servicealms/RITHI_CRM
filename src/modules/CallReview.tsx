@@ -39,7 +39,7 @@ import './callreview.css';
 // ===========================================================================
 
 
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 2000; // shown per step (the user, 2026-11-28: 2,000 to open and per Load more)
 
 type Call = Record<string, unknown>;
 const g = (r: Call, k: string) => String(r[k] ?? '');

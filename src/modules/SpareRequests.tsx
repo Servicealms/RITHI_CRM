@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { readUpTo } from '../lib/paging';
+import { readUpTo, readSliced, REGISTER_PAGE } from '../lib/paging';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { PickList } from '../components/ui/PickList';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -544,7 +544,7 @@ export function SpareRequests() {
   const scope = useAccessScope();
   const onDb = supabaseConfigured();
   const cached = onDb ? loadCache<Row>(CACHE_KEY) : null;
-  const PAGE = 1000;
+  const PAGE = REGISTER_PAGE;
   const [rows, setRows] = useState<Row[]>(cached?.rows ?? []);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<Stage | typeof MINE | ''>('');
@@ -665,7 +665,7 @@ export function SpareRequests() {
     if (onDb) {
       setBusy(true); setMsg({ tone: 'info', text: 'Loading spare requests…' });
       try {
-        const { rows: r, more: hasMore } = await readUpTo(listSpareRequestLines, offsetRef.current, PAGE);
+        const { rows: r, more: hasMore } = await readUpTo(listSpareRequestLines, Math.max(offsetRef.current, PAGE));
         const mapped = r.map((x, i) => ({ ...x, id: String(`${g(x as Row, 'uid')}-${g(x as Row, 'part')}-${i}`) } as Row));
         setRows(mapped); setOffset(mapped.length); setMore(hasMore); setLastSync(saveCache(CACHE_KEY, mapped));
         setMsg({ tone: 'ok', text: `Synced ${mapped.length} spare-request line${mapped.length === 1 ? '' : 's'}.` });
@@ -753,7 +753,7 @@ export function SpareRequests() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const r = await listSpareRequestLines(PAGE, offset);
+      const r = await readSliced((l, o) => listSpareRequestLines(l, o), offset, PAGE);
       const mapped = r.map((x, i) => ({ ...x, id: String(`${g(x as Row, 'uid')}-${g(x as Row, 'part')}-${offset + i}`) } as Row));
       const merged = [...rows, ...mapped];
       setRows(merged); setOffset(offset + r.length); setMore(r.length === PAGE); setLastSync(saveCache(CACHE_KEY, merged));

@@ -1171,8 +1171,10 @@ export function CoverRegister({ kind }: { kind: CoverKind }) {
       // end of the register, so `more` goes false and the step stops growing —
       // otherwise coming back to a filtered view would open with a request for
       // sixteen pages of nothing.
+      // A STEADY 2,000 PER LOAD MORE (the user, 2026-11-28: "every Load more
+      // should be set to the Max it can load in 1 go") -- it used to double.
       setFeed(tab, { rows: merged, offset: feed.offset + r.length,
-                     more: r.length >= want, at, step: feed.step * 2 });
+                     more: r.length >= want, at, step: OPEN_PAGES });
     } catch (e) { setMsg({ tone: 'error', text: `Load more failed: ${e instanceof Error ? e.message : String(e)}` }); }
     finally { setBusy(false); }
   };

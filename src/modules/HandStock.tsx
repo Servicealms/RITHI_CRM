@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import { isMissingTable } from '../lib/dberror';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectPicker } from '../components/ui/SelectPicker';
@@ -607,7 +608,7 @@ export function HandStock() {
 // Loaded on its own (and paged) rather than with the levels, because a level
 // is a handful of rows per engineer and its history is not.
 // ---------------------------------------------------------------------------
-const PAGE = 1000;
+const PAGE = REGISTER_PAGE;
 
 function Movements({
   engineers, onMigrationError,
@@ -632,7 +633,8 @@ function Movements({
   const [beforeCount, setBeforeCount] = useState(false);
 
   const fetchPage = async (from: number, engineerKey: string) => {
-    const raw = await listAllHandstockMovements(PAGE, from, { ...(engineerKey ? { engineerKey } : {}), beforeCount });
+    // 2,000 per load, read in slices of 1,000 (PostgREST's cap) -- 2026-11-28.
+    const raw = await readSliced((l, o) => listAllHandstockMovements(l, o, { ...(engineerKey ? { engineerKey } : {}), beforeCount }), from, PAGE);
     return raw.map((m, i) => ({ ...asMovement(m), id: `${from + i}` } as MoveRow));
   };
 

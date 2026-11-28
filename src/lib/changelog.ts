@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.316',
+    date: '2026-11-28',
+    title: 'Registers open with 2,000 rows, and Load more adds 2,000',
+    changes: [
+      'The registers now open with 2,000 rows and every Load more adds 2,000: Field, Installation and PM calls, Visit Reports, Spare Requests, Spare Consumption, Customer Feedback, Material Returns, Party Master, Product Database, Hand Stock movements, the Daily Complaint Review, Call Review, the Audit Log, and the Warranty and Contract registers (whose Load more no longer doubles). Call History, Pending Calls and Pending Registrations already did.',
+    ],
+  },
+  {
     version: '0.10.315',
     date: '2026-11-28',
     title: 'Product Status Check: change only the calls you choose, with their financial impact',

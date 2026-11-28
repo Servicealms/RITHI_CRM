@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { DataTable, type Column } from '../components/table/DataTable';
@@ -14,7 +15,7 @@ import { partial } from '../lib/exportscope';
 // ===========================================================================
 
 const CACHE_KEY = 'auditLog';
-const PAGE = 500;
+const PAGE = REGISTER_PAGE;
 type Row = Record<string, unknown> & { id: string };
 const g = (r: Row, k: string) => String(r[k] ?? '');
 
@@ -53,7 +54,7 @@ export function AuditLog() {
     if (!supabaseConfigured()) return;
     setBusy(true);
     try {
-      const data = await queryAudit({}, 0, PAGE);
+      const data = await readSliced((l, o) => queryAudit({}, o, l), 0, PAGE);
       const r = toRows(data, 0);
       setRows(r); setOffset(r.length); setMore(r.length === PAGE); setLastSync(saveCache(CACHE_KEY, r));
       setMsg({ tone: 'ok', text: `Synced ${r.length}${r.length === PAGE ? '+' : ''} audit events.` });
@@ -88,7 +89,7 @@ export function AuditLog() {
     const t = window.setTimeout(async () => {
       setBusy(true);
       try {
-        const data = await queryAudit(filter, 0, PAGE);
+        const data = await readSliced((l, o) => queryAudit(filter, o, l), 0, PAGE);
         setRows(toRows(data, 0)); setOffset(data.length); setMore(data.length === PAGE);
       } catch (e) { setMsg({ tone: 'error', text: `Search failed: ${e instanceof Error ? e.message : String(e)}` }); }
       finally { setBusy(false); }
@@ -100,7 +101,7 @@ export function AuditLog() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const data = await queryAudit(hasFilter ? filter : {}, offset, PAGE);
+      const data = await readSliced((l, o) => queryAudit(hasFilter ? filter : {}, o, l), offset, PAGE);
       const merged = [...rows, ...toRows(data, rows.length)];
       setRows(merged); setOffset(offset + data.length); setMore(data.length === PAGE);
       if (!hasFilter) setLastSync(saveCache(CACHE_KEY, merged));

@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import { partyMissing, type PartyFieldOptions } from '../lib/partyRules';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useColumns } from '../components/ui/useColumns';
@@ -34,7 +35,7 @@ import { safeUrl } from '../lib/safeUrl';
 // ===========================================================================
 
 const CACHE_KEY = 'partyMaster';
-const PAGE = 1000;
+const PAGE = REGISTER_PAGE;
 type Row = Record<string, unknown> & { id: string };
 
 // THE CURATED SET IS WHAT YOU SEE WITHOUT ASKING, and that is the whole
@@ -442,7 +443,7 @@ export function PartyMaster() {
     if (!supabaseConfigured()) return;
     setBusy(true);
     try {
-      const data = await queryParties({}, 0, PAGE);
+      const data = await readSliced((l, o) => queryParties({}, o, l), 0, PAGE);
       const r = toRows(data, 0);
       setRows(r); setOffset(r.length); setMore(r.length === PAGE);
       setLastSync(saveCache(CACHE_KEY, r));
@@ -485,7 +486,7 @@ export function PartyMaster() {
     const t = window.setTimeout(async () => {
       setBusy(true);
       try {
-        const data = await queryParties(filter, 0, PAGE);
+        const data = await readSliced((l, o) => queryParties(filter, o, l), 0, PAGE);
         setRows(toRows(data, 0)); setOffset(data.length); setMore(data.length === PAGE);
         setMsg({ tone: 'ok', text: `${data.length}${data.length === PAGE ? '+' : ''} parties matched (live).` });
       } catch (e) {
@@ -499,7 +500,7 @@ export function PartyMaster() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const data = await queryParties(hasFilter ? filter : {}, offset, PAGE);
+      const data = await readSliced((l, o) => queryParties(hasFilter ? filter : {}, o, l), offset, PAGE);
       const merged = [...rows, ...toRows(data, rows.length)];
       setRows(merged); setOffset(offset + data.length); setMore(data.length === PAGE);
       if (!hasFilter) setLastSync(saveCache(CACHE_KEY, merged));

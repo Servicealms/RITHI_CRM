@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.316 — Registers: 2,000 to open and per Load more (2026-11-28)
+- Asked: "Load all Registers with 2000 Rows to start with - The Max it can load in 1 Go and every Load more should be set to the Max it can load in 1 go."
+- paging.ts REGISTER_PAGE = 2000 and readSliced(page, offset, want, 1000) -- a 2,000 page read as 1,000-row requests (PostgREST cap), stopping at a short slice. Applied: FieldCalls (RECENT_LIMIT 800 -> 2000, +2000), AuditLog (500), DailyCallReview (500), CallReview (500, client), PartyMaster, Reports, ProductMaster, CustomerFeedback, MaterialReturns, SpareConsumption, SpareRequests, HandStock (1000 -> 2000); readUpTo callers keep 1,000-row slices (want = max(loaded, PAGE)). CoverRegister already opened with 2 x 1,000; its Load more now stays 2,000 instead of doubling (check:ui assertion changed with it). Already 2,000: CallHistory, PendingCalls, RequestCallRegistration.
+- Write up: HOW_TO_USE (registers load 2,000 at a time); check:ui comments.
+
 ## v0.10.315 — Product Status Check: choose the calls; financial impact (2026-11-28)
 - Asked: "Give me option to Change only Specific Calls ... OGP but actually CMC - not Costing me anything ... AMC and OGP are almost the Same - Spare is Chargeable ... give me the Groups for which i can Change and Also if there is no Spare Request against that Call, Still no financial Impact."
 - Screen only (fix_product_status already takes a list): group chips by "stored -> correct" (multi-select), impact chips (All / No financial impact / Financial impact), row tick boxes, Select all shown, Select shown with no financial impact, Update selected (confirm says how many have an impact). Charging: OGP, AMC charged; WGP, CMC free; anything else unknown (= impact). Impact = charging changes AND spare_requests > 0. Columns "Spare charging (now -> at registration)" and "Financial impact"; the report downloads what is shown, scope on the About sheet.

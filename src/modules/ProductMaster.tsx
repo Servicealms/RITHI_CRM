@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import { useEffect, useState, useRef } from 'react';
 import { itemStatusToday } from '../lib/coverToday';
 import { todayLocal } from '../lib/dates';
@@ -82,7 +83,7 @@ export function ProductMaster() {
   // silently -- so asking for more would come back with 1,000 anyway and the
   // "did I get a full page?" test would then read FALSE and hide the Load more
   // button, announcing the end of a register with thousands left.
-  const PAGE = 1000;
+  const PAGE = REGISTER_PAGE;
   // A SAVED PAGE FROM AN EARLIER DAY shows today's Item Status, not the one it
   // was saved with (2026-11-19, a contract that ran out still read CMC).
   const [rows, setRows] = useState<Row[]>(() => (cached?.rows ?? []).map((r) => ({ ...r, 'Item Status': itemStatusToday(r, todayLocal()) })));
@@ -105,7 +106,7 @@ export function ProductMaster() {
     setBusy(true);
     setMsg({ tone: 'info', text: 'Searching the Product Database…' });
     try {
-      const r = await searchProducts(filters, PAGE, 0);
+      const r = await readSliced((l, o) => searchProducts(filters, l, o), 0, PAGE);
       // A SHORT READ IS THE ONLY HONEST END SIGNAL. Receiving exactly what you
       // asked for says nothing about whether a next row exists.
       const exhausted = r.length < PAGE;
@@ -136,7 +137,7 @@ export function ProductMaster() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const r = await searchProducts(f, PAGE, offset);
+      const r = await readSliced((l, o) => searchProducts(f, l, o), offset, PAGE);
       const exhausted = r.length < PAGE;
       const mapped = r.map((p, i) => ({ ...p, id: `${String(p['Item Serial Number'] ?? '')}-${offset + i}` }));
       const merged = [...rows, ...mapped];

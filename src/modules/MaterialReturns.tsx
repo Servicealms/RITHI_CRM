@@ -1,3 +1,4 @@
+import { readSliced, REGISTER_PAGE } from '../lib/paging';
 import { logAudit } from '../lib/audit';
 import { isMissingTable } from '../lib/dberror';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -69,7 +70,7 @@ export function MaterialReturns() {
   const scope = useAccessScope();
   const onDb = supabaseConfigured();
   const cached = onDb ? loadCache<Row>(CACHE_KEY) : null;
-  const PAGE = 1000;
+  const PAGE = REGISTER_PAGE;
   // Raw as fetched — cached and refreshed as before.
   const [allRows, setRows] = useState<Row[]>(cached?.rows ?? []);
   // RLS scopes a real session; this narrows the list only while an
@@ -98,7 +99,7 @@ export function MaterialReturns() {
     if (!onDb) return;
     setBusy(true);
     try {
-      const r = await listMaterialReturns(PAGE, 0);
+      const r = await readSliced((l, o) => listMaterialReturns(l, o), 0, PAGE);
       // KEYED ON THE TABLE'S OWN id. `uid-row_no` is not unique: the unique
       // index is (uid, part, row_no), so two parts of one MRN may share a row
       // number -- a file that numbers them so loads both -- and React then drew
@@ -126,7 +127,7 @@ export function MaterialReturns() {
   const loadMore = async () => {
     setBusy(true);
     try {
-      const r = await listMaterialReturns(PAGE, offset);
+      const r = await readSliced((l, o) => listMaterialReturns(l, o), offset, PAGE);
       const mapped = r.map((x, i) => ({ ...x, id: String(x.id ?? `row-${offset + i}`) } as Row));
       const merged = [...rows, ...mapped];
       setRows(merged); setOffset(offset + r.length); setMore(r.length === PAGE); setLastSync(saveCache(CACHE_KEY, merged));
