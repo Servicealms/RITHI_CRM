@@ -31,52 +31,64 @@ export interface FormatColumn {
    *  column is empty); the first is the register's own. */
   extra?: string[];
   kind?: FormatKind;
+  /** Which section of the call's drawer it sits in (HISTORY_SECTIONS). */
+  section: HistorySection;
 }
 
+// THE DRAWER IN SECTIONS, LIKE THE FIELD CALL FORM (the user, 2026-11-28:
+// "Segregate it into Sections like the Field Call Form - In Call History
+// also"). The first four are the form's own sections, holding the same fields
+// they hold there; the register's status and visit columns have no place on
+// the form (they come from the visit), so they get two of their own. The LIST
+// and the DOWNLOAD keep the register's own column order -- only the drawer is
+// grouped.
+export const HISTORY_SECTIONS = ['Registration', 'Customer & Product', 'Warranty & Contract', 'Complaint', 'Call Status', 'Visit & Report'] as const;
+export type HistorySection = typeof HISTORY_SECTIONS[number];
+
 export const CALL_HISTORY_FORMAT: FormatColumn[] = [
-  { header: 'UC Number', column: 'ucn' },
-  { header: 'Call Number', column: 'call_no' },
+  { header: 'UC Number', column: 'ucn' , section: 'Registration' },
+  { header: 'Call Number', column: 'call_no' , section: 'Registration' },
   // A file loaded before the upload knew this spelling kept the date in `extra`.
-  { header: 'Call Registeration Date', column: 'call_at', extra: ['Call Registeration Date'], kind: 'datetime' },
-  { header: 'Complaint Date', extra: ['Complaint Date'], kind: 'date' },
-  { header: 'Party Name', column: 'party_name' },
-  { header: 'City', column: 'city' },
-  { header: 'State', column: 'state' },
-  { header: 'Product Name', column: 'item_name' },
-  { header: 'Product Serial Number', column: 'serial' },
-  { header: 'Item Status', column: 'item_status' },
-  { header: 'Warranty Number', extra: ['Warranty Number', 'Warranty No', 'Warranty No.'] },
-  { header: 'Warranty Start Date', column: 'warranty_start', kind: 'date' },
-  { header: 'Warranty End Date', extra: ['Warranty End Date', 'Warranty End'], kind: 'date' },
-  { header: 'Contract Number', extra: ['Contract Number', 'Contract No', 'Contract No.'] },
-  { header: 'Contract Start Date', extra: ['Contract Start Date', 'Contract Start'], kind: 'date' },
-  { header: 'Contract End Date', extra: ['Contract End Date', 'Contract End'], kind: 'date' },
-  { header: 'Contract Type', column: 'contract_type' },
-  { header: 'Call Type', column: 'call_type' },
-  { header: 'Standard Complaint', column: 'standard_complaint' },
-  { header: 'Complaint Reported', column: 'complaint_reported' },
-  { header: 'Call Allocated To', column: 'engineer' },
-  { header: 'Breakdown Date', extra: ['Breakdown Date'], kind: 'date' },
-  { header: 'Engineer Email', extra: ['Engineer Email', 'Engineer E-mail', 'Engineer Email ID'] },
-  { header: 'Reporting Manager', extra: ['Reporting Manager'] },
-  { header: 'Regional Manager', extra: ['Regional Manager'] },
-  { header: 'Call Acceptance', extra: ['Call Acceptance'] },
-  { header: 'Open/Close', extra: ['Open/Close', 'Open Close'] },
-  { header: 'Call Status', column: 'call_status' },
-  { header: 'Region', extra: ['Region'] },
-  { header: 'Visiting Service Engineer', extra: ['Visiting Service Engineer'] },
-  { header: 'Visit Date & Time', extra: ['Visit Date & Time', 'Visit Date and Time', 'Visit Date'], kind: 'datetime' },
-  { header: 'CALL PENDING REASON', extra: ['CALL PENDING REASON', 'Pending Reason'] },
-  { header: 'Complaint Observation', extra: ['Complaint Observation'] },
-  { header: 'Job Done', extra: ['Job Done'] },
-  { header: 'Service Report', extra: ['Service Report'] },
+  { header: 'Call Registeration Date', column: 'call_at', extra: ['Call Registeration Date'], kind: 'datetime' , section: 'Registration' },
+  { header: 'Complaint Date', extra: ['Complaint Date'], kind: 'date' , section: 'Registration' },
+  { header: 'Party Name', column: 'party_name' , section: 'Customer & Product' },
+  { header: 'City', column: 'city' , section: 'Customer & Product' },
+  { header: 'State', column: 'state' , section: 'Customer & Product' },
+  { header: 'Product Name', column: 'item_name' , section: 'Customer & Product' },
+  { header: 'Product Serial Number', column: 'serial' , section: 'Customer & Product' },
+  { header: 'Item Status', column: 'item_status' , section: 'Customer & Product' },
+  { header: 'Warranty Number', extra: ['Warranty Number', 'Warranty No', 'Warranty No.'] , section: 'Warranty & Contract' },
+  { header: 'Warranty Start Date', column: 'warranty_start', kind: 'date' , section: 'Warranty & Contract' },
+  { header: 'Warranty End Date', extra: ['Warranty End Date', 'Warranty End'], kind: 'date' , section: 'Warranty & Contract' },
+  { header: 'Contract Number', extra: ['Contract Number', 'Contract No', 'Contract No.'] , section: 'Warranty & Contract' },
+  { header: 'Contract Start Date', extra: ['Contract Start Date', 'Contract Start'], kind: 'date' , section: 'Warranty & Contract' },
+  { header: 'Contract End Date', extra: ['Contract End Date', 'Contract End'], kind: 'date' , section: 'Warranty & Contract' },
+  { header: 'Contract Type', column: 'contract_type' , section: 'Warranty & Contract' },
+  { header: 'Call Type', column: 'call_type' , section: 'Registration' },
+  { header: 'Standard Complaint', column: 'standard_complaint' , section: 'Complaint' },
+  { header: 'Complaint Reported', column: 'complaint_reported' , section: 'Complaint' },
+  { header: 'Call Allocated To', column: 'engineer' , section: 'Complaint' },
+  { header: 'Breakdown Date', extra: ['Breakdown Date'], kind: 'date' , section: 'Complaint' },
+  { header: 'Engineer Email', extra: ['Engineer Email', 'Engineer E-mail', 'Engineer Email ID'] , section: 'Complaint' },
+  { header: 'Reporting Manager', extra: ['Reporting Manager'] , section: 'Complaint' },
+  { header: 'Regional Manager', extra: ['Regional Manager'] , section: 'Complaint' },
+  { header: 'Call Acceptance', extra: ['Call Acceptance'] , section: 'Call Status' },
+  { header: 'Open/Close', extra: ['Open/Close', 'Open Close'] , section: 'Call Status' },
+  { header: 'Call Status', column: 'call_status' , section: 'Call Status' },
+  { header: 'Region', extra: ['Region'] , section: 'Customer & Product' },
+  { header: 'Visiting Service Engineer', extra: ['Visiting Service Engineer'] , section: 'Visit & Report' },
+  { header: 'Visit Date & Time', extra: ['Visit Date & Time', 'Visit Date and Time', 'Visit Date'], kind: 'datetime' , section: 'Visit & Report' },
+  { header: 'CALL PENDING REASON', extra: ['CALL PENDING REASON', 'Pending Reason'] , section: 'Call Status' },
+  { header: 'Complaint Observation', extra: ['Complaint Observation'] , section: 'Visit & Report' },
+  { header: 'Job Done', extra: ['Job Done'] , section: 'Visit & Report' },
+  { header: 'Service Report', extra: ['Service Report'] , section: 'Visit & Report' },
   // ONE MORE, BESIDE IT (the user, 2026-11-28: "one more Column for 'Drive
   // Link' - Which should present as a Drive Link"; asked, the files will CARRY
   // it -- no lookup). Service Report is an AppSheet path, not a link; this is
   // the file's own Drive URL, kept in `extra` like the others, opened as a link.
-  { header: 'Drive Link', extra: ['Drive Link', 'Drive URL', 'Google Drive Link', 'Drive'], kind: 'link' },
-  { header: 'Call Solved Date & Time', column: 'solved_at', kind: 'datetime' },
-  { header: 'Call Canceled Date', extra: ['Call Canceled Date', 'Call Cancelled Date'], kind: 'date' },
+  { header: 'Drive Link', extra: ['Drive Link', 'Drive URL', 'Google Drive Link', 'Drive'], kind: 'link' , section: 'Visit & Report' },
+  { header: 'Call Solved Date & Time', column: 'solved_at', kind: 'datetime' , section: 'Call Status' },
+  { header: 'Call Canceled Date', extra: ['Call Canceled Date', 'Call Cancelled Date'], kind: 'date' , section: 'Call Status' },
 ];
 
 /** The key a shaped row carries a format column's value under. */

@@ -13,7 +13,7 @@ import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
 import { safeUrl } from '../lib/safeUrl';
-import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref, otherExtra } from '../lib/callHistoryFormat';
+import { CALL_HISTORY_FORMAT, HISTORY_SECTIONS, formatKey, shapeHistoryRow, driveHref, otherExtra } from '../lib/callHistoryFormat';
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
@@ -521,24 +521,26 @@ function CallDetail({ row }: { row: Row }) {
   const others = otherExtra(row.extra);
   return (
     <div style={{ display: 'grid', gap: 16 }}>
-      <section>
-        <h4 style={{ margin: '0 0 6px' }}>The call, as in the file</h4>
-        <DetailRows rows={CALL_HISTORY_FORMAT.map((c, i) => [c.header, shown(i)] as [string, React.ReactNode])} />
-      </section>
-      <section>
-        <h4 style={{ margin: '0 0 6px' }}>Recorded by RITHI</h4>
+      {HISTORY_SECTIONS.map((sec) => (
+        <details key={sec} open>
+          <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>{sec}</summary>
+          <DetailRows rows={CALL_HISTORY_FORMAT.flatMap((c, i) => (c.section === sec ? [[c.header, shown(i)] as [string, React.ReactNode]] : []))} />
+        </details>
+      ))}
+      <details open>
+        <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>Recorded by RITHI</summary>
         <DetailRows rows={[
           ['Register (chosen at upload)', String(row.register ?? '')],
           ['Source', String(row.source ?? '')],
           ['Year', row.record_year == null ? 'Undated' : String(row.record_year)],
           ['Duplicate', row.duplicate ? 'Duplicate — the same UC No. + Call No. also came from another source this year' : ''],
         ]} />
-      </section>
+      </details>
       {others.length > 0 && (
-        <section>
-          <h4 style={{ margin: '0 0 6px' }}>Other columns in the file</h4>
+        <details open>
+          <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>Other columns in the file</summary>
           <DetailRows rows={others} />
-        </section>
+        </details>
       )}
       <p className="muted" style={{ fontSize: 12, margin: 0 }}>History only: nothing in RITHI was created from this call. Its status and dates are the file’s own.</p>
     </div>
