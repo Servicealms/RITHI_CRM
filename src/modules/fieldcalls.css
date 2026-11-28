@@ -131,6 +131,15 @@
 .call-search .call-search-engineer { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-status { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-product { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
+/* The call registers' search, compact enough to share ONE row with the chips,
+   Export, Group and Filters (2026-11-28). It still wraps on a narrow screen. */
+.call-search.call-search-compact { flex: 0 1 auto; }
+.call-search-compact .input { flex: 0 1 92px; min-width: 70px; }
+.call-search-compact .call-search-product,
+.call-search-compact .call-search-engineer,
+.call-search-compact .call-search-status { flex: 0 1 138px; min-width: 100px; }
+.call-search-compact .call-search-global { flex: 0 1 140px; min-width: 100px; }
+@media (min-width: 1400px) { .call-search.call-search-compact { flex-wrap: nowrap; } }
 
 /* ---- Call reporting drawer (sectioned, status-driven) ------------------- */
 .rep-form { display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }

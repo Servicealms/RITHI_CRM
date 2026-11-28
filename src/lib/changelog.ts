@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.312',
+    date: '2026-11-28',
+    title: 'Call registers: every filter on one row; Call History gets the Drive button',
+    changes: [
+      'On the Field, Installation and PM call registers, the search boxes, Open only / All calls, Re-opened, Reset, Export CSV, Group and Filters now sit on one row on a normal screen. The boxes are a little narrower; Reset filters reads Reset.',
+      'Call History uses the same Drive button as the call screen — the Drive mark and “Drive” — in the opened call and in the list’s Drive Link column.',
+    ],
+  },
+  {
     version: '0.10.311',
     date: '2026-11-28',
     title: 'Field, Installation and PM calls: the Service Report on the status row, and a Drive link',

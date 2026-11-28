@@ -23,6 +23,12 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.312 — Call registers' filters on one row; Call History Drive button (2026-11-28)
+- Asked: "Add the same Drive button in Call History"; "Move all Filters to 1 Row - Applicable to Field, Pm, Installation Calls".
+- DriveIcon + isDriveUrl moved to src/components/ui/DriveIcon.tsx (shared). Call History: the opened call's Drive Link and the list's Drive Link cell use the svc-drive-link chip with the Drive mark ("Drive"; a non-Drive web link reads "Open report"/"Open").
+- Call registers (FieldCalls.tsx toolbar): .call-search-compact -- boxes 92px, pickers 138px, Global 140px, no wrapping among themselves at >= 1400px; "Reset filters" -> "Reset". Rendered at 1660px with the real CSS: one row.
+- Write up: HOW_TO_USE call registers' search line (Reset); Call History (Drive button).
+
 ## v0.10.311 — Service Report on the status row; Drive button (2026-11-28)
 - Asked (screenshot): "Add one more link to open it in Drive Directly. Next to the Service Report - Add it with Drive Symbol"; "move the Service Report to the Same row as Call Status"; "Do this change in Field, Installation, PM Calls" (one screen, FieldCalls.tsx).
 - The 📄 Service Report button (and "No service report was filed") moved from the actions row into the call-status-hero, at its right (light chips on the dark bar). New "Drive" chip with an inline Drive mark (no external image): an <a> to the report URL via safeUrl, new tab, shown only when the URL is drive.google.com / docs.google.com.
