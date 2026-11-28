@@ -619,7 +619,10 @@ const MODULES = {
             '0502_call_history_emptied.sql',
             // ...and a second time (the user, 2026-11-28: "clean it again"),
             // its own once, with its own record.
-            '0503_call_history_emptied_again.sql'],
+            '0503_call_history_emptied_again.sql',
+            // Each Call History upload numbered, listed and deletable as a whole
+            // with call_history.delete (the user, 2026-11-28).
+            '0504_call_history_upload_delete.sql'],
   },
   notifications: {
     title: 'Notifications',

@@ -140,6 +140,8 @@ export interface UploadDef {
   /** A column given ONE batch number per upload, so the upload can be found
    *  and deleted as a whole (the hand stock counts, 0483). */
   batch?: string;
+  /** A column given the uploaded FILE'S NAME on every row, beside `batch`. */
+  batchFile?: string;
   /** Rows that must not repeat within one upload, keyed AFTER the asked values
    *  are applied; a repeat is refused before anything is written, naming the
    *  rows (0484: the same engineer + part at the same moment). */
@@ -1381,6 +1383,9 @@ export const UPLOADS: UploadDef[] = [
     // call in two yearly sheets is two records, and a re-load of one year's file
     // corrects that year only.
     table: 'call_history', conflict: 'ucn,call_no,record_year', extraInto: 'extra',
+    // ONE BATCH NUMBER PER UPLOAD, and the file's name (0504), so the Uploads
+    // tab can list each upload and delete it as a whole.
+    batch: 'upload_batch', batchFile: 'upload_file',
     // THE YEAR ROUTES THE ROW to its year's table, before any database trigger
     // runs, so the upload gives it: the Year chosen, else the year of the call's
     // own call date (India), else none -- the "undated" table.

@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.299',
+    date: '2026-11-28',
+    title: 'Call History: delete a whole upload',
+    changes: [
+      'Every Call History upload is now numbered, and the Uploads & summary tab lists each one — its file, years, source, call type, how many calls, when and by whom.',
+      'A “Delete upload” button removes every call that upload loaded, after a confirmation that says how many. It cannot be undone.',
+      'Deleting needs the new “Delete a Call History upload” permission, on the Call History row of Roles & Permissions. Administrators have it; tick or untick it for any other role.',
+      'Loading a file again takes over the calls it names, so they belong to the newer upload. Calls loaded before today show as one group, “Before uploads were numbered”, and can be deleted the same way.',
+    ],
+  },
+  {
     version: '0.10.298',
     date: '2026-11-28',
     title: 'Call History: a call opens in a pop-up',

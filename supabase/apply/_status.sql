@@ -2226,11 +2226,16 @@ with checks(sort_order, bundle, provides, present) as (
     (348, 'Objective: the Total column is calculated', 'objective_total() and the trigger zx_quality_objectives_total (0428): a calculated objective''s Total is the sum of its months (FFR count) or the average of the months that carry a figure (every percentage), restated whenever a month changes; a typed objective keeps its typed Total. NO means the Total column still shows the figure typed in from the sheet. Restore: objective.sql (0428)',
         (to_regprocedure('public.objective_total(public.quality_objectives)') is not null
      and exists (select 1 from pg_trigger where tgname = 'zx_quality_objectives_total' and tgrelid = to_regclass('public.quality_objectives')))),
-    (349, 'Call History: the calls before RITHI, kept apart', 'call_history (0429): row-level security on, read like a call, written with bulk.upload, never deleted or read through the public key, keyed by UC No. + Call No., and carrying no trigger but the loader stamp, the source / year / duplicate rule (0432) and the register it fills on its own row (0451) -- so nothing is created from a historical call. NO means the Call History upload in Bulk Uploads cannot load. Restore: daily_review.sql (0429)',
+    (349, 'Call History: the calls before RITHI, kept apart', 'call_history (0429): row-level security on, read like a call, written with bulk.upload, deleted only by a holder of call_history.delete (0504, a whole upload at a time), never read or deleted through the public key, keyed by UC No. + Call No., and carrying no trigger but the loader stamp, the source / year / duplicate rule (0432) and the register it fills on its own row (0451) -- so nothing is created from a historical call. NO means the Call History upload in Bulk Uploads cannot load. Restore: daily_review.sql (0429)',
         (to_regclass('public.call_history') is not null
      and coalesce((select relrowsecurity from pg_class where oid = to_regclass('public.call_history')), false)
      and to_regclass('public.call_history_key') is not null
-     and not coalesce(has_table_privilege('authenticated', 'public.call_history', 'delete'), true)
+     -- Deleting is call_history.delete's (0504): a DELETE grant only beside the
+     -- policy that asks it, and never one for the public key.
+     and (not coalesce(has_table_privilege('authenticated', 'public.call_history', 'delete'), true)
+          or exists (select 1 from pg_policy where polrelid = to_regclass('public.call_history') and polname = 'ch_delete'
+                      and pg_get_expr(polqual, polrelid) like '%call_history.delete%'))
+     and not coalesce(has_table_privilege('anon', 'public.call_history', 'delete'), true)
      and not coalesce(has_table_privilege('anon', 'public.call_history', 'select'), true)
      and (select count(*) from pg_trigger where tgrelid = to_regclass('public.call_history') and not tgisinternal
             and tgname not in ('call_history_stamp', 'call_history_year_default', 'call_history_zz_keep_latest', 'call_history_register', 'zzz_sys_stamp') and tgname not like 'record_audit%') = 0)),
@@ -2513,7 +2518,15 @@ with checks(sort_order, bundle, provides, present) as (
         and exists (select 1 from public.one_time_data_fixes where name = '0502_call_history_emptied')),
     (409, 'Call History emptied a second time', 'Call History was emptied a second time (0503, the user 2026-11-28: "clean it again"), once, with its own record in one_time_data_fixes, so re-running the bundle never empties it again. NO means 0503 has not run, or its record is missing -- and then a re-run WOULD empty it again. Restore: daily_review.sql (0503)',
         to_regclass('public.one_time_data_fixes') is not null
-        and exists (select 1 from public.one_time_data_fixes where name = '0503_call_history_emptied_again'))
+        and exists (select 1 from public.one_time_data_fixes where name = '0503_call_history_emptied_again')),
+    (410, 'A Call History upload can be deleted as a whole', 'Each Call History upload carries a batch number and file name (call_history.upload_batch / upload_file, 0504), call_history_uploads lists them (as its reader), and a DELETE policy lets only a holder of call_history.delete remove one. NO means the Uploads tab cannot list or delete uploads. Restore: daily_review.sql (0504)',
+        exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'upload_batch')
+        and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'upload_file')
+        and to_regclass('public.call_history_uploads') is not null
+        and exists (select 1 from pg_policy where polrelid = to_regclass('public.call_history') and polname = 'ch_delete'
+                     and pg_get_expr(polqual, polrelid) like '%call_history.delete%')
+        and has_table_privilege('authenticated', 'public.call_history', 'delete')
+        and not has_table_privilege('anon', 'public.call_history', 'delete'))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,
