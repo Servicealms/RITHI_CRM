@@ -613,7 +613,10 @@ const MODULES = {
             // The Call History search's dropdowns: what the history holds (0500).
             '0500_call_history_choices.sql',
             // Call History stored year by year: partitioned by record_year (0501).
-            '0501_call_history_by_year.sql'],
+            '0501_call_history_by_year.sql',
+            // Call History emptied ONCE for a clean re-load (the user,
+            // 2026-11-28: "Delete everything and re-load"); a re-run is a no-op.
+            '0502_call_history_emptied.sql'],
   },
   notifications: {
     title: 'Notifications',
