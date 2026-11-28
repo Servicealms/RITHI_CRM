@@ -138,8 +138,14 @@ const FORMAT_EXPORT: { key: string; header: string }[] = [
   ...CALL_HISTORY_FORMAT.map((c, i) => ({ key: formatKey(i), header: c.header })),
   { key: 'register', header: 'Register (chosen at upload)' }, { key: 'source', header: 'Source' },
   { key: 'record_year', header: 'Year' }, { key: 'duplicate', header: 'Duplicate' },
-  { key: 'loaded_at', header: 'Loaded At' },
 ];
+
+/** A call's row without who loaded it and when -- those live on the summary. */
+function withoutLoad<T extends Record<string, unknown>>(r: T): T {
+  const { loaded_at: _at, loaded_by: _by, ...rest } = r;
+  void _at; void _by;
+  return rest as T;
+}
 
 const groupKey = (g: { record_year: number | null; source: string; register: string }) => `${g.record_year ?? ''}|${g.source}|${g.register}`;
 
@@ -234,7 +240,12 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
     try {
       const got = await listCallHistory(kind, filter, from, from + PAGE - 1);
       if (mine !== seq.current) return; // a newer filter has been asked for
-      const page = got.rows.map((r) => ({ ...(cfg.yearTabs ? shapeHistoryRow(r) : r), id: String(r.id) } as Row));
+      // WHO LOADED IT AND WHEN are not part of a call's view (the user,
+      // 2026-11-28: "Dont keep tab of Who Uploaded or When it was Uploaded in
+      // the View - Move it to the Summary or Log"): the summary's Last loaded /
+      // By carry them, so they are taken off the row here -- the list's column
+      // picker, the drawer and the download cannot show them.
+      const page = got.rows.map((r) => ({ ...(cfg.yearTabs ? withoutLoad(shapeHistoryRow(r)) : r), id: String(r.id) } as Row));
       setRows((prev) => (append ? [...prev, ...page] : page));
       setTotal(got.total);
     } catch (e) {
@@ -297,7 +308,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       if (!all.length) return;
       const name = `${cfg.fileName}-${todayLocal()}`;
       const shaped = (r: Record<string, unknown>): Record<string, unknown> =>
-        ({ ...(cfg.yearTabs ? shapeHistoryRow(r) : r), duplicate: r.duplicate ? 'Duplicate' : '' });
+        ({ ...(cfg.yearTabs ? withoutLoad(shapeHistoryRow(r)) : r), duplicate: r.duplicate ? 'Duplicate' : '' });
       if (fileKind === 'csv') {
         csvExport(`${name}.csv`, EXPORT, all.map((r) => {
           const s = shaped(r);
@@ -467,7 +478,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
 
       {opened && (
         <Drawer open onClose={() => setOpened(null)} title={`Call History — ${String(opened.ucn ?? '')}`} storeKey="call-history-call" width={640}>
-          <CallDetail row={opened} names={names} />
+          <CallDetail row={opened} />
         </Drawer>
       )}
     </div>
@@ -491,7 +502,7 @@ function DetailRows({ rows }: { rows: [string, React.ReactNode][] }) {
 
 /** One history call in full: the register's columns in its order, then what
  *  RITHI recorded about the load, then any other column the file carried. */
-function CallDetail({ row, names }: { row: Row; names: ReturnType<typeof useUserNames> }) {
+function CallDetail({ row }: { row: Row }) {
   const shown = (i: number): React.ReactNode => {
     const c = CALL_HISTORY_FORMAT[i];
     const v = row[formatKey(i)];
@@ -518,8 +529,6 @@ function CallDetail({ row, names }: { row: Row; names: ReturnType<typeof useUser
           ['Source', String(row.source ?? '')],
           ['Year', row.record_year == null ? 'Undated' : String(row.record_year)],
           ['Duplicate', row.duplicate ? 'Duplicate — the same UC No. + Call No. also came from another source this year' : ''],
-          ['Loaded at', row.loaded_at ? formatDayTime(row.loaded_at) : ''],
-          ['Loaded by', row.loaded_by ? nameForUserId(String(row.loaded_by), names) : ''],
         ]} />
       </section>
       {others.length > 0 && (
