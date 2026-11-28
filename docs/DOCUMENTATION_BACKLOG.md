@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.297 — Call History drawer in sections (2026-11-28)
+- Asked: "Segregate it into Sections like the Field Call Form - In Call History also."
+- Drawer only (list + download keep the register's order). HISTORY_SECTIONS in callHistoryFormat.ts; each format column has a `section`. The Field Call form's four, same fields: Registration (UC Number, Call Number, Call Registeration Date, Complaint Date, Call Type), Customer & Product (Party, City, State, Product, Serial, Item Status, Region), Warranty & Contract (Warranty No/Start/End, Contract No/Start/End, Contract Type), Complaint (Standard Complaint, Complaint Reported, Call Allocated To, Breakdown Date, Engineer Email, Reporting Manager, Regional Manager). Then Call Status (Call Acceptance, Open/Close, Call Status, CALL PENDING REASON, Call Solved, Call Canceled) and Visit & Report (Visiting Service Engineer, Visit Date & Time, Complaint Observation, Job Done, Service Report, Drive Link). Then Recorded by RITHI, Other columns in the file. Each foldable (<details>).
+- Write up: with v0.10.294.
+
 ## v0.10.296 — Call History pages of 2,000 (2026-11-28)
 - Asked: "Load More should load 2000 in one go in Call History Page [Including all Sub Pages]."
 - PAGE 500 -> 2000 (first load and each Load more; every year tab, Undated, All years, any search; DCCR History shares the component). listCallHistory reads a page in slices of 1,000 (PostgREST's silent cap) under the same order, exact count from the first slice, stops on a short slice.

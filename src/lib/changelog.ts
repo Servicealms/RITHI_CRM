@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.297',
+    date: '2026-11-28',
+    title: 'Call History: a call opens in sections, like the Field Call form',
+    changes: [
+      'An opened call in Call History is grouped the way the Field Call form is: Registration, Customer & Product, Warranty & Contract and Complaint, each holding the same fields as on the form.',
+      'Then Call Status (acceptance, open/close, status, pending reason, solved and cancelled dates) and Visit & Report (visiting engineer, visit date, observation, job done, service report, Drive Link).',
+      'Each section can be folded away. The list and the download keep the register’s own column order.',
+    ],
+  },
+  {
     version: '0.10.296',
     date: '2026-11-28',
     title: 'Call History loads 2,000 calls at a time',
