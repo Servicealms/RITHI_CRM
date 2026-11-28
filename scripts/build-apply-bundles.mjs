@@ -616,7 +616,10 @@ const MODULES = {
             '0501_call_history_by_year.sql',
             // Call History emptied ONCE for a clean re-load (the user,
             // 2026-11-28: "Delete everything and re-load"); a re-run is a no-op.
-            '0502_call_history_emptied.sql'],
+            '0502_call_history_emptied.sql',
+            // ...and a second time (the user, 2026-11-28: "clean it again"),
+            // its own once, with its own record.
+            '0503_call_history_emptied_again.sql'],
   },
   notifications: {
     title: 'Notifications',

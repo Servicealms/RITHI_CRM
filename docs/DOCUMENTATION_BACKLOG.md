@@ -23,6 +23,10 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.293 — Call History emptied a second time (2026-11-28)
+- Asked: "clean it again". 0503 (daily_review): 0502's rules exactly, its own once-marker '0503_call_history_emptied_again'. _status.sql row 409; call_history_emptied_test extended.
+- Write up: with v0.10.292. If this keeps being asked for, an "Empty Call History" admin action would replace a migration per clean-up.
+
 ## v0.10.292 — Call History emptied once, for a clean re-load (2026-11-28)
 - Asked: "Clean up what is already Loaded in Call History"; chosen: "Delete everything and re-load".
 - 0502 (daily_review): TRUNCATE call_history (parent + every year's table), ONCE -- guarded by public.one_time_data_fixes row '0502_call_history_emptied' (new marker table: RLS on, no API access), so a re-run of daily_review.sql is a no-op and never deletes the re-load. Prints the count removed (numbers only). NOT touched: dccr_call_history, call_history_pre_split (0501's one-table copy -- the only way back; still to be dropped when the user says), upload audit lines. _status.sql row 408; suite call_history_emptied_test.

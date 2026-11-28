@@ -30,3 +30,15 @@ select to_regclass('public.dccr_call_history') is not null
        as "DCCR History is a different table and is still there";
 select (select count(*) from public.call_history_pre_split) = (select n from pre_split_before)
        as "the pre-split copy is left as it was";
+
+-- 0503, THE SECOND ONCE: it ran at setup; a re-run removes nothing.
+insert into public.call_history (ucn, call_no, call_at, source, record_year, register) values
+  ('CHE-4', 'A', '2022-03-01 10:00+05:30', 'Yearly sheet', 2022, 'Field');
+\ir ../migrations/0503_call_history_emptied_again.sql
+select exists (select 1 from public.one_time_data_fixes where name = '0503_call_history_emptied_again')
+   and (select count(*) from public.call_history where ucn = 'CHE-4') = 1
+       as "the second clean-up ran once, and a re-run removes nothing";
+delete from public.one_time_data_fixes where name = '0503_call_history_emptied_again';
+\ir ../migrations/0503_call_history_emptied_again.sql
+select (select count(*) from public.call_history) = 0
+       as "its first run empties every year";
