@@ -20,6 +20,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.307',
+    date: '2026-11-28',
+    title: 'Call History: no Call Acceptance column',
+    changes: [
+      'Call Acceptance is no longer shown in Call History — not in the list, the opened call or the download — as it has been taken out of the upload files.',
+    ],
+  },
+  {
     version: '0.10.306',
     date: '2026-11-28',
     title: 'Call History: resizable panes, values beside their names, sections that fold',

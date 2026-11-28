@@ -73,7 +73,6 @@ export const CALL_HISTORY_FORMAT: FormatColumn[] = [
   { header: 'Complaint Reported', column: 'complaint_reported' , section: 'Complaint' },
   { header: 'Call Allocated To', column: 'engineer' , section: 'Complaint' },
   { header: 'Breakdown Date', extra: ['Breakdown Date'], kind: 'date' , section: 'Complaint' },
-  { header: 'Call Acceptance', extra: ['Call Acceptance'] , section: 'Call Status' },
   { header: 'Open/Close', extra: ['Open/Close', 'Open Close'] , section: 'Call Status' },
   { header: 'Call Status', column: 'call_status' , section: 'Call Status' },
   { header: 'Region', extra: ['Region'] , section: 'Customer & Product' },
@@ -168,7 +167,9 @@ export function driveHref(v: unknown): string | undefined {
 }
 
 /** Headings taken out of the format and never shown, even if a file carries them. */
-export const NOT_SHOWN = ['Engineer Email', 'Engineer E-mail', 'Engineer Email ID', 'Reporting Manager', 'Reporting Manager Email',
+// Call Acceptance too (the user, 2026-11-28: "Call Acceptance - Field has been
+// removed in the upload").
+export const NOT_SHOWN = ['Call Acceptance', 'Engineer Email', 'Engineer E-mail', 'Engineer Email ID', 'Reporting Manager', 'Reporting Manager Email',
   'Regional Manager', 'Regional Manager Email'];
 
 /** The headings the file carried that no format column shows -- kept with the

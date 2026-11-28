@@ -23,6 +23,10 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.307 — Call History: Call Acceptance removed (2026-11-28)
+- Told: "Call Acceptance - Field has been removed in the upload." Removed from CALL_HISTORY_FORMAT (34 columns now) and added to NOT_SHOWN, so a file that still carries it keeps it in `extra`, unshown.
+- Write up: with v0.10.290 (the format's column list).
+
 ## v0.10.306 — Call History panes: draggable, inline values, folding sections (2026-11-28)
 - Asked: "Make the pane dividers draggable like Pending Registration. Arrange the Value next to the Field Name, Dont go to Next Line. And I still want to be able to Collapse Sections."
 - Dividers: Pending Registrations' drag rule (each of the first two panes 15-60%, together <= 70%), widths in localStorage rithi.callhistory.cols (default 36 / 32). Rows: .ch-kv grid -- name (min 110px, 42%) | value beside it. Sections: <details open> with the section title as the summary.
