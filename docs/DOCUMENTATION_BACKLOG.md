@@ -23,6 +23,13 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.308 — Call History: the opened call in two columns (2026-11-28)
+- Asked: "Make it 2 Columns, and Split the 2nd Column Vertically into 2 and Fit the Consumption to Lower Part of the Vertically Split 2nd Column. Move Complaint Section Up and Warranty & Contract Section Down"; "I dont want the Breakdown Date and Complaint Date in the Pop Up window".
+- Layout: Call details | (Visit details over Spare consumption). Column divider drags 25-75% of the width, the row divider 20-80% of the right column's height; localStorage rithi.callhistory.split (default 48 / 58). Stacks under 1100px. ✕ moved to the Visit details head.
+- Left order: Registration, Customer & Product, Complaint, Warranty & Contract (+ Other columns in the file).
+- HIDDEN_IN_POPUP: Breakdown Date, Complaint Date (still in the list and the Excel/CSV).
+- Write up: with v0.10.305 (supersedes its three-pane wording).
+
 ## v0.10.307 — Call History: Call Acceptance removed (2026-11-28)
 - Told: "Call Acceptance - Field has been removed in the upload." Removed from CALL_HISTORY_FORMAT (34 columns now) and added to NOT_SHOWN, so a file that still carries it keeps it in `extra`, unshown.
 - Write up: with v0.10.290 (the format's column list).

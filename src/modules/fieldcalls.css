@@ -818,6 +818,19 @@ th.rbac-col-admin { color: var(--text-muted); }
 .ch-pane-sum { cursor: pointer; }
 /* Field name and value on ONE line: the name in a fixed share, the value
    beside it, wrapping within its own column when it is long. */
+/* Two columns, the second split top (visit) and bottom (spares), each pane
+   scrolling on its own. The split takes the overlay's full height so the two
+   halves have a height to share. */
+.ch-split { height: 100%; }
+.ch-right { display: grid; min-width: 0; min-height: 0; overflow: hidden; }
+.ch-right > .reg-split-right { min-height: 0; }
+.ch-spares { border-top: 1px solid var(--border); }
+.ch-hgutter { cursor: row-resize; }
+@media (max-width: 1100px) {
+  .ch-split { height: auto; }
+  .ch-right { grid-template-rows: auto !important; overflow: visible; }
+  .ch-hgutter { display: none; }
+}
 .ch-kv { display: grid; grid-template-columns: minmax(110px, 42%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .ch-kv .reg-detail-v { margin-top: 0; }
 .ch-drive { display: flex; align-items: center; min-height: 32px; margin-bottom: 12px; }

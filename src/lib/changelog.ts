@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.308',
+    date: '2026-11-28',
+    title: 'Call History: the opened call in two columns',
+    changes: [
+      'An opened call is now two columns: Call details on the left; on the right, Visit details above and Spare consumption below.',
+      'Both dividers drag — between the columns, and between the visit and the spares — and are remembered on this device.',
+      'In Call details, Complaint now comes before Warranty & Contract.',
+      'Breakdown Date and Complaint Date are no longer shown in the opened call; they stay in the list and the download.',
+    ],
+  },
+  {
     version: '0.10.307',
     date: '2026-11-28',
     title: 'Call History: no Call Acceptance column',

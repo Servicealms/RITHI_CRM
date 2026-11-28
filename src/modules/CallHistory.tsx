@@ -618,8 +618,10 @@ function HistoryUcn({ ucn, status }: { ucn: unknown; status: unknown }) {
 // call and still in the list's columns and the download; only the pop-up
 // leaves them out. "Recorded by RITHI" (Register, Source, Year, Duplicate) is
 // gone from it too ("I dont want this").
-// (Taken out of the format altogether since -- the user removed them from the source.)
-const HIDDEN_IN_POPUP = new Set<string>();
+// Breakdown Date and Complaint Date are not in the pop-up (the user,
+// 2026-11-28: "I dont want the Breakdown Date and Complaint Date in the Pop Up
+// window"); they stay in the list and the download.
+const HIDDEN_IN_POPUP = new Set<string>(['Breakdown Date', 'Complaint Date']);
 
 /** One history call in full: the register's columns in its order, then what
  *  RITHI recorded about the load, then any other column the file carried. */
@@ -660,39 +662,38 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onClose]);
-  // DRAGGABLE DIVIDERS, AS ON PENDING REGISTRATIONS (the user, 2026-11-28:
-  // "Make the pane dividers draggable like Pending Registration") -- the same
-  // rule: each of the first two panes 15-60%, together at most 70%, the
-  // widths remembered on this device.
-  const [cols, setCols] = useState<[number, number]>(() => {
+  // TWO COLUMNS, THE SECOND SPLIT TOP AND BOTTOM (the user, 2026-11-28:
+  // "Make it 2 Columns, and Split the 2nd Column Vertically into 2 and Fit the
+  // Consumption to Lower Part"): call details | visit details over spare
+  // consumption. BOTH DIVIDERS DRAG, as on Pending Registrations -- the left
+  // column 25-75% of the width, the visit 20-80% of the right column's height
+  // -- and are remembered on this device.
+  const [split, setSplit] = useState<{ left: number; top: number }>(() => {
     try {
-      const v = JSON.parse(localStorage.getItem('rithi.callhistory.cols') ?? '');
-      if (Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === 'number')) return v as [number, number];
+      const v = JSON.parse(localStorage.getItem('rithi.callhistory.split') ?? '');
+      if (v && typeof v.left === 'number' && typeof v.top === 'number') return v;
     } catch { /* never set, or a private window */ }
-    return [36, 32];
+    return { left: 48, top: 58 };
   });
-  const dragRef = useRef<{ which: 0 | 1; x: number; start: [number, number]; width: number } | null>(null);
-  const onDragStart = (which: 0 | 1) => (e: React.MouseEvent<HTMLDivElement>) => {
+  const dragRef = useRef<{ axis: 'x' | 'y'; at: number; start: { left: number; top: number }; size: number } | null>(null);
+  const onDragStart = (axis: 'x' | 'y') => (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation();
     const box = e.currentTarget.parentElement?.getBoundingClientRect();
-    dragRef.current = { which, x: e.clientX, start: cols, width: box?.width ?? 1000 };
+    dragRef.current = { axis, at: axis === 'x' ? e.clientX : e.clientY, start: split,
+      size: (axis === 'x' ? box?.width : box?.height) ?? 1000 };
   };
   useEffect(() => {
     const move = (e: MouseEvent) => {
       const d = dragRef.current;
       if (!d) return;
-      const delta = ((e.clientX - d.x) / d.width) * 100;
-      const clamp = (n: number) => Math.max(15, Math.min(60, n));
-      const next: [number, number] = d.which === 0
-        ? [clamp(d.start[0] + delta), d.start[1]]
-        : [d.start[0], clamp(d.start[1] + delta)];
-      if (next[0] + next[1] > 70) return;
-      setCols(next);
+      const delta = (((d.axis === 'x' ? e.clientX : e.clientY) - d.at) / d.size) * 100;
+      if (d.axis === 'x') setSplit({ ...d.start, left: Math.max(25, Math.min(75, d.start.left + delta)) });
+      else setSplit({ ...d.start, top: Math.max(20, Math.min(80, d.start.top + delta)) });
     };
     const up = () => {
       if (!dragRef.current) return;
       dragRef.current = null;
-      setCols((c) => { try { localStorage.setItem('rithi.callhistory.cols', JSON.stringify(c)); } catch { /* ignore */ } return c; });
+      setSplit((c) => { try { localStorage.setItem('rithi.callhistory.split', JSON.stringify(c)); } catch { /* ignore */ } return c; });
     };
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
@@ -719,8 +720,8 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
   const driveUrl = driveHref(driveVal);
   return (
     <div className="reg-overlay" onMouseDown={onClose}>
-      <div className="reg-split reg-split-3" onMouseDown={(e) => e.stopPropagation()}
-        style={{ gridTemplateColumns: `${cols[0]}% 6px ${cols[1]}% 6px 1fr` }}>
+      <div className="reg-split reg-split-3 ch-split" onMouseDown={(e) => e.stopPropagation()}
+        style={{ gridTemplateColumns: `${split.left}% 6px 1fr` }}>
         <aside className="reg-split-left">
           <div className="reg-split-head">
             <span>📄 Call details · <HistoryUcn ucn={row.ucn} status={row.call_status} /></span>
@@ -728,56 +729,61 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
           <div className="reg-detail-list">
             {group('Registration', rowsOf('Registration'))}
             {group('Customer & Product', rowsOf('Customer & Product'))}
-            {group('Warranty & Contract', rowsOf('Warranty & Contract'))}
+            {/* Complaint up, Warranty & Contract down (the user, 2026-11-28). */}
             {group('Complaint', rowsOf('Complaint'))}
+            {group('Warranty & Contract', rowsOf('Warranty & Contract'))}
             {others.length > 0 && group('Other columns in the file', others)}
           </div>
         </aside>
-        <div className="reg-gutter" onMouseDown={onDragStart(0)} title="Drag to resize" />
-        <section className="reg-split-right">
-          <div className="reg-split-head"><span>🛠 Visit details</span></div>
-          <div className="reg-split-body">
-            <div className="ch-drive">
-              {driveUrl
-                ? <a className="btn btn-sm btn-primary" href={safeUrl(driveUrl)} target="_blank" rel="noopener noreferrer">📎 Open in Drive ↗</a>
-                : <span className="muted">{driveVal ? `Drive Link: ${driveVal}` : 'No Drive Link on this call.'}</span>}
+        <div className="reg-gutter" onMouseDown={onDragStart('x')} title="Drag to resize" />
+        <div className="ch-right" style={{ gridTemplateRows: `${split.top}% 6px 1fr` }}>
+          <section className="reg-split-right">
+            <div className="reg-split-head">
+              <span>🛠 Visit details</span>
+              <button className="btn btn-ghost btn-sm" onClick={onClose} title="Close (Esc)">✕</button>
             </div>
-            {group('Visit & Report', rowsOf('Visit & Report', 'Drive Link'))}
-            {group('Call Status', rowsOf('Call Status'))}
-          </div>
-        </section>
-        <div className="reg-gutter" onMouseDown={onDragStart(1)} title="Drag to resize" />
-        <section className="reg-split-third">
-          <div className="reg-split-head">
-            <span>🔩 Spare consumption{spares ? ` · ${spares.length}` : ''}</span>
-            <button className="btn btn-ghost btn-sm" onClick={onClose} title="Close (Esc)">✕</button>
-          </div>
-          <div className="reg-split-body">
-            {sparesErr && <div className="sheet-banner sheet-banner-error"><span>Could not read the spares: {sparesErr}</span></div>}
-            {!sparesErr && spares === null && <p className="muted" style={{ margin: 0 }}>Loading…</p>}
-            {spares && spares.length === 0 && <p className="muted" style={{ margin: 0 }}>No spare is recorded against this UC No.</p>}
-            {spares && spares.length > 0 && (
-              <div style={{ overflowX: 'auto' }}>
-                <table className="assoc-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr><th>Part</th><th style={{ textAlign: 'right' }}>Qty</th><th>Date</th><th>Engineer</th></tr>
-                  </thead>
-                  <tbody>
-                    {spares.map((x, i) => (
-                      <tr key={i}>
-                        {/* No "Recorded as" or "Remarks" (the user, 2026-11-28). */}
-                        <td>{x.part}</td>
-                        <td style={{ textAlign: 'right' }}>{x.qty ?? ''}</td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{x.at ? formatDay(x.at) : ''}</td>
-                        <td>{x.engineer}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="reg-split-body">
+              <div className="ch-drive">
+                {driveUrl
+                  ? <a className="btn btn-sm btn-primary" href={safeUrl(driveUrl)} target="_blank" rel="noopener noreferrer">📎 Open in Drive ↗</a>
+                  : <span className="muted">{driveVal ? `Drive Link: ${driveVal}` : 'No Drive Link on this call.'}</span>}
               </div>
-            )}
-          </div>
-        </section>
+              {group('Visit & Report', rowsOf('Visit & Report', 'Drive Link'))}
+              {group('Call Status', rowsOf('Call Status'))}
+            </div>
+          </section>
+          <div className="reg-gutter ch-hgutter" onMouseDown={onDragStart('y')} title="Drag to resize" />
+          <section className="reg-split-right ch-spares">
+            <div className="reg-split-head">
+              <span>🔩 Spare consumption{spares ? ` · ${spares.length}` : ''}</span>
+            </div>
+            <div className="reg-split-body">
+              {sparesErr && <div className="sheet-banner sheet-banner-error"><span>Could not read the spares: {sparesErr}</span></div>}
+              {!sparesErr && spares === null && <p className="muted" style={{ margin: 0 }}>Loading…</p>}
+              {spares && spares.length === 0 && <p className="muted" style={{ margin: 0 }}>No spare is recorded against this UC No.</p>}
+              {spares && spares.length > 0 && (
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="assoc-table" style={{ width: '100%' }}>
+                    <thead>
+                      <tr><th>Part</th><th style={{ textAlign: 'right' }}>Qty</th><th>Date</th><th>Engineer</th></tr>
+                    </thead>
+                    <tbody>
+                      {spares.map((x, i) => (
+                        <tr key={i}>
+                          {/* No "Recorded as" or "Remarks" (the user, 2026-11-28). */}
+                          <td>{x.part}</td>
+                          <td style={{ textAlign: 'right' }}>{x.qty ?? ''}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{x.at ? formatDay(x.at) : ''}</td>
+                          <td>{x.engineer}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
