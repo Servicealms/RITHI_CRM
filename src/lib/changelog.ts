@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.310',
+    date: '2026-11-28',
+    title: 'Bulk Uploads: Drive report links onto live visits, by UID',
+    changes: [
+      'Bulk Uploads → Visit Reports has a new upload, “Drive Report Links — map to visits by UID”: a CSV with the visit’s UID and its Drive Link puts each link on that visit, where the call’s 📄 Service Report opens it.',
+      'Only a visit with no report link is filled. A visit that already has one is kept as it is, and a UID that matches no visit is held back; both are listed after the upload, with any value that is not a web link.',
+      'No visit is created and no call’s status changes. It needs “Load registers in bulk”.',
+    ],
+  },
+  {
     version: '0.10.309',
     date: '2026-11-28',
     title: 'Call History: colour coding switched off, with a switch',

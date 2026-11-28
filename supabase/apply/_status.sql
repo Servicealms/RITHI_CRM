@@ -2519,6 +2519,10 @@ with checks(sort_order, bundle, provides, present) as (
     (409, 'Call History emptied a second time', 'Call History was emptied a second time (0503, the user 2026-11-28: "clean it again"), once, with its own record in one_time_data_fixes, so re-running the bundle never empties it again. NO means 0503 has not run, or its record is missing -- and then a re-run WOULD empty it again. Restore: daily_review.sql (0503)',
         to_regclass('public.one_time_data_fixes') is not null
         and exists (select 1 from public.one_time_data_fixes where name = '0503_call_history_emptied_again')),
+    (411, 'Drive report links can be mapped to live visits', 'map_report_drive_links(jsonb) (0505): fills reports.manual_report by the visit UID only where the visit has no report link, never creates a visit, asks bulk.upload itself, and is not executable by the public key. NO means the Drive Report Links upload on Bulk Uploads cannot run. Restore: reports.sql (0505)',
+        to_regprocedure('public.map_report_drive_links(jsonb)') is not null
+        and not has_function_privilege('anon', 'public.map_report_drive_links(jsonb)', 'execute')
+        and has_function_privilege('authenticated', 'public.map_report_drive_links(jsonb)', 'execute')),
     (410, 'A Call History upload can be deleted as a whole', 'Each Call History upload carries a batch number and file name (call_history.upload_batch / upload_file, 0504), call_history_uploads lists them (as its reader), and a DELETE policy lets only a holder of call_history.delete remove one. NO means the Uploads tab cannot list or delete uploads. Restore: daily_review.sql (0504)',
         exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'upload_batch')
         and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'call_history' and column_name = 'upload_file')

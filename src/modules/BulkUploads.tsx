@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, SectionCard } from '../components/ui/ui';
+import { DriveReportLinks } from './DriveReportLinks';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useAuth } from '../lib/auth';
 import { parseCSV } from '../lib/dataImport';
@@ -342,6 +343,8 @@ export function BulkUploads() {
           {g.items.map((d) => (
             <Register key={d.key} def={d} count={counts[d.table] ?? null} onDone={() => void refresh([d.table])} />
           ))}
+          {/* Drive report links onto live visits by UID (0505). */}
+          {g.title === 'Visit Reports' && <DriveReportLinks />}
         </SectionCard>
       ))}
     </div>
