@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.302',
+    date: '2026-11-28',
+    title: 'Call History: Product, Engineer and Call Status lists fill after an upload',
+    changes: [
+      'The Product, Engineer and Call Status dropdowns on Call History are refreshed with the summary — when the page opens, on Refresh, and after every upload or delete. They were read only when the page opened, so they stayed empty if Call History was empty at that moment.',
+      'If the lists cannot be read, the page now says so instead of showing empty dropdowns.',
+    ],
+  },
+  {
     version: '0.10.301',
     date: '2026-11-28',
     title: 'Call History: one search row, no email columns, columns in order',
