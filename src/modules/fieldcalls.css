@@ -120,6 +120,11 @@
 .call-search { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .call-search .input { flex: 0 1 110px; min-width: 90px; padding: 5px 8px; font-size: 12.5px; }
 .call-search .call-search-global { flex: 1 1 150px; min-width: 120px; }
+/* Call History: a smaller Global, kept on the row with the others (2026-11-28). */
+.call-search .call-search-global.call-search-global-sm { flex: 0 1 170px; }
+.ch-tabs-row { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+.ch-tabs-row .dccr-tabs { flex: 1 1 auto; margin-bottom: 0; }
+.ch-filter-slot { display: inline-flex; align-items: center; gap: 6px; }
 .call-search .call-search-engineer { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-status { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }
 .call-search .call-search-product { flex: 0 1 170px; min-width: 130px; font-size: 12.5px; }

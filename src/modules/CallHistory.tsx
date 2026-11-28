@@ -243,6 +243,9 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   // window instead of a Drawer"): the format's columns in sections, less the
   // three it hides, and anything else the file carried.
   const [opened, setOpened] = useState<Row | null>(null);
+  // THE TABLE'S FILTERS IN THE SEARCH ROW (the user, 2026-11-28: "Move Filters
+  // also to the Same Row as other Filters are"): the table renders them here.
+  const [filterSlot, setFilterSlot] = useState<HTMLSpanElement | null>(null);
   const BLANK = { ucn: '', product: '', serial: '', party: '', engineer: '', status: '', q: '' };
   const [hs, setHs] = useState(BLANK);
   const [hsLive, setHsLive] = useState(BLANK);
@@ -498,6 +501,9 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       {err && <div className="sheet-banner sheet-banner-error"><span>{err}</span></div>}
       {cfg.yearTabs && (
         <>
+          {/* THE YEAR ROW CARRIES THE DOWNLOAD (the user, 2026-11-28: "Export
+              can be moved to the Row where Year is mentioned"). */}
+          <div className="ch-tabs-row">
           <div className="dccr-tabs" role="tablist" aria-label="Year">
             {yearTabs.map((t) => (
               <button key={t.key} role="tab" aria-selected={tab === t.key}
@@ -505,6 +511,9 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
                 {t.label} <span className="dccr-tab-count">{t.n.toLocaleString()}</span>
               </button>
             ))}
+          </div>
+            {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('xlsx')}>⭳ Excel</button>}
+            {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('csv')}>⭳ CSV</button>}
           </div>
           <Toolbar>
             <div className="call-search">
@@ -517,7 +526,8 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
                 placeholder="Engineer" options={opt('engineer')} />
               <SelectPicker className="call-search-status" value={hs.status} onChange={(v) => setHs1('status', v)}
                 placeholder="Call Status" options={opt('status')} />
-              <input className="input call-search-global" placeholder="🔎 Global" value={hs.q} onChange={(e) => setHs1('q', e.target.value)} />
+              <input className="input call-search-global call-search-global-sm" placeholder="🔎 Global" value={hs.q} onChange={(e) => setHs1('q', e.target.value)} />
+              <span className="ch-filter-slot" ref={setFilterSlot} />
             </div>
             <button className="btn btn-sm btn-ghost" onClick={() => setHs(BLANK)} disabled={!hsSet}
               title="Clear every search on this year">✕ Reset filters</button>
@@ -540,7 +550,12 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       <DataTable<Row>
         columns={COLUMNS} rows={rows} getRowId={(r) => r.id}
         storageKey={cfg.storageKey}
-        toolbar={(
+        controlsSlot={cfg.yearTabs ? filterSlot : undefined}
+        toolbar={cfg.yearTabs
+          // LOAD MORE ONLY BESIDE THE PAGE NAME (the user, 2026-11-28); the
+          // download is on the year row and the Filters in the search row.
+          ? <span className="muted">{rows.length.toLocaleString()} shown{total != null ? ` of ${total.toLocaleString()}` : ''}</span>
+          : (
           <>
             {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('xlsx')}>⭳ Excel</button>}
             {mayExport && <button className="btn btn-ghost btn-sm" disabled={dl || !rows.length} onClick={() => void download('csv')}>⭳ CSV</button>}
