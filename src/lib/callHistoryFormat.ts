@@ -1,5 +1,9 @@
 // ===========================================================================
-// THE CALL HISTORY FORMAT -- the F/I Call Register's 37 columns (and Drive Link), in its order
+// THE CALL HISTORY FORMAT -- the F/I Call Register's columns (and Drive Link),
+// LESS Engineer Email, Reporting Manager and Regional Manager (the user,
+// 2026-11-28: "Removed Email Columns from Source itself"), which no longer
+// show anywhere -- list, pop-up or download. A file that still carries them
+// keeps them with the call (in `extra`), unshown. in its order
 // and under its headings (the user, 2026-11-28, uploading
 // "24_v0 - F_I Call Register - Field 24.csv": "I need the Call History in this
 // Format").
@@ -69,9 +73,6 @@ export const CALL_HISTORY_FORMAT: FormatColumn[] = [
   { header: 'Complaint Reported', column: 'complaint_reported' , section: 'Complaint' },
   { header: 'Call Allocated To', column: 'engineer' , section: 'Complaint' },
   { header: 'Breakdown Date', extra: ['Breakdown Date'], kind: 'date' , section: 'Complaint' },
-  { header: 'Engineer Email', extra: ['Engineer Email', 'Engineer E-mail', 'Engineer Email ID'] , section: 'Complaint' },
-  { header: 'Reporting Manager', extra: ['Reporting Manager'] , section: 'Complaint' },
-  { header: 'Regional Manager', extra: ['Regional Manager'] , section: 'Complaint' },
   { header: 'Call Acceptance', extra: ['Call Acceptance'] , section: 'Call Status' },
   { header: 'Open/Close', extra: ['Open/Close', 'Open Close'] , section: 'Call Status' },
   { header: 'Call Status', column: 'call_status' , section: 'Call Status' },
@@ -91,8 +92,12 @@ export const CALL_HISTORY_FORMAT: FormatColumn[] = [
   { header: 'Call Canceled Date', extra: ['Call Canceled Date', 'Call Cancelled Date'], kind: 'date' , section: 'Call Status' },
 ];
 
-/** The key a shaped row carries a format column's value under. */
-export const formatKey = (i: number) => `fmt_${i}`;
+/** The key a shaped row carries a format column's value under -- NAMED FROM
+ *  THE HEADING, never its position: the table remembers each person's column
+ *  order by key, and a positional key moved every later column whenever one
+ *  was added or taken out (Drive Link, added at 35, came up FIRST on a layout
+ *  saved before it). */
+export const formatKey = (i: number) => `fmt_${squash(CALL_HISTORY_FORMAT[i].header)}`;
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -147,11 +152,15 @@ export function driveHref(v: unknown): string | undefined {
   return undefined;
 }
 
+/** Headings taken out of the format and never shown, even if a file carries them. */
+export const NOT_SHOWN = ['Engineer Email', 'Engineer E-mail', 'Engineer Email ID', 'Reporting Manager', 'Reporting Manager Email',
+  'Regional Manager', 'Regional Manager Email'];
+
 /** The headings the file carried that no format column shows -- kept with the
  *  call, and shown in its drawer so nothing the file said is out of sight. */
 export function otherExtra(extra: unknown): [string, string][] {
   if (!extra || typeof extra !== 'object') return [];
-  const shown = new Set(CALL_HISTORY_FORMAT.flatMap((c) => [...(c.extra ?? []), ...(c.column ? [] : [c.header])]).map(squash));
+  const shown = new Set([...CALL_HISTORY_FORMAT.flatMap((c) => [...(c.extra ?? []), ...(c.column ? [] : [c.header])]), ...NOT_SHOWN].map(squash));
   return Object.entries(extra as Record<string, unknown>)
     .filter(([k, v]) => !shown.has(squash(k)) && String(v ?? '').trim() !== '')
     .map(([k, v]) => [k, String(v)]);
