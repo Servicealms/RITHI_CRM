@@ -567,7 +567,10 @@ UPLOADS.forEach((d) => {
   // A register with its own shaper declares no columns — it owns the job.
   if (!d.shape && !d.cols.some((c) => c.required)) { console.log(`  ✗ ${d.key} has no required column`); fail++; }
   const keys = d.conflictFrom ?? d.conflict?.split(',') ?? [];
-  if (!d.shape && d.conflict && !keys.every((k) => d.cols.some((c) => c.to === k) || Object.keys(d.stamp ?? {}).includes(k))) {
+  // A value ASKED on the upload screen fills the row too (Call History's year,
+  // 0501 -- the one chosen, else afterAsked() derives it from the call date).
+  if (!d.shape && d.conflict && !keys.every((k) => d.cols.some((c) => c.to === k) || Object.keys(d.stamp ?? {}).includes(k)
+      || (d.asks ?? []).some((a) => a.to === k))) {
     console.log(`  ✗ ${d.key}: conflict key "${d.conflict}" is not derived from anything it fills`); fail++;
   }
 });

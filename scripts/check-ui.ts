@@ -688,8 +688,12 @@ console.log('\n-- call history, kept apart --');
   eq('Excel Long Date reads, with or without the weekday',
     [toIsoDate('Thursday, March 31, 2016'), toIsoDate('November 01, 2019'), toIsoDate('Someday, Foo 01, 2019')], ['2016-03-31', '2019-11-01', null]);
   const def = ALL_UPLOADS.find((d) => d.key === 'call_history');
-  eq('the register writes call_history and nothing else, keyed by UC No. + Call No.',
-    [def?.table, def?.conflict, def?.group], ['call_history', 'ucn,call_no', 'Calls']);
+  // KEYED BY YEAR TOO since 0501: each year is stored apart.
+  eq('the register writes call_history and nothing else, keyed by UC No. + Call No. + year',
+    [def?.table, def?.conflict, def?.group], ['call_history', 'ucn,call_no,record_year', 'Calls']);
+  eq('...and gives each row its year: the one chosen, else its call date\'s (India), else none',
+    [def?.afterAsked?.({ call_at: '2023-12-31T20:00:00Z' })?.record_year, def?.afterAsked?.({ call_at: '2023-12-31T20:00:00Z', record_year: 2024 })?.record_year,
+     def?.afterAsked?.({})?.record_year], [2024, 2024, undefined]);
   const mig = readFileSync('supabase/migrations/0429_call_history.sql', 'utf8');
   eq('the table has no trigger but the loader stamp',
     (mig.match(/create trigger/g) ?? []).length === 1 && /create trigger call_history_stamp/.test(mig), true);
@@ -10200,18 +10204,26 @@ console.log('\n-- module review batch 2: frozen closures and over-strong counts 
       /\{isPm && !pmHideRule\.all && \(\s*<FacetChips\s*options=\{missedPmCounts\}/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8'))
         && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes('!missedPmFilter || pmHideRule.all ||'), true);
     eq('the call registers search by engineer, picked from a list and matched whole on the server',
-      readFileSync('src/lib/supabase.ts', 'utf8').includes("if (terms.engineer) q = q.ilike('allocated_to', _san(terms.engineer));")
+      readFileSync('src/lib/supabase.ts', 'utf8').includes("if (terms.engineer) q = q.ilike('allocated_to', likeWhole(terms.engineer));")
         && /<SelectPicker className="call-search-engineer" value=\{srch\.engineer\}[\s\S]{0,120}options=\{allotTeam\.names\}/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8')), true);
     eq('the call registers search by call status, the state the register shows, on the server',
       readFileSync('src/lib/supabase.ts', 'utf8').includes("return terms.status ? rows.filter((r) => String(r.callState ?? '') === terms.status) : rows;")
         && /value: 'Report pending', label: 'Solved - Report Pending'/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8'))
         && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes('options={CALL_STATUS_PICK}'), true);
     eq('the call registers search by product, picked from the Product list and matched whole',
-      readFileSync('src/lib/supabase.ts', 'utf8').includes("if (terms.productName) q = q.ilike('product_name', _san(terms.productName));")
+      readFileSync('src/lib/supabase.ts', 'utf8').includes("if (terms.productName) q = q.ilike('product_name', likeWhole(terms.productName));")
         && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes("placeholder=\"Product\" options={productNames}"), true);
     eq('Reset filters clears every search and filter on a call register, Open only back to how it opens',
       /const resetFilters = \(\) => \{\s*setSrch\(BLANK_SEARCH\);\s*setOpenOnly\(openOnlyDefault\); setReopenedOnly\(false\);\s*setEngineerFilter\(''\); setPendingReasonFilter\(''\); setMissedPmFilter\(''\);/.test(readFileSync('src/modules/FieldCalls.tsx', 'utf8'))
         && readFileSync('src/modules/FieldCalls.tsx', 'utf8').includes("const BLANK_SEARCH = { ucn: '', productName: '', serial: '', partyName: '', engineer: '', status: '', q: '' };"), true);
+    eq('Call History: a tab per year, and the Field Call register\'s search row against the server',
+      /<div className="dccr-tabs" role="tablist" aria-label="Year">/.test(readFileSync('src/modules/CallHistory.tsx', 'utf8'))
+        && ["placeholder=\"UCN No\"", "placeholder=\"Product\" options={opt('product')}", "placeholder=\"Serial\"", "placeholder=\"Party\"",
+            "placeholder=\"Engineer\" options={opt('engineer')}", "placeholder=\"Call Status\" options={opt('status')}", "placeholder=\"🔎 Global\""]
+          .every((s) => readFileSync('src/modules/CallHistory.tsx', 'utf8').includes(s))
+        && readFileSync('src/lib/supabase.ts', 'utf8').includes("if (f.undated) q = q.is('record_year', null);"), true);
+    eq('a value picked from a list is matched whole, its brackets and commas kept',
+      readFileSync('src/lib/supabase.ts', 'utf8').includes("export const likeWhole = (v: string) => v.replace(/[\\\\%_]/g, (c) => `\\\\${c}`);"), true);
     eq('search reads a reopened call as Reopened, as the registers do',
       /r\.cancelled_at \? 'Cancelled' : r\.reopened_at \? 'Reopened' : r\.open_state/.test(readFileSync('src/lib/supabase.ts', 'utf8')), true);
     eq('...the signature keys are hidden too', /'users\.signature\.view',[\s\S]*'users\.signature\.upload',/.test(ah), true);

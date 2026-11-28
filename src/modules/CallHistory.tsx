@@ -13,10 +13,11 @@ import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
 import {
-  supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory,
+  supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
 } from '../lib/supabase';
 import './fieldcalls.css';
+import './dccr.css';
 
 // ===========================================================================
 // CALL HISTORY -- the calls before RITHI (up to 2025), what was loaded and the
@@ -51,15 +52,17 @@ interface HistoryConfig {
   title: string; icon: string; subtitle: string; uploadKey: string; summaryMigration: string;
   storageKey: string; fileName: string; sheet: string; report: string; audit: string;
   sources: boolean; duplicates: boolean; summaryNote: string; noSerial: string;
+  /** Year tabs and the Field Call register's search row (Call History, 2026-11-28). */
+  yearTabs: boolean;
 }
 const CONFIG: Record<HistoryKind, HistoryConfig> = {
   call: {
     title: 'Call History', icon: '📜', uploadKey: 'call_history', summaryMigration: '0495',
-    subtitle: "The calls before RITHI (up to 2025): what has been loaded, by year, source and call type, and the calls themselves. History only — nothing in RITHI is created from them. Each machine's history is on Machine History. The DCCR register's calls are on DCCR History.",
+    subtitle: "The calls before RITHI (up to 2025), stored year by year: what has been loaded, and each year's calls on a tab of its own. History only — nothing in RITHI is created from them. Each machine's history is on Machine History. The DCCR register's calls are on DCCR History.",
     storageKey: 'call-history', fileName: 'call-history', sheet: 'Call History',
     report: 'Call History — calls before RITHI (up to 2025)', audit: 'report.call_history',
-    sources: true, duplicates: true,
-    summaryNote: 'A call that came from two sources or years is counted once, under the year it is shown with. No serial: stored, but not listed on Machine History, which finds a history call by its serial.',
+    sources: true, duplicates: true, yearTabs: true,
+    summaryNote: 'Each year is stored on its own: a call in two yearly sheets is counted in each year; two sources of the same year are one call, counted once, and the other is its Duplicate. No serial: stored, but not listed on Machine History, which finds a history call by its serial.',
     noSerial: 'Stored, but Machine History finds a history call by its serial and cannot list these',
   },
   dccr: {
@@ -67,7 +70,7 @@ const CONFIG: Record<HistoryKind, HistoryConfig> = {
     subtitle: "The old DCCR register's calls (2025 and before), apart from Call History: what has been loaded, by year and call type, and the calls themselves. History only — nothing in RITHI is created from them; each call's review is kept, and the Recent Failure Rate counts its failures.",
     storageKey: 'dccr-history', fileName: 'dccr-history', sheet: 'DCCR History',
     report: 'DCCR History — the old DCCR register\u2019s calls', audit: 'report.dccr_history',
-    sources: false, duplicates: false,
+    sources: false, duplicates: false, yearTabs: false,
     summaryNote: 'One record per UC No. + Call No.; a re-load corrects it. No serial: stored, but the Recent Failure Rate matches a failure to its machine by serial, so it cannot count these.',
     noSerial: 'Stored, but the Recent Failure Rate matches a failure to its machine by serial and cannot count these',
   },
@@ -145,9 +148,27 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   const [q, setQ] = useState('');
   const [qLive, setQLive] = useState('');
   useEffect(() => { const t = setTimeout(() => setQLive(q), 350); return () => clearTimeout(t); }, [q]);
-  const filter: CallHistoryFilter = useMemo(() => ({
-    year: year ? Number(year) : null, source, register, duplicate: dupOnly, q: qLive,
-  }), [year, source, register, dupOnly, qLive]);
+  // CALL HISTORY: A TAB PER YEAR, and the Field Call register's search row (the
+  // user, 2026-11-28: "Add Tabs Per year , Field , Installation , PM all can be
+  // in the Same List , But Year should be in Different Tabs. For Server Search
+  // Filters - Go with these ... Same as Field Call"). Each year is stored in a
+  // table of its own (0501). `tab` is a year, 'undated' or 'all'; '' until the
+  // summary has said which years there are, and the list waits for it.
+  const [tab, setTab] = useState('');
+  const BLANK = { ucn: '', product: '', serial: '', party: '', engineer: '', status: '', q: '' };
+  const [hs, setHs] = useState(BLANK);
+  const [hsLive, setHsLive] = useState(BLANK);
+  useEffect(() => { const t = setTimeout(() => setHsLive(hs), 350); return () => clearTimeout(t); }, [hs]);
+  const setHs1 = (k: keyof typeof BLANK, v: string) => setHs((c) => ({ ...c, [k]: v }));
+  const [choices, setChoices] = useState<Record<'product' | 'engineer' | 'status', { value: string; calls: number }[]>>({ product: [], engineer: [], status: [] });
+  useEffect(() => {
+    if (!cfg.yearTabs || !supabaseConfigured()) return;
+    callHistoryChoices().then(setChoices).catch(() => { /* no 0500 yet: the dropdowns stay empty */ });
+  }, [cfg.yearTabs]);
+  const filter: CallHistoryFilter = useMemo(() => (cfg.yearTabs
+    ? { year: /^\d+$/.test(tab) ? Number(tab) : null, undated: tab === 'undated', ...hsLive }
+    : { year: year ? Number(year) : null, source, register, duplicate: dupOnly, q: qLive }),
+  [cfg.yearTabs, tab, hsLive, year, source, register, dupOnly, qLive]);
 
   const [rows, setRows] = useState<Row[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -157,6 +178,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   const seq = useRef(0);
   const load = async (append: boolean) => {
     if (!supabaseConfigured()) return;
+    if (cfg.yearTabs && !tab) return;     // which year is not known yet
     const mine = ++seq.current;
     const from = append ? rows.length : 0;
     if (append) setMore(true); else setBusy(true);
@@ -177,6 +199,21 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   useEffect(() => { void load(false); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const moreAvailable = total != null && rows.length < total;
+  // THE TABS: every year there is a record of, newest first; Undated when a call
+  // has no year; All years last, for a call whose year is not known. Opens on
+  // the newest year.
+  const yearTabs = useMemo(() => {
+    const ys = [...new Set(groups.map((g) => g.record_year).filter((y): y is number => y != null))].sort((a, b) => b - a);
+    const count = (y: number | null) => groups.filter((g) => g.record_year === y).reduce((n, g) => n + g.calls, 0);
+    return [...ys.map((y) => ({ key: String(y), label: String(y), n: count(y) })),
+      ...(groups.some((g) => g.record_year == null) ? [{ key: 'undated', label: 'Undated', n: count(null) }] : []),
+      { key: 'all', label: 'All years', n: groups.reduce((n, g) => n + g.calls, 0) }];
+  }, [groups]);
+  useEffect(() => {
+    if (!cfg.yearTabs || tab || sumBusy) return;
+    if (groups.length || sumErr) setTab(yearTabs[0]?.key ?? 'all');
+  }, [cfg.yearTabs, tab, sumBusy, groups, sumErr, yearTabs]);
+  const hsSet = Object.values(hs).some((v) => v.trim() !== '');
   const years = useMemo(() => [...new Set(groups.map((g) => g.record_year).filter((y): y is number => y != null))]
     .sort((a, b) => b - a).map(String), [groups]);
   const sources = useMemo(() => [...new Set(groups.map((g) => g.source))].sort(), [groups]);
@@ -186,14 +223,21 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   }), { calls: 0, duplicates: 0, without_serial: 0 }), [groups]);
   const picked = (g: CallHistoryGroup) => String(g.record_year ?? '') === year && g.source === source && g.register === register;
   const pick = (g: CallHistoryGroup) => {
+    if (cfg.yearTabs) { setTab(g.record_year == null ? 'undated' : String(g.record_year)); return; }
     if (picked(g)) { setYear(''); setSource(''); setRegister(''); return; }
     setYear(g.record_year == null ? '' : String(g.record_year)); setSource(g.source); setRegister(g.register);
   };
   const clearFilters = () => { setYear(''); setSource(''); setRegister(''); setDupOnly(false); setQ(''); };
-  const filtered = !!(year || source || register || dupOnly || qLive.trim());
+  const filtered = !!(year || source || register || dupOnly || qLive.trim())
+    || (cfg.yearTabs && Object.values(hsLive).some((v) => v.trim() !== ''));
 
-  const scopeText = [year && `year ${year}`, source && `source ${source}`, register && `call type ${register}`,
-    dupOnly && 'duplicates only', qLive.trim() && `search: ${qLive.trim()}`].filter(Boolean).join(' · ') || 'every history call';
+  const scopeText = (cfg.yearTabs
+    ? [tab === 'all' ? 'all years' : tab === 'undated' ? 'undated' : `year ${tab}`,
+       ...Object.entries(hsLive).filter(([, v]) => v.trim()).map(([k, v]) => `${k}: ${v.trim()}`)]
+    : [year && `year ${year}`, source && `source ${source}`, register && `call type ${register}`,
+       dupOnly && 'duplicates only', qLive.trim() && `search: ${qLive.trim()}`]).filter(Boolean).join(' · ') || 'every history call';
+  const opt = (k: 'product' | 'engineer' | 'status') =>
+    choices[k].map((c) => ({ value: c.value, label: `${c.value} (${c.calls.toLocaleString()})` }));
 
   const [dl, setDl] = useState(false);
   const download = async (fileKind: 'xlsx' | 'csv') => {
@@ -300,7 +344,35 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       <div style={{ height: 12 }} />
 
       {err && <div className="sheet-banner sheet-banner-error"><span>{err}</span></div>}
-      <Toolbar>
+      {cfg.yearTabs && (
+        <>
+          <div className="dccr-tabs" role="tablist" aria-label="Year">
+            {yearTabs.map((t) => (
+              <button key={t.key} role="tab" aria-selected={tab === t.key}
+                className={`dccr-tab${tab === t.key ? ' is-active' : ''}`} onClick={() => setTab(t.key)}>
+                {t.label} <span className="dccr-tab-count">{t.n.toLocaleString()}</span>
+              </button>
+            ))}
+          </div>
+          <Toolbar>
+            <div className="call-search">
+              <input className="input" placeholder="UCN No" value={hs.ucn} onChange={(e) => setHs1('ucn', e.target.value)} />
+              <SelectPicker className="call-search-product" value={hs.product} onChange={(v) => setHs1('product', v)}
+                placeholder="Product" options={opt('product')} />
+              <input className="input" placeholder="Serial" value={hs.serial} onChange={(e) => setHs1('serial', e.target.value)} />
+              <input className="input" placeholder="Party" value={hs.party} onChange={(e) => setHs1('party', e.target.value)} />
+              <SelectPicker className="call-search-engineer" value={hs.engineer} onChange={(v) => setHs1('engineer', v)}
+                placeholder="Engineer" options={opt('engineer')} />
+              <SelectPicker className="call-search-status" value={hs.status} onChange={(v) => setHs1('status', v)}
+                placeholder="Call Status" options={opt('status')} />
+              <input className="input call-search-global" placeholder="🔎 Global" value={hs.q} onChange={(e) => setHs1('q', e.target.value)} />
+            </div>
+            <button className="btn btn-sm btn-ghost" onClick={() => setHs(BLANK)} disabled={!hsSet}
+              title="Clear every search on this year">✕ Reset filters</button>
+          </Toolbar>
+        </>
+      )}
+      {!cfg.yearTabs && <Toolbar>
         <SearchBox value={q} onChange={setQ} placeholder="UC No., Call No., party, product or serial" />
         <SelectPicker value={year} onChange={setYear} placeholder="Any year" options={years} />
         {cfg.sources && <SelectPicker value={source} onChange={setSource} placeholder="Any source" options={sources} />}
@@ -311,7 +383,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
           </label>
         )}
         {filtered && <button className="btn btn-ghost btn-sm" onClick={clearFilters}>Clear</button>}
-      </Toolbar>
+      </Toolbar>}
 
       <DataTable<Row>
         columns={COLUMNS} rows={rows} getRowId={(r) => r.id}

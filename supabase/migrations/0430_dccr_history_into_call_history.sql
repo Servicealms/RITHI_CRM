@@ -174,7 +174,9 @@ begin
                  p.serious_incident, p.extra
             from public.pm_calls p where p.extra->>'imported_from' = 'DCCR register (historical)') c
     left join public.dccr_history_import d on d.ucn = c.ucn
-  on conflict (ucn, call_no) do nothing;
+  -- No target (0501): call_history is keyed by year since, and this backfill
+  -- inserts nothing once 0430 has run -- it only has to keep replaying.
+  on conflict do nothing;
   get diagnostics v_h = row_count;
 
   delete from public.field_calls where extra->>'imported_from' = 'DCCR register (historical)'

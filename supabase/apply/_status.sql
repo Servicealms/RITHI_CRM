@@ -2489,7 +2489,25 @@ with checks(sort_order, bundle, provides, present) as (
                  where table_schema = 'public' and table_name = 'device_cache_status' and column_name = 'open_calls_at')
         and exists (select 1 from pg_proc p
                      where p.oid = to_regprocedure('public.device_cache_report()')
-                       and pg_get_function_result(p.oid) like '%open_calls_at%'))
+                       and pg_get_function_result(p.oid) like '%open_calls_at%')),
+    (406, 'Call History search: its dropdowns offer what the history holds', 'call_history_choices (0500): each distinct product, engineer and call status in Call History with its count, reading as its reader (security_invoker), granted to signed-in users and not to the public key. NO means the Call History search has no Product, Engineer or Call Status choices. Restore: daily_review.sql (0500)',
+        to_regclass('public.call_history_choices') is not null
+        and coalesce((select 'security_invoker=on' = any (c.reloptions) or 'security_invoker=true' = any (c.reloptions)
+                        from pg_class c where c.oid = to_regclass('public.call_history_choices')), false)
+        and has_table_privilege('authenticated', coalesce(to_regclass('public.call_history_choices'), 'pg_class'::regclass), 'select')
+        and not has_table_privilege('anon', coalesce(to_regclass('public.call_history_choices'), 'pg_class'::regclass), 'select')),
+    (407, 'Call History is stored year by year', 'call_history is partitioned by record_year (0501): a table per year (call_history_y2015 ... _y2030 at least) and call_history_undated; the key is UC No. + Call No. + year; the year trigger that would move a routed row is gone; and no year table can be read or written directly by an API role. NO means Call History is still one table, or a year''s table is open past the parent''s policies. Restore: daily_review.sql (0501)',
+        (select relkind from pg_class where oid = to_regclass('public.call_history')) = 'p'
+        and to_regclass('public.call_history_y2025') is not null
+        and to_regclass('public.call_history_undated') is not null
+        and exists (select 1 from pg_index i join pg_class c on c.oid = i.indexrelid
+                     where i.indrelid = to_regclass('public.call_history') and i.indisunique and c.relname = 'call_history_key'
+                       and pg_get_indexdef(i.indexrelid) like '%(ucn, call_no, record_year)%')
+        and not exists (select 1 from pg_trigger where tgrelid = to_regclass('public.call_history') and tgname = 'call_history_year_default')
+        and not exists (select 1 from pg_inherits i join pg_class c on c.oid = i.inhrelid
+                         where i.inhparent = to_regclass('public.call_history')
+                           and (not c.relrowsecurity or has_table_privilege('authenticated', c.oid, 'select')
+                                or has_table_privilege('anon', c.oid, 'select'))))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,

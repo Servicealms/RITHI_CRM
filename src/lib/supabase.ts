@@ -310,6 +310,10 @@ export async function listCalls(callType = '', limit = 20000): Promise<Record<st
 // already scopes the result to what the user may see.
 export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string; status?: string }
 const _san = (t: string) => t.replace(/[%,()]/g, ' ').trim();
+/** A value picked from a list, as an ILIKE pattern that matches it WHOLE:
+ *  only the pattern's own characters (\ % _) are escaped -- a comma or a
+ *  bracket in a product name is kept, or "X (NEW)" would match nothing. */
+export const likeWhole = (v: string) => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 export async function searchCalls(callType: string, terms: CallSearch, limit = 1000): Promise<Record<string, unknown>[]> {
   let q = orderCalls(must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null), callType).limit(limit);
   if (terms.ucn) q = q.ilike('ucn', `%${_san(terms.ucn)}%`);
@@ -318,11 +322,11 @@ export async function searchCalls(callType: string, terms: CallSearch, limit = 1
   // THE PRODUCT IS PICKED FROM A LIST TOO (the user, 2026-11-27: "Add Product
   // filter dropdown too"): matched whole, ignoring case -- VEGA never brings
   // back VEGA XT.
-  if (terms.productName) q = q.ilike('product_name', _san(terms.productName));
+  if (terms.productName) q = q.ilike('product_name', likeWhole(terms.productName));
   // THE ENGINEER IS PICKED FROM A LIST (the user, 2026-11-27: "Add Engineer
   // Search ... Preferably Drop down"), so it is matched WHOLE -- an ilike with no
   // wildcard, i.e. equal ignoring case -- never as a fragment of another name.
-  if (terms.engineer) q = q.ilike('allocated_to', _san(terms.engineer));
+  if (terms.engineer) q = q.ilike('allocated_to', likeWhole(terms.engineer));
   // CALL STATUS, picked from a list (the user, 2026-11-27: "Similar to Engineer
   // Name search, add Call Status also in filter"): the state the register SHOWS
   // (dbToCall: cancelled, else reopened, else open_state). Narrowed on the
@@ -5922,19 +5926,46 @@ export async function callHistorySummary(kind: HistoryKind = 'call'): Promise<Ca
       .range(from, to)));
 }
 
-export interface CallHistoryFilter { year?: number | null; source?: string; register?: string; duplicate?: boolean; q?: string }
+export interface CallHistoryFilter {
+  year?: number | null; source?: string; register?: string; duplicate?: boolean; q?: string;
+  /** The Undated tab: calls stored with no year (0501). */
+  undated?: boolean;
+  // THE FIELD CALL REGISTER'S SEARCH ROW (the user, 2026-11-28): UCN, Serial
+  // and Party as fragments; Product, Engineer and Call Status picked from what
+  // the history holds (call_history_choices, 0500) and matched whole.
+  ucn?: string; serial?: string; party?: string; product?: string; engineer?: string; status?: string;
+}
+/** The values Call History holds, for its search dropdowns (0500), each with
+ *  how many calls carry it. */
+export async function callHistoryChoices(): Promise<Record<'product' | 'engineer' | 'status', { value: string; calls: number }[]>> {
+  const c = must();
+  const rows = await allRows<{ kind: string; value: string; calls: number }>((from, to) =>
+    c.from('call_history_choices').select('kind,value,calls').order('kind').order('value').range(from, to));
+  const out = { product: [], engineer: [], status: [] } as Record<'product' | 'engineer' | 'status', { value: string; calls: number }[]>;
+  rows.forEach((r) => { if (r.kind === 'product' || r.kind === 'engineer' || r.kind === 'status') out[r.kind].push({ value: r.value, calls: r.calls }); });
+  return out;
+}
 
 function callHistoryQuery(kind: HistoryKind, f: CallHistoryFilter, count?: 'exact') {
   const h = HISTORY[kind];
   let q = must().from(h.table).select(h.cols, count ? { count } : undefined);
   if (f.year != null) q = q.eq('record_year', f.year);
+  if (f.undated) q = q.is('record_year', null);
+  if (f.ucn?.trim()) q = q.ilike('ucn', `%${searchTerm(f.ucn)}%`);
+  if (f.serial?.trim()) q = q.ilike('serial', `%${searchTerm(f.serial)}%`);
+  if (f.party?.trim()) q = q.ilike('party_name', `%${searchTerm(f.party)}%`);
+  // Picked from a list, so matched WHOLE (ignoring case), as on the Field Call register.
+  if (f.product) q = q.ilike('item_name', likeWhole(f.product));
+  if (f.engineer) q = q.ilike('engineer', likeWhole(f.engineer));
+  if (f.status) q = q.ilike('call_status', likeWhole(f.status));
   // '(not recorded)' is how the summary names a blank source or call type.
   // DCCR History has one source and no duplicates, so those two never filter it.
   if (kind === 'call' && f.source) q = f.source === '(not recorded)' ? q.eq('source', '') : q.eq('source', f.source);
   if (f.register) q = f.register === '(not recorded)' ? q.is('register', null) : q.eq('register', f.register);
   if (kind === 'call' && f.duplicate) q = q.eq('duplicate', true);
   const t = searchTerm(f.q ?? '');
-  if (t) q = q.or(['ucn', 'call_no', 'party_name', 'item_name', 'serial'].map((k) => `${k}.ilike.%${t}%`).join(','));
+  if (t) q = q.or(['ucn', 'call_no', 'party_name', 'item_name', 'serial', 'engineer', 'city', 'state', 'standard_complaint', 'complaint_reported']
+    .map((k) => `${k}.ilike.%${t}%`).join(','));
   return q.order('call_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false });
 }
 

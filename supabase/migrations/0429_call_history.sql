@@ -57,7 +57,16 @@ create table if not exists public.call_history (
   loaded_at          timestamptz not null default now(),
   loaded_by          uuid
 );
-create unique index if not exists call_history_key on public.call_history (ucn, call_no);
+-- GUARDED BY NAME, not by `if not exists` (0501): once Call History is stored
+-- year by year its key is (ucn, call_no, record_year) under this same name, and
+-- Postgres refuses a unique index that leaves out the year BEFORE it looks for
+-- the name -- so the plain statement would stop a re-run of this bundle.
+do $$
+begin
+  if to_regclass('public.call_history_key') is null then
+    create unique index call_history_key on public.call_history (ucn, call_no);
+  end if;
+end $$;
 create index if not exists call_history_serial_idx on public.call_history (serial);
 create index if not exists call_history_call_at_idx on public.call_history (call_at);
 

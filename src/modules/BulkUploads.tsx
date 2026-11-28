@@ -85,7 +85,10 @@ export function Register({ def, count, onDone }: { def: UploadDef; count: number
     // ONE BATCH NUMBER FOR THE WHOLE UPLOAD (0483), so it can be deleted as one.
     const batch = def.batch ? `${def.key.toUpperCase()}-${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}` : '';
     const withBatch = (r: Record<string, unknown>) => (def.batch ? { ...r, [def.batch]: batch } : r);
-    const rows = pending.shaped.rows.map((r) => withBatch(Object.keys(asked).length ? withAsked(def.asks, asked, r) : r));
+    const rows = pending.shaped.rows.map((r) => {
+      const a = Object.keys(asked).length ? withAsked(def.asks, asked, r) : r;
+      return withBatch(def.afterAsked ? def.afterAsked(a) : a);
+    });
     // A LINE GIVEN TWICE is refused here, named, before anything is written.
     if (def.uniqueIn) {
       const seen = new Map<string, number>();
