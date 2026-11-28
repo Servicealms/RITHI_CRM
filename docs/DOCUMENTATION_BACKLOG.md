@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.302 — Call History dropdowns refreshed with the summary (2026-11-28)
+- Reported: "Product, Engineer, Call Status Drop down is blank in Call History - Search / Filter".
+- callHistoryChoices() was called once on mount and its error swallowed; now called in loadSummary (open, Refresh, after upload / delete), the pickers show loading, and a failure is shown in the summary's error banner. The view itself (call_history_choices) answered correctly when tested on a database.
+- Write up: nothing beyond v0.10.289's dropdowns.
+
 ## v0.10.301 — Call History: one search row; email columns out; stable column keys (2026-11-28)
 - Asked (screenshot): "Why is it still wraped to next line? Removed Email Columns from Source itself - Engineer Email, Reporting Manager Email, Regional Manager Email."
 - Wrap: the search row (.call-search.ch-search) now takes the whole toolbar width (flex 1 1 100%) and holds Reset filters; it fitted one line at 1660px in a render with the real CSS.

@@ -186,6 +186,15 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
     } finally { setSumBusy(false); }
     if (def) countTable(def.table).then(setHeld).catch(() => setHeld(null));
     if (cfg.yearTabs) {
+      // THE DROPDOWNS' VALUES ARE ASKED AGAIN WITH THE SUMMARY -- on opening,
+      // Refresh, and after every upload or delete. They were asked ONCE, when
+      // the page opened, so a page opened while Call History was empty kept
+      // empty Product / Engineer / Call Status lists after the files were
+      // loaded (reported 2026-11-28), and a failure was swallowed in silence.
+      setChoicesBusy(true);
+      callHistoryChoices().then(setChoices)
+        .catch((e) => setSumErr((prev) => prev ?? `The Product / Engineer / Call Status lists could not be loaded: ${e instanceof Error ? e.message : String(e)}`))
+        .finally(() => setChoicesBusy(false));
       listCallHistoryUploads().then((u) => { setUploads(u); setUpErr(null); })
         .catch((e) => setUpErr(loadFailure(e, { tables: ['call_history_uploads'],
           hint: 'The list of uploads arrives with migration 0504 (supabase/apply/daily_review.sql).' })));
@@ -252,10 +261,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   useEffect(() => { const t = setTimeout(() => setHsLive(hs), 350); return () => clearTimeout(t); }, [hs]);
   const setHs1 = (k: keyof typeof BLANK, v: string) => setHs((c) => ({ ...c, [k]: v }));
   const [choices, setChoices] = useState<Record<'product' | 'engineer' | 'status', { value: string; calls: number }[]>>({ product: [], engineer: [], status: [] });
-  useEffect(() => {
-    if (!cfg.yearTabs || !supabaseConfigured()) return;
-    callHistoryChoices().then(setChoices).catch(() => { /* no 0500 yet: the dropdowns stay empty */ });
-  }, [cfg.yearTabs]);
+  const [choicesBusy, setChoicesBusy] = useState(false);
   const filter: CallHistoryFilter = useMemo(() => (cfg.yearTabs
     ? { year: /^\d+$/.test(tab) ? Number(tab) : null, undated: tab === 'undated', ...hsLive }
     : { year: year ? Number(year) : null, source, register, duplicate: dupOnly, q: qLive }),
@@ -519,13 +525,13 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
             <div className="call-search ch-search">
               <input className="input" placeholder="UCN No" value={hs.ucn} onChange={(e) => setHs1('ucn', e.target.value)} />
               <SelectPicker className="call-search-product" value={hs.product} onChange={(v) => setHs1('product', v)}
-                placeholder="Product" options={opt('product')} />
+                placeholder="Product" options={opt('product')} loading={choicesBusy} />
               <input className="input" placeholder="Serial" value={hs.serial} onChange={(e) => setHs1('serial', e.target.value)} />
               <input className="input" placeholder="Party" value={hs.party} onChange={(e) => setHs1('party', e.target.value)} />
               <SelectPicker className="call-search-engineer" value={hs.engineer} onChange={(v) => setHs1('engineer', v)}
-                placeholder="Engineer" options={opt('engineer')} />
+                placeholder="Engineer" options={opt('engineer')} loading={choicesBusy} />
               <SelectPicker className="call-search-status" value={hs.status} onChange={(v) => setHs1('status', v)}
-                placeholder="Call Status" options={opt('status')} />
+                placeholder="Call Status" options={opt('status')} loading={choicesBusy} />
               <input className="input call-search-global call-search-global-sm" placeholder="🔎 Global" value={hs.q} onChange={(e) => setHs1('q', e.target.value)} />
               <span className="ch-filter-slot" ref={setFilterSlot} />
               <button className="btn btn-sm btn-ghost" onClick={() => setHs(BLANK)} disabled={!hsSet}
