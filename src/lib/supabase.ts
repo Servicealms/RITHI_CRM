@@ -5970,10 +5970,26 @@ function callHistoryQuery(kind: HistoryKind, f: CallHistoryFilter, count?: 'exac
 }
 
 /** One page of history calls under the filter, and the EXACT number matching it. */
+// A PAGE OF 2,000 IS TWO REQUESTS (the user, 2026-11-28: "Load More should
+// load 2000 in one go in Call History Page [Including all Sub Pages]").
+// PostgREST answers at most 1,000 rows however wide the range, silently -- so
+// one range(0, 1999) would return 1,000 and the screen would believe it had
+// 2,000. The page is read in slices of 1,000 under the same order, and stops
+// early when a slice comes back short (the end of the list).
+const HISTORY_SLICE = 1000;
 export async function listCallHistory(kind: HistoryKind, f: CallHistoryFilter, from: number, to: number): Promise<{ rows: Record<string, unknown>[]; total: number | null }> {
-  const { data, error, count } = await callHistoryQuery(kind, f, 'exact').range(from, to);
-  if (error) throw new Error(errMsg(error));
-  return { rows: (data ?? []) as unknown as Record<string, unknown>[], total: count ?? null };
+  const rows: Record<string, unknown>[] = [];
+  let total: number | null = null;
+  for (let a = from; a <= to; a += HISTORY_SLICE) {
+    const b = Math.min(a + HISTORY_SLICE - 1, to);
+    const { data, error, count } = await callHistoryQuery(kind, f, a === from ? 'exact' : undefined).range(a, b);
+    if (error) throw new Error(errMsg(error));
+    if (a === from) total = count ?? null;
+    const got = (data ?? []) as unknown as Record<string, unknown>[];
+    rows.push(...got);
+    if (got.length < b - a + 1) break;
+  }
+  return { rows, total };
 }
 
 /** Every history call under the filter, for a download (paged; capped). */
