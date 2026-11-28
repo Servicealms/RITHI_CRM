@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.315',
+    date: '2026-11-28',
+    title: 'Product Status Check: change only the calls you choose, with their financial impact',
+    changes: [
+      'The check now groups the mismatches by change (e.g. OGP → CMC) — click a group to show only it — and tick the calls you want; Update selected changes only those.',
+      'Each call says whether the change has a financial impact: spares are charged under OGP and AMC and free under WGP and CMC, so a change within the same charging (OGP ↔ AMC, WGP ↔ CMC), or on a call with no spare request, has none.',
+      'Filter by No financial impact / Financial impact, and Select shown with no financial impact in one click. The report downloads what is shown.',
+    ],
+  },
+  {
     version: '0.10.314',
     date: '2026-11-28',
     title: 'Call registers: Open only is a server search',
