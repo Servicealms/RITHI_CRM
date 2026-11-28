@@ -78,7 +78,7 @@ export function DriveReportLinks() {
         {busy && <span className="muted">{busy}</span>}
       </div>
       <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-        A CSV with the visit&rsquo;s <b>UID</b> and its <b>Drive Link</b>. Each link goes on the visit with that UID, where the call&rsquo;s 📄 Service Report opens it.
+        <b>Export from Visit Reports</b> (it carries <b>Row ID</b> — the visit&rsquo;s UID — and <b>Service Report</b>), replace each <code>42Reportingv2_Images/…</code> path in Service Report with its Drive URL (or add a <b>Drive Link</b> column, which wins), and upload the file here. Each link goes on the visit with that UID, where the call&rsquo;s 📄 Service Report opens it; the path it replaces is kept with the visit.
         Only a visit with <b>no report link</b> is filled; one that already has a link is kept. A UID that matches no visit is held back. No visit is created and no call&rsquo;s status changes.
       </div>
       {msg && <div className={`sheet-banner ${msg.tone === 'ok' ? 'sheet-banner-ok' : 'sheet-banner-error'}`} style={{ marginTop: 8 }}><span>{msg.text}</span></div>}
@@ -87,11 +87,11 @@ export function DriveReportLinks() {
           <div><b>{res.mapped.toLocaleString()}</b> of {res.rows.toLocaleString()} mapped.
             {res.already ? ` ${res.already.toLocaleString()} already had a link (kept).` : ''}
             {res.not_found ? ` ${res.not_found.toLocaleString()} UID${res.not_found === 1 ? '' : 's'} matched no visit.` : ''}
-            {res.bad_link ? ` ${res.bad_link.toLocaleString()} had a value that is not a web link.` : ''}
+            {res.bad_link ? ` ${res.bad_link.toLocaleString()} still held a path or nothing — left as it was.` : ''}
             {res.blank_uid ? ` ${res.blank_uid.toLocaleString()} had no UID.` : ''}</div>
           {list('Already had a link — kept', res.already_uids, res.already)}
           {list('UID matched no visit — held back', res.not_found_uids, res.not_found)}
-          {list('Not a web link — refused', res.bad_link_uids, res.bad_link)}
+          {list('Not a web link (a path, or blank) — left as it was', res.bad_link_uids, res.bad_link)}
         </div>
       )}
     </div>
