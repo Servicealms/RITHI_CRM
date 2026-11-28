@@ -23,6 +23,15 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.299 — Call History: delete a whole upload (2026-11-28)
+- Asked: "Till i Finalize the Uploads, i might need to clean it up quite often, Give me a Button to Clear it, Add it to Actions list in Roles & Permission so that i can remove at my Will - the Whole Upload - So keep it at Upload Level". Replaces a one-time migration per clean-up (0502/0503).
+- 0504 (daily_review): call_history.upload_batch + upload_file (text, default ''), index; the Call History upload stamps ONE batch number (UploadDef.batch, 0483's mechanism) and the file name (new UploadDef.batchFile) on every row. View call_history_uploads (security_invoker): one row per batch -- file, calls, first/last loaded, loaded_by (latest), years, sources, registers. Policy ch_delete: (select has_perm('call_history.delete')); grant delete to authenticated, never anon.
+- Key call_history.delete "Delete a Call History upload" (Admin group; PERM_TREE /call-history actions). Administrators pass has_perm; any other role only when ticked. No migration grants it.
+- Uploads & summary tab: an "Uploads" table above the summary, newest first; "🗑 Delete upload" (only with the key) -> confirm naming calls/years/source/type and "no undo" -> DELETE ... WHERE upload_batch = x, count returned; 0 deleted is said as such (RLS refuses silently). Audit line call_history.delete_upload (batch, count).
+- Rules: a re-upload takes over the rows it names (stamped with the newer batch); deleting the newer upload removes them entirely, the earlier version is NOT restored. Rows loaded before 0504: batch '' -> "Before uploads were numbered", deletable as one.
+- Tests: call_history_upload_delete_test (new); call_history_test (an engineer's delete now removes nothing, no error); _status.sql row 349 moved (delete grant allowed only beside ch_delete), row 410 new.
+- Write up: HOW_TO_USE Call History (Uploads list, Delete upload, the re-upload rule); FRS for the delete + RBAC key; CLAUDE.md gotcha (call_history is deletable now -- only by upload batch, only with the key).
+
 ## v0.10.298 — Call History: the call opens in a pop-up (2026-11-28)
 - Asked (with a screenshot of "Recorded by RITHI"): "I dont want this. Make it a Pop up window instead of a Drawer. I want to Hide certain fields - Engineer Email, Reporting Manager, Regional Manager."
 - Drawer -> Modal (760 wide). Removed from it: the Recorded by RITHI section (Register, Source, Year, Duplicate) and the "History only" note; Engineer Email, Reporting Manager, Regional Manager (HIDDEN_IN_POPUP). All still in the list's columns and the Excel/CSV. Sections and "Other columns in the file" unchanged.

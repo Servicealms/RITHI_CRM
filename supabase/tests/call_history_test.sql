@@ -64,9 +64,12 @@ select 'the engineer reads their own call and the unallotted one, not somebody e
   (select string_agg(call_no, ',' order by call_no) from public.call_history where ucn like 'CHX%') = '1001,50549' as ok;
 \echo 'expect ERROR: new row violates row-level security policy for table "call_history"'
 insert into public.call_history (ucn, call_no) values ('CHX-NEW', '1');
-\echo 'expect ERROR: permission denied for table call_history'
+-- DELETING IS call_history.delete's (0504): an engineer without it deletes
+-- nothing -- row-level security matches no row, which is not an error.
 delete from public.call_history where ucn like 'CHX%';
 reset role;
+select 'an engineer without call_history.delete deletes nothing' as t,
+  (select count(*) from public.call_history where ucn like 'CHX%') > 0 as ok;
 update public.harness set uid = null, email = null;
 set role anon;
 \echo 'expect ERROR: permission denied for table call_history'

@@ -5998,6 +5998,27 @@ export async function allCallHistory(kind: HistoryKind, f: CallHistoryFilter, ca
     callHistoryQuery(kind, f).range(from, to) as unknown as PromiseLike<{ data: Record<string, unknown>[] | null; error: { message?: string; code?: string } | null }>, cap);
 }
 
+/** One Call History upload (0504): its batch number ('' = loaded before
+ *  uploads were numbered), file, calls, when, by whom, and what it holds. */
+export interface CallHistoryUpload {
+  upload_batch: string; upload_file: string; calls: number;
+  first_loaded_at: string | null; last_loaded_at: string | null; loaded_by: string | null;
+  years: string; sources: string; registers: string;
+}
+export async function listCallHistoryUploads(): Promise<CallHistoryUpload[]> {
+  return allRows<CallHistoryUpload>((from, to) =>
+    must().from('call_history_uploads').select('*')
+      .order('last_loaded_at', { ascending: false, nullsFirst: false }).order('upload_batch').range(from, to));
+}
+/** Delete one whole upload; returns how many calls went. Row-level security
+ *  asks call_history.delete -- without it nothing is deleted and no error is
+ *  raised, so the count is what says whether it happened. */
+export async function deleteCallHistoryUpload(batch: string): Promise<number> {
+  const { error, count } = await must().from('call_history').delete({ count: 'exact' }).eq('upload_batch', batch);
+  if (error) throw new Error(errMsg(error));
+  return count ?? 0;
+}
+
 export async function countTable(table: string): Promise<number | null> {
   const c = getSupabase(); if (!c) return null;
   const { count, error } = await c.from(table).select('*', { count: 'exact', head: true });

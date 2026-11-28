@@ -16,6 +16,7 @@ import { safeUrl } from '../lib/safeUrl';
 import { CALL_HISTORY_FORMAT, HISTORY_SECTIONS, formatKey, shapeHistoryRow, driveHref, otherExtra } from '../lib/callHistoryFormat';
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
+  listCallHistoryUploads, deleteCallHistoryUpload, type CallHistoryUpload,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
 } from '../lib/supabase';
 import './fieldcalls.css';
@@ -164,6 +165,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   const { can } = useAuth();
   const mayUpload = can('bulk.upload');
   const mayExport = can('export.data');
+  const mayDelete = can('call_history.delete');
   const names = useUserNames();
 
   // ---- the summary ---------------------------------------------------------
@@ -183,6 +185,35 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       }));
     } finally { setSumBusy(false); }
     if (def) countTable(def.table).then(setHeld).catch(() => setHeld(null));
+    if (cfg.yearTabs) {
+      listCallHistoryUploads().then((u) => { setUploads(u); setUpErr(null); })
+        .catch((e) => setUpErr(loadFailure(e, { tables: ['call_history_uploads'],
+          hint: 'The list of uploads arrives with migration 0504 (supabase/apply/daily_review.sql).' })));
+    }
+  };
+
+  // ---- the uploads, each deletable as a whole (0504) -----------------------
+  // The user, 2026-11-28: "Give me a Button to Clear it, Add it to Actions list
+  // in Roles & Permission so that i can remove at my Will - the Whole Upload".
+  const [uploads, setUploads] = useState<CallHistoryUpload[]>([]);
+  const [upErr, setUpErr] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState('');
+  const [upMsg, setUpMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const deleteUpload = async (u: CallHistoryUpload) => {
+    if (!mayDelete) return;
+    const what = u.upload_batch ? `upload ${u.upload_batch}${u.upload_file ? ` (${u.upload_file})` : ''}` : 'the calls loaded before uploads were numbered';
+    if (!confirm(`Delete ${what}?\n\n${u.calls.toLocaleString()} call${u.calls === 1 ? '' : 's'} — ${u.years || 'no year'} · ${u.sources || 'no source'} · ${u.registers || 'no call type'} — will be removed from Call History for good. There is no undo.\n\nA call this upload loaded again from an earlier upload goes too; the earlier version is not brought back.`)) return;
+    setDeleting(u.upload_batch); setUpMsg(null);
+    try {
+      const n = await deleteCallHistoryUpload(u.upload_batch);
+      setUpMsg(n
+        ? { tone: 'ok', text: `${n.toLocaleString()} call${n === 1 ? '' : 's'} deleted (${what}).` }
+        : { tone: 'error', text: `Nothing was deleted — your role may not hold “Delete a Call History upload” on the database yet, or the calls were already gone.` });
+      logAudit({ action: 'call_history.delete_upload', meta: { batch: u.upload_batch, calls: n } });
+      void loadSummary(); void load(false);
+    } catch (e) {
+      setUpMsg({ tone: 'error', text: `Could not delete: ${e instanceof Error ? e.message : String(e)}` });
+    } finally { setDeleting(''); }
   };
 
   // ---- the list ------------------------------------------------------------
@@ -368,6 +399,52 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
         )}
       </SectionCard>
       <div style={{ height: 12 }} />
+
+      {cfg.yearTabs && (
+        <>
+          <SectionCard title="Uploads">
+            {upErr && <div className="sheet-banner sheet-banner-error"><span>{upErr}</span></div>}
+            {upMsg && <div className={`sheet-banner ${upMsg.tone === 'ok' ? 'sheet-banner-ok' : 'sheet-banner-error'}`}><span>{upMsg.text}</span></div>}
+            {!upErr && uploads.length === 0 && <p className="muted" style={{ margin: 0 }}>No uploads yet.</p>}
+            {uploads.length > 0 && (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="assoc-table">
+                  <thead>
+                    <tr>
+                      <th>Upload</th><th>File</th><th>Years</th><th>Source</th><th>Call Type</th>
+                      <th style={{ textAlign: 'right' }}>Calls</th><th>Loaded</th><th>By</th>{mayDelete && <th />}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {uploads.map((u) => (
+                      <tr key={u.upload_batch || '(none)'}>
+                        <td style={{ whiteSpace: 'nowrap' }}>{u.upload_batch || <span className="muted">Before uploads were numbered</span>}</td>
+                        <td>{u.upload_file}</td><td>{u.years}</td><td>{u.sources}</td><td>{u.registers}</td>
+                        <td style={{ textAlign: 'right' }}>{u.calls.toLocaleString()}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{u.last_loaded_at ? formatDayTime(u.last_loaded_at) : ''}</td>
+                        <td>{u.loaded_by ? nameForUserId(u.loaded_by, names) : ''}</td>
+                        {mayDelete && (
+                          <td>
+                            <button className="btn btn-sm btn-danger" disabled={!!deleting} onClick={() => void deleteUpload(u)}
+                              title="Delete every call this upload loaded">
+                              {deleting === u.upload_batch ? 'Deleting…' : '🗑 Delete upload'}
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
+              Each upload is numbered, and deleting it removes every call it loaded, for good. Loading a file again takes over the calls it names, so they belong to the newer upload.
+              {!mayDelete && ' Deleting needs “Delete a Call History upload” on Roles & Permissions.'}
+            </p>
+          </SectionCard>
+          <div style={{ height: 12 }} />
+        </>
+      )}
 
       <SectionCard title="What has been loaded">
         {sumErr && <div className="sheet-banner sheet-banner-error"><span>{sumErr}</span></div>}

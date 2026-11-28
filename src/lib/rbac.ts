@@ -484,6 +484,9 @@ export const FUNCTIONAL_ACTIONS: ActionDef[] = [
   { group: 'Admin', key: 'objective.manage', label: 'Edit, recalculate and cut off the quality objectives' },
   { group: 'Admin', key: 'objective.lock', label: 'Lock or unlock the objective cut-off' },
   { group: 'Admin', key: 'bulk.upload', label: 'Load registers in bulk (Bulk Uploads)' },
+  // DELETE A WHOLE CALL HISTORY UPLOAD (0504, the user 2026-11-28: "Add it to
+  // Actions list in Roles & Permission so that i can remove at my Will").
+  { group: 'Admin', key: 'call_history.delete', label: 'Delete a Call History upload' },
   { group: 'Admin', key: 'pm.bulk_upload', label: 'Upload PM calls in bulk' },
   // PM Due's list (0401). Creating the calls is pm.create, the PM register's.
   { group: 'Admin', key: 'pm.generate', label: 'Generate PM calls from the registers' },
@@ -749,7 +752,7 @@ export const PERM_TREE: PermHeader[] = [
     // comment above claimed and nothing did.
     { path: '/machine-history', label: 'Machine History', actions: ['masters.view'] },
     // The upload on it is bulk.upload's, the download export.data's (0495).
-    { path: '/call-history', label: 'Call History', actions: ['bulk.upload', 'export.data'] },
+    { path: '/call-history', label: 'Call History', actions: ['bulk.upload', 'export.data', 'call_history.delete'] },
     { path: '/dccr-history', label: 'DCCR History', actions: ['bulk.upload', 'export.data'] },
     // READ ONLY FOR EVERYONE, Admin included: the page has no action to tick.
     { path: '/part-search', label: 'Part Search', actions: [] },

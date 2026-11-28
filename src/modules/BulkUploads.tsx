@@ -84,7 +84,8 @@ export function Register({ def, count, onDone }: { def: UploadDef; count: number
     const asked = askedFields(def.asks, answers);
     // ONE BATCH NUMBER FOR THE WHOLE UPLOAD (0483), so it can be deleted as one.
     const batch = def.batch ? `${def.key.toUpperCase()}-${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}` : '';
-    const withBatch = (r: Record<string, unknown>) => (def.batch ? { ...r, [def.batch]: batch } : r);
+    const withBatch = (r: Record<string, unknown>) => (def.batch
+      ? { ...r, [def.batch]: batch, ...(def.batchFile ? { [def.batchFile]: pending.file } : {}) } : r);
     const rows = pending.shaped.rows.map((r) => {
       const a = Object.keys(asked).length ? withAsked(def.asks, asked, r) : r;
       return withBatch(def.afterAsked ? def.afterAsked(a) : a);
@@ -104,7 +105,7 @@ export function Register({ def, count, onDone }: { def: UploadDef; count: number
     const askedNote = Object.keys(asked).length
       ? `${(def.asks ?? []).some((a) => a.fallback) ? 'Rows without their own value are' : 'Every row is'} recorded with ${(def.asks ?? []).filter((a) => asked[a.to] !== undefined).map((a) => `${a.label}: ${a.type === 'datetime' ? formatDayTime(String(asked[a.to])) : String(asked[a.to])}`).join(', ')}.\n\n` : '';
     const warn = def.conflict
-      ? `Rows are matched on ${def.conflict}, so running this again corrects them rather than duplicating.`
+      ? `Rows are matched on ${def.conflict}, so running this again corrects them rather than duplicating.${def.batch ? ` This upload is batch ${batch}; it can be deleted as a whole.` : ''}`
       : def.batch
         ? `This upload is batch ${batch}. Running the file again adds new rows; a wrong upload is deleted as a whole by its batch number.`
         : `⚠ This register has NO natural key — running it again will ADD ${n} more rows, not correct these.`;
