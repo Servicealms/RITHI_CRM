@@ -660,18 +660,59 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onClose]);
+  // DRAGGABLE DIVIDERS, AS ON PENDING REGISTRATIONS (the user, 2026-11-28:
+  // "Make the pane dividers draggable like Pending Registration") -- the same
+  // rule: each of the first two panes 15-60%, together at most 70%, the
+  // widths remembered on this device.
+  const [cols, setCols] = useState<[number, number]>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('rithi.callhistory.cols') ?? '');
+      if (Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === 'number')) return v as [number, number];
+    } catch { /* never set, or a private window */ }
+    return [36, 32];
+  });
+  const dragRef = useRef<{ which: 0 | 1; x: number; start: [number, number]; width: number } | null>(null);
+  const onDragStart = (which: 0 | 1) => (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    const box = e.currentTarget.parentElement?.getBoundingClientRect();
+    dragRef.current = { which, x: e.clientX, start: cols, width: box?.width ?? 1000 };
+  };
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const delta = ((e.clientX - d.x) / d.width) * 100;
+      const clamp = (n: number) => Math.max(15, Math.min(60, n));
+      const next: [number, number] = d.which === 0
+        ? [clamp(d.start[0] + delta), d.start[1]]
+        : [d.start[0], clamp(d.start[1] + delta)];
+      if (next[0] + next[1] > 70) return;
+      setCols(next);
+    };
+    const up = () => {
+      if (!dragRef.current) return;
+      dragRef.current = null;
+      setCols((c) => { try { localStorage.setItem('rithi.callhistory.cols', JSON.stringify(c)); } catch { /* ignore */ } return c; });
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+  }, []);
   const rowsOf = (sec: string, skip?: string) => CALL_HISTORY_FORMAT.flatMap((c, i) =>
     (c.section === sec && c.header !== skip && !HIDDEN_IN_POPUP.has(c.header) ? [[c.header, shown(i)] as [string, React.ReactNode]] : []));
+  // EACH SECTION FOLDS (the user: "I still want to be able to Collapse
+  // Sections"), and a VALUE SITS BESIDE ITS FIELD NAME, not under it ("Arrange
+  // the Value next to the Field Name, Dont go to Next Line").
   const group = (title: string, items: [string, React.ReactNode][]) => (
-    <div key={title} className="ch-pane-group">
-      <div className="rep-sec-title">{title}</div>
+    <details key={title} className="ch-pane-group" open>
+      <summary className="rep-sec-title ch-pane-sum">{title}</summary>
       {items.map(([k, v]) => (
-        <div className="reg-detail-row" key={k}>
+        <div className="reg-detail-row ch-kv" key={k}>
           <div className="reg-detail-k">{k}</div>
           <div className="reg-detail-v">{v === '' || v == null ? <span className="muted">—</span> : v}</div>
         </div>
       ))}
-    </div>
+    </details>
   );
   const driveIdx = CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link');
   const driveVal = driveIdx >= 0 ? String(row[formatKey(driveIdx)] ?? '').trim() : '';
@@ -679,7 +720,7 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
   return (
     <div className="reg-overlay" onMouseDown={onClose}>
       <div className="reg-split reg-split-3" onMouseDown={(e) => e.stopPropagation()}
-        style={{ gridTemplateColumns: '36% 6px 32% 6px 1fr' }}>
+        style={{ gridTemplateColumns: `${cols[0]}% 6px ${cols[1]}% 6px 1fr` }}>
         <aside className="reg-split-left">
           <div className="reg-split-head">
             <span>📄 Call details · <HistoryUcn ucn={row.ucn} status={row.call_status} /></span>
@@ -692,7 +733,7 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
             {others.length > 0 && group('Other columns in the file', others)}
           </div>
         </aside>
-        <div className="reg-gutter" />
+        <div className="reg-gutter" onMouseDown={onDragStart(0)} title="Drag to resize" />
         <section className="reg-split-right">
           <div className="reg-split-head"><span>🛠 Visit details</span></div>
           <div className="reg-split-body">
@@ -705,7 +746,7 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
             {group('Call Status', rowsOf('Call Status'))}
           </div>
         </section>
-        <div className="reg-gutter" />
+        <div className="reg-gutter" onMouseDown={onDragStart(1)} title="Drag to resize" />
         <section className="reg-split-third">
           <div className="reg-split-head">
             <span>🔩 Spare consumption{spares ? ` · ${spares.length}` : ''}</span>

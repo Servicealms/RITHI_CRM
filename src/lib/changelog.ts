@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.306',
+    date: '2026-11-28',
+    title: 'Call History: resizable panes, values beside their names, sections that fold',
+    changes: [
+      'The two dividers between the panes of an opened call can be dragged, as on Pending Registrations; the widths are remembered on this device.',
+      'Each value now sits beside its field name on the same line.',
+      'Each section (Registration, Customer & Product, Visit & Report and the rest) folds and unfolds by clicking its heading.',
+    ],
+  },
+  {
     version: '0.10.305',
     date: '2026-11-28',
     title: 'Call History: the opened call in three panes, and the status colours',
