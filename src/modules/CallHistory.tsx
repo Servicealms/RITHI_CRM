@@ -13,6 +13,7 @@ import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
 import { safeUrl } from '../lib/safeUrl';
+import { DriveIcon, isDriveUrl } from '../components/ui/DriveIcon';
 import { CALL_HISTORY_FORMAT, HISTORY_SECTIONS, formatKey, shapeHistoryRow, driveHref, otherExtra, historyStatusLabel, isLightSolved } from '../lib/callHistoryFormat';
 import { StateBadge, HISTORY_SOLVED_LIGHT, stateColour } from '../lib/callstate';
 import {
@@ -132,7 +133,8 @@ const FORMAT_COLUMNS: Column<Row>[] = [
         const v = String(r[formatKey(i)] ?? '');
         const href = driveHref(v);
         return href
-          ? <a href={safeUrl(href)} target="_blank" rel="noopener noreferrer" title={href} onClick={(e) => e.stopPropagation()}>Open in Drive ↗</a>
+          ? <a className="svc-report-link svc-drive-link" href={safeUrl(href)} target="_blank" rel="noopener noreferrer" title={href}
+              onClick={(e) => e.stopPropagation()}>{isDriveUrl(href) ? <DriveIcon /> : '📄'} {isDriveUrl(href) ? 'Drive' : 'Open'}</a>
           : v;
       }
       : undefined,
@@ -769,7 +771,9 @@ function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
             <div className="reg-split-body">
               <div className="ch-drive">
                 {driveUrl
-                  ? <a className="btn btn-sm btn-primary" href={safeUrl(driveUrl)} target="_blank" rel="noopener noreferrer">📎 Open in Drive ↗</a>
+                  // THE SAME DRIVE BUTTON AS THE CALL SCREEN (the user, 2026-11-28).
+                ? <a className="svc-report-link svc-drive-link" href={safeUrl(driveUrl)} target="_blank" rel="noopener noreferrer"
+                    title="Open the report in Google Drive, in a new tab">{isDriveUrl(driveUrl) ? <DriveIcon /> : '📄'} {isDriveUrl(driveUrl) ? 'Drive' : 'Open report'}</a>
                   : <span className="muted">{driveVal ? `Drive Link: ${driveVal}` : 'No Drive Link on this call.'}</span>}
               </div>
               {group('Visit & Report', rowsOf('Visit & Report', 'Drive Link'))}
