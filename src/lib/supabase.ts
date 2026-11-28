@@ -288,14 +288,26 @@ function orderCalls<Q extends Orderable<Q>>(q: Q, callType: string): Q {
 // without it is a live call.
 export const HISTORICAL_MARK = 'extra->>imported_from';
 
+// OPEN ONLY, ON THE SERVER (the user, 2026-11-28: "The All Calls / Open Calls
+// Toggle should be a Server Search"). Open is what the register SHOWS as not
+// closed (dbToCall): not cancelled, and not Solved unless it was re-opened.
+// Applied to the query, so "Open only" reads the open calls of the WHOLE
+// register rather than the open ones among the newest N.
+type OpenFilterable<Q> = { is: (c: string, v: null) => Q; or: (f: string) => Q };
+function onlyOpen<Q extends OpenFilterable<Q>>(q: Q): Q {
+  return q.is('cancelled_at', null).or('open_state.is.null,open_state.not.in.(Solved,Cancelled),reopened_at.not.is.null');
+}
+
 // Supabase caps a single response at ~1000 rows, so page through with range()
 // until the register is fully loaded (or `limit` reached).
-export async function listCalls(callType = '', limit = 20000): Promise<Record<string, unknown>[]> {
+export async function listCalls(callType = '', limit = 20000, openOnly = false): Promise<Record<string, unknown>[]> {
   const PAGE = 1000;
   const out: Record<string, unknown>[] = [];
   for (let from = 0; from < limit; from += PAGE) {
     // Read the type's own table (isolated); the union view only for "all".
-    const q = orderCalls(must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null), callType).range(from, Math.min(from + PAGE, limit) - 1);
+    let base = must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null);
+    if (openOnly) base = onlyOpen(base);
+    const q = orderCalls(base, callType).range(from, Math.min(from + PAGE, limit) - 1);
     const { data, error } = await q;
     if (error) throw new Error(errMsg(error));
     const rows = data ?? [];
@@ -308,7 +320,7 @@ export async function listCalls(callType = '', limit = 20000): Promise<Record<st
 // Server-side register search. Field-specific terms AND together (each an
 // ilike on its column); the global term ORs across the common columns. RLS
 // already scopes the result to what the user may see.
-export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string; status?: string }
+export interface CallSearch { q?: string; ucn?: string; serial?: string; partyName?: string; productName?: string; engineer?: string; status?: string; openOnly?: boolean }
 const _san = (t: string) => t.replace(/[%,()]/g, ' ').trim();
 /** A value picked from a list, as an ILIKE pattern that matches it WHOLE:
  *  only the pattern's own characters (\ % _) are escaped -- a comma or a
@@ -316,6 +328,7 @@ const _san = (t: string) => t.replace(/[%,()]/g, ' ').trim();
 export const likeWhole = (v: string) => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 export async function searchCalls(callType: string, terms: CallSearch, limit = 1000): Promise<Record<string, unknown>[]> {
   let q = orderCalls(must().from(callTable(callType)).select('*').is(HISTORICAL_MARK, null), callType).limit(limit);
+  if (terms.openOnly) q = onlyOpen(q);
   if (terms.ucn) q = q.ilike('ucn', `%${_san(terms.ucn)}%`);
   if (terms.serial) q = q.ilike('serial', `%${_san(terms.serial)}%`);
   if (terms.partyName) q = q.ilike('party_name', `%${_san(terms.partyName)}%`);

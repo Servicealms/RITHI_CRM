@@ -162,8 +162,8 @@ export async function pingSheet(): Promise<PingResult> {
 }
 
 // List calls from a tab. Returns records keyed by app keys.
-export async function listFieldCalls(type = '', limit = 0, tab = ''): Promise<Record<string, unknown>[]> {
-  if (sb.supabaseConfigured()) return sb.listCalls(sb.callTypeForTab(tab), limit || 100000);
+export async function listFieldCalls(type = '', limit = 0, tab = '', openOnly = false): Promise<Record<string, unknown>[]> {
+  if (sb.supabaseConfigured()) return sb.listCalls(sb.callTypeForTab(tab), limit || 100000, openOnly);
   const params: Record<string, string> = { action: 'list' };
   if (type) params.type = type;
   if (limit) params.limit = String(limit);
