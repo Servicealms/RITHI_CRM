@@ -307,9 +307,12 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   const yearTabs = useMemo(() => {
     const ys = [...new Set(groups.map((g) => g.record_year).filter((y): y is number => y != null))].sort((a, b) => b - a);
     const count = (y: number | null) => groups.filter((g) => g.record_year === y).reduce((n, g) => n + g.calls, 0);
-    return [...ys.map((y) => ({ key: String(y), label: String(y), n: count(y) })),
-      ...(groups.some((g) => g.record_year == null) ? [{ key: 'undated', label: 'Undated', n: count(null) }] : []),
-      { key: 'all', label: 'All years', n: groups.reduce((n, g) => n + g.calls, 0) }];
+    // ALL YEARS FIRST, then the years newest first (the user, 2026-11-28:
+    // "Move All Years as the first tab then go Descending"); Undated last. The
+    // page opens on the first tab, All years.
+    return [{ key: 'all', label: 'All years', n: groups.reduce((n, g) => n + g.calls, 0) },
+      ...ys.map((y) => ({ key: String(y), label: String(y), n: count(y) })),
+      ...(groups.some((g) => g.record_year == null) ? [{ key: 'undated', label: 'Undated', n: count(null) }] : [])];
   }, [groups]);
   useEffect(() => {
     if (!cfg.yearTabs || tab || sumBusy) return;

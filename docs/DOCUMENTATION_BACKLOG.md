@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.303 — Call History: All years first (2026-11-28)
+- Asked: "Move All Years as the first tab then go Descending." Tabs: All years, years newest first, Undated; opens on All years (the first tab).
+- Also: supabase/apply/_call_history_open_calls_migrated.sql (read-only, counts only, one grid) -- per year x loaded-as register x file Call Status x file Open/Close: in the same live register by UCN / another / none, found by Call Number only, and the live copy's state. Asked: "All Open Calls from Previous year were migrated to the Current Call register ... check and Confirm".
+- Write up: HOW_TO_USE Call History (tab order).
+
 ## v0.10.302 — Call History dropdowns refreshed with the summary (2026-11-28)
 - Reported: "Product, Engineer, Call Status Drop down is blank in Call History - Search / Filter".
 - callHistoryChoices() was called once on mount and its error swallowed; now called in loadSummary (open, Refresh, after upload / delete), the pickers show loading, and a failure is shown in the summary's error banner. The view itself (call_history_choices) answered correctly when tested on a database.
