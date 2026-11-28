@@ -837,7 +837,8 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
     // "This is no longer true"): the busy state says it is loading.
     if (!onDb) setBanner({ tone: 'info', text: 'Loading calls from the Google Sheet…' });
     try {
-      const rows = await listFieldCalls('', limit, config.tab);
+      // Open only is asked of the SERVER (the user, 2026-11-28).
+      const rows = await listFieldCalls('', limit, config.tab, openOnly);
       // Replace the synced cache; keep locally-pending rows.
       db.removeWhere(config.collection, (r) => !!(r as Rec)._synced);
       // Insert oldest-first so the newest sit on top after the reverse in
@@ -921,8 +922,8 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
       setBusy(true);
       try {
         const rows = active
-          ? (await searchCalls(config.callType, srch, SEARCH_CAP)) as unknown as Rec[]
-          : (await listFieldCalls('', loadLimit, config.tab)) as unknown as Rec[];
+          ? (await searchCalls(config.callType, { ...srch, openOnly }, SEARCH_CAP)) as unknown as Rec[]
+          : (await listFieldCalls('', loadLimit, config.tab, openOnly)) as unknown as Rec[];
         const capped = active && rows.length >= SEARCH_CAP;
         setSearchCapped(capped);
         applyRows(rows);
@@ -933,7 +934,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
           ? (capped
             ? `${SEARCH_CAP.toLocaleString()}+ matches — the search stopped at ${SEARCH_CAP.toLocaleString()}. Narrow it to see the rest.`
             : `${rows.length} match${rows.length === 1 ? '' : 'es'} for your search (server-side).`)
-          : `Showing ${rows.length} ${config.singular.toLowerCase()}s${rows.length >= loadLimit ? ' — Load more for older' : ''}; search finds any call.` });
+          : `Showing ${rows.length}${openOnly ? ' open' : ''} ${config.singular.toLowerCase()}s${rows.length >= loadLimit ? ' — Load more for older' : ''}; search finds any call.` });
       } catch (e) {
         // NO SIGNAL: THE OPEN CALLS KEPT ON THIS DEVICE (the user, 2026-11-27).
         // Open calls only -- solved and cancelled ones need the server -- and a
@@ -945,7 +946,7 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
     }, active ? 350 : 0);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [srch, onDb, loadLimit]);
+  }, [srch, onDb, loadLimit, openOnly]);
 
   // Arriving with a prefill (Product Database / pending) opens the create drawer;
   // arriving with editUcn opens the existing call in edit mode.

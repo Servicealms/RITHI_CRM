@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.314',
+    date: '2026-11-28',
+    title: 'Call registers: Open only is a server search',
+    changes: [
+      'On the Field, Installation and PM call registers, “Open only” now asks the server for the open calls of the whole register — not just the open ones among the calls already loaded. It works with every search box, and Load more brings older open calls.',
+      'Open means not cancelled, and not solved unless the call was re-opened — the same as the register shows.',
+    ],
+  },
+  {
     version: '0.10.313',
     date: '2026-11-28',
     title: 'Product Status Check: every call against its cover at registration',
