@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.295 — Call History: load who/when only on the summary (2026-11-28)
+- Asked: "Dont keep tab of Who Uploaded or When it was Uploaded in the View - Move it to the Summary or Log."
+- loaded_at / loaded_by taken off each call's row on the client (withoutLoad): not in the drawer, the list's column picker or the Excel/CSV ("Loaded At" dropped). The summary (Uploads & summary tab) keeps Last loaded / By per year x source x call type. Still stored on the row (the summary is counted from it). DCCR History unchanged.
+- Write up: with v0.10.294.
+
 ## v0.10.294 — Call History: Calls / Uploads tabs; a call opens in a drawer (2026-11-28)
 - Asked: "Keep the Log and Upload option in a Separate Tab in Call History.. Also the Summary goes there. When i click on the Row, I want the Inform to come up in a Drawer or Pop Up." Asked what "Log" is: THE SUMMARY IS THE LOG -- no separate upload log (none exists: a Call History upload writes no audit line; only each row's loaded_at / loaded_by).
 - Call History only (DCCR History keeps one page): tab Calls (default; year tabs, search, list) and tab Uploads & summary (upload + "What has been loaded"). A summary row opens its year on the Calls tab.

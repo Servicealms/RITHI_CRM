@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.295',
+    date: '2026-11-28',
+    title: 'Call History: who loaded a call, and when, only on the summary',
+    changes: [
+      'A call in Call History no longer shows who uploaded it or when — not in its drawer, not among the list’s columns and not in the Excel / CSV download.',
+      'That is on the Uploads & summary tab: each year, source and call type shows when it was last loaded and by whom.',
+    ],
+  },
+  {
     version: '0.10.294',
     date: '2026-11-28',
     title: 'Call History: a Calls tab and an Uploads tab; a call opens in a drawer',
