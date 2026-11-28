@@ -815,4 +815,9 @@ th.rbac-col-admin { color: var(--text-muted); }
 /* Call History's opened call: Pending Registrations' three panes (2026-11-28). */
 .ch-pane-group { margin-bottom: 14px; }
 .ch-pane-group .rep-sec-title { margin: 6px 0 2px; }
+.ch-pane-sum { cursor: pointer; }
+/* Field name and value on ONE line: the name in a fixed share, the value
+   beside it, wrapping within its own column when it is long. */
+.ch-kv { display: grid; grid-template-columns: minmax(110px, 42%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.ch-kv .reg-detail-v { margin-top: 0; }
 .ch-drive { display: flex; align-items: center; min-height: 32px; margin-bottom: 12px; }

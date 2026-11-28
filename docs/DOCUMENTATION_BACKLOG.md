@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.306 — Call History panes: draggable, inline values, folding sections (2026-11-28)
+- Asked: "Make the pane dividers draggable like Pending Registration. Arrange the Value next to the Field Name, Dont go to Next Line. And I still want to be able to Collapse Sections."
+- Dividers: Pending Registrations' drag rule (each of the first two panes 15-60%, together <= 70%), widths in localStorage rithi.callhistory.cols (default 36 / 32). Rows: .ch-kv grid -- name (min 110px, 42%) | value beside it. Sections: <details open> with the section title as the summary.
+- Write up: with v0.10.305.
+
 ## v0.10.305 — Call History: three panes like Pending Registrations; status colours (2026-11-28)
 - Asked: "Split it into 3 Column Screen, Screen 1 - Call Details, Complaint, Screen 2 Visit Details, Screen 3 Spare Consumption. Add the Drive Link at the Top of Screen 2"; "Remove both Recorded as and Remarks columns"; "Add the Solved / Unsolved Colour Coding. For Solved - Mark it as Solved In Winmax, for Solved - Waiting for Manual Report - Make these as Light Green"; "Match the UI with how it looks in Pending Registration".
 - The opened call uses Pending Registrations' overlay and panes (reg-overlay / reg-split-3, label-over-value reg-detail-rows, fixed 36% | 32% | rest, stacks under 1100px; Esc / ✕ / outside click close). Pane 1 Call details: Registration, Customer & Product, Warranty & Contract, Complaint (+ Other columns in the file). Pane 2 Visit details: Drive Link button first, Visit & Report, Call Status. Pane 3 Spare consumption: Part, Qty, Date, Engineer.
