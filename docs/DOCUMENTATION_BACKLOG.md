@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.292 — Call History emptied once, for a clean re-load (2026-11-28)
+- Asked: "Clean up what is already Loaded in Call History"; chosen: "Delete everything and re-load".
+- 0502 (daily_review): TRUNCATE call_history (parent + every year's table), ONCE -- guarded by public.one_time_data_fixes row '0502_call_history_emptied' (new marker table: RLS on, no API access), so a re-run of daily_review.sql is a no-op and never deletes the re-load. Prints the count removed (numbers only). NOT touched: dccr_call_history, call_history_pre_split (0501's one-table copy -- the only way back; still to be dropped when the user says), upload audit lines. _status.sql row 408; suite call_history_emptied_test.
+- Write up: BACKLOG (re-load pending: upload each yearly file again); HOW_TO_USE Call History (nothing to say beyond the re-load); CLAUDE.md pattern note (a one-time data change in a re-runnable bundle needs a done-marker).
+
 ## v0.10.291 — Call History: Drive Link column (2026-11-28)
 - Asked: "one more Column for 'Drive Link' - Which should present as a Drive Link." Chosen: the FILES CARRY IT (no Drive lookup from Service Report).
 - Column 38, after Service Report, screen + Excel/CSV. Read from `extra` (headings Drive Link / Drive URL / Google Drive Link / Drive, squash-matched); no migration. Shown as "Open in Drive ↗" (new tab): http(s) address as given; a bare Drive file id (25+ of A-Za-z0-9_-) -> https://drive.google.com/file/d/<id>/view; anything else shown as text, no link (driveHref, callHistoryFormat.ts). The export carries the address as text.

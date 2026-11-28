@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.292',
+    date: '2026-11-28',
+    title: 'Call History emptied for a clean re-load',
+    changes: [
+      'Everything loaded into Call History so far has been removed — every year and every source — so the files can be uploaded again in the F/I Call Register format, with their call dates read correctly.',
+      'This was done once. Uploading again is safe: nothing will empty Call History a second time.',
+      'DCCR History is a separate register and was not touched.',
+    ],
+  },
+  {
     version: '0.10.291',
     date: '2026-11-28',
     title: 'Call History: a Drive Link column',

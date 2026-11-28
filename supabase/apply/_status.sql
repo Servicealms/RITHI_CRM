@@ -2507,7 +2507,10 @@ with checks(sort_order, bundle, provides, present) as (
         and not exists (select 1 from pg_inherits i join pg_class c on c.oid = i.inhrelid
                          where i.inhparent = to_regclass('public.call_history')
                            and (not c.relrowsecurity or has_table_privilege('authenticated', c.oid, 'select')
-                                or has_table_privilege('anon', c.oid, 'select'))))
+                                or has_table_privilege('anon', c.oid, 'select')))),
+    (408, 'Call History emptied once for a clean re-load', 'Call History was emptied ONCE (0502, the user 2026-11-28: "Delete everything and re-load"), and the record that it was is kept in one_time_data_fixes, so re-running the bundle never empties it again. NO means 0502 has not run (Call History still holds what was loaded before), or its record is missing -- and then a re-run WOULD empty it again. Restore: daily_review.sql (0502)',
+        to_regclass('public.one_time_data_fixes') is not null
+        and exists (select 1 from public.one_time_data_fixes where name = '0502_call_history_emptied'))
 )
 select bundle,
        case when present then 'yes' else 'NO  <-- apply this' end as applied,
