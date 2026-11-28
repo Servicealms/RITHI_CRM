@@ -285,3 +285,6 @@ html, body { max-width: 100%; overflow-x: hidden; }
 }
 .svc-report-link:hover { background: var(--primary); color: #fff; }
 .svc-report-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* Open in Drive: the same chip, light, so it reads as the second of a pair. */
+.svc-drive-link { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.svc-drive-link:hover { background: var(--surface-alt, var(--surface)); color: var(--text); }
