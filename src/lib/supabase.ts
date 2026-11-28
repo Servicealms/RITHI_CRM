@@ -6052,6 +6052,31 @@ export async function callHistorySpares(ucn: string): Promise<HistorySpare[]> {
   ];
 }
 
+/** What one Drive Report Links upload did (0505). */
+export interface DriveLinkResult {
+  rows: number; mapped: number; blank_uid: number; already: number; not_found: number; bad_link: number;
+  already_uids: string[]; not_found_uids: string[]; bad_link_uids: string[];
+}
+/** Map Drive report links to live visits by their UID (0505), 500 at a time.
+ *  Only a visit with no report link is filled; nothing is created. */
+export async function mapReportDriveLinks(rows: { uid: string; link: string }[],
+  onProgress?: (done: number, total: number) => void): Promise<DriveLinkResult> {
+  const c = must();
+  const sum: DriveLinkResult = { rows: 0, mapped: 0, blank_uid: 0, already: 0, not_found: 0, bad_link: 0,
+    already_uids: [], not_found_uids: [], bad_link_uids: [] };
+  for (let i = 0; i < rows.length; i += 500) {
+    const { data, error } = await c.rpc('map_report_drive_links', { p_rows: rows.slice(i, i + 500) });
+    if (error) throw new Error(`${errMsg(error)} (${sum.mapped} mapped before it stopped)`);
+    const r = data as DriveLinkResult;
+    sum.rows += r.rows; sum.mapped += r.mapped; sum.blank_uid += r.blank_uid;
+    sum.already += r.already; sum.not_found += r.not_found; sum.bad_link += r.bad_link;
+    sum.already_uids.push(...(r.already_uids ?? [])); sum.not_found_uids.push(...(r.not_found_uids ?? []));
+    sum.bad_link_uids.push(...(r.bad_link_uids ?? []));
+    onProgress?.(Math.min(i + 500, rows.length), rows.length);
+  }
+  return sum;
+}
+
 export async function countTable(table: string): Promise<number | null> {
   const c = getSupabase(); if (!c) return null;
   const { count, error } = await c.from(table).select('*', { count: 'exact', head: true });

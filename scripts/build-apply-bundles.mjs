@@ -1181,7 +1181,9 @@ const MODULES = {
             // Checked / corrected from a cut-out (0488).
             '0488_visit_report_crop_review.sql',
             // Corrected Visit Dates as a report (0489).
-            '0489_visit_date_corrections.sql'],
+            '0489_visit_date_corrections.sql',
+            // Drive report links mapped to live visits by UID (0505).
+            '0505_report_drive_links.sql'],
   },
   handstock: {
     // Written to the repo root as HandStock_X.sql, alongside Spare_1.sql — it
