@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.291 — Call History: Drive Link column (2026-11-28)
+- Asked: "one more Column for 'Drive Link' - Which should present as a Drive Link." Chosen: the FILES CARRY IT (no Drive lookup from Service Report).
+- Column 38, after Service Report, screen + Excel/CSV. Read from `extra` (headings Drive Link / Drive URL / Google Drive Link / Drive, squash-matched); no migration. Shown as "Open in Drive ↗" (new tab): http(s) address as given; a bare Drive file id (25+ of A-Za-z0-9_-) -> https://drive.google.com/file/d/<id>/view; anything else shown as text, no link (driveHref, callHistoryFormat.ts). The export carries the address as text.
+- Write up: HOW_TO_USE Call History (columns) + Bulk Uploads Call History (add a Drive Link column to the file); FRS-295.
+
 ## v0.10.290 — Call History in the F/I Call Register format (2026-11-28)
 - Asked (with "24_v0 - F_I Call Register - Field 24.csv"): "I need the Call History in this Format."
 - Call History's list AND its Excel/CSV: the register's 37 columns, its order, its headings (misspelling "Call Registeration Date" kept), then Register (chosen at upload), Source, Year, Duplicate (+ Loaded At in the file). DCCR History unchanged. Spec: src/lib/callHistoryFormat.ts (CALL_HISTORY_FORMAT).

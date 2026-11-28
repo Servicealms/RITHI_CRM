@@ -12,7 +12,8 @@ import { loadFailure } from '../lib/dberror';
 import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
-import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow } from '../lib/callHistoryFormat';
+import { safeUrl } from '../lib/safeUrl';
+import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref } from '../lib/callHistoryFormat';
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
@@ -119,6 +120,13 @@ const FORMAT_COLUMNS: Column<Row>[] = [
     wrap: c.header === 'UC Number' ? false : undefined,
     render: c.kind === 'date' ? (r) => day(r[formatKey(i)])
       : c.kind === 'datetime' ? (r) => (r[formatKey(i)] ? formatDayTime(r[formatKey(i)]) : '')
+      : c.kind === 'link' ? (r) => {
+        const v = String(r[formatKey(i)] ?? '');
+        const href = driveHref(v);
+        return href
+          ? <a href={safeUrl(href)} target="_blank" rel="noopener noreferrer" title={href} onClick={(e) => e.stopPropagation()}>Open in Drive ↗</a>
+          : v;
+      }
       : undefined,
   })),
   { key: 'register', header: 'Register (chosen at upload)', width: 110 },
