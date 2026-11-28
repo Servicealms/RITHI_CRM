@@ -8373,7 +8373,7 @@ console.log('\n-- Product Failure Analysis: the four things asked for --');
   // file directly". Every LIVE register still normalises.
   eq('...and no register still takes it as plain text, Call History apart',
     (up.match(/TEXT\('item_status'/g) ?? []).length === 1
-      && /key: 'call_history'[\s\S]{0,5000}TEXT\('item_status'/.test(up), true);
+      && /key: 'call_history'[\s\S]{0,6000}TEXT\('item_status'/.test(up), true);
   eq('the PM importer normalises cover',
     /col === 'item_status' \? coverCode\(val\)/.test(readFileSync('src/lib/pmImport.ts', 'utf8')), true);
   eq('the AppSheet cover export normalises its own spelling of it',

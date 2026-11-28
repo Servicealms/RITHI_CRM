@@ -5901,7 +5901,7 @@ export interface CallHistoryGroup {
 export type HistoryKind = 'call' | 'dccr';
 const HISTORY = {
   call: { table: 'call_history',
-          cols: 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,contract_type,call_status,solved_at,source,record_year,duplicate,loaded_at,loaded_by' },
+          cols: 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,warranty_start,contract_type,call_status,solved_at,source,record_year,duplicate,loaded_at,loaded_by,extra' },
   // No source or duplicate columns: one source, nothing to be a duplicate of.
   dccr: { table: 'dccr_call_history',
           cols: 'id,ucn,call_no,call_at,call_type,register,party_name,state,city,engineer,item_code,item_name,serial,standard_complaint,complaint_reported,item_status,contract_type,call_status,solved_at,record_year,loaded_at,loaded_by' },

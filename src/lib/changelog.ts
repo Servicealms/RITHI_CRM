@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.290',
+    date: '2026-11-28',
+    title: 'Call History in the F/I Call Register format',
+    changes: [
+      'The Call History list and its Excel / CSV download now carry the F/I Call Register\u2019s 37 columns, in its order and under its headings — UC Number, Call Number, Call Registeration Date, Complaint Date and so on to Call Canceled Date — followed by the Register chosen at upload, Source, Year and Duplicate.',
+      'Columns such as Warranty Number, Contract Number, Engineer Email, Region, Job Done and Service Report are shown from what the uploaded file carried; a file that did not carry a column shows it blank.',
+      'The upload now reads the register\u2019s “Call Registeration Date” as the call date, so those calls are dated, and go to the year of that date, instead of Undated.',
+    ],
+  },
+  {
     version: '0.10.289',
     date: '2026-11-28',
     title: 'Call History: stored year by year, a tab per year, and the Field Call search',

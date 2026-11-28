@@ -1414,7 +1414,12 @@ export const UPLOADS: UploadDef[] = [
     cols: [
       { to: 'ucn', from: ['uc no.', 'uc no', 'uc number', 'ucn'], required: true },
       TEXT('call_no', 'call no.', 'call no', 'call number'),
-      TS('call_at', 'call date & time', 'call date and time', 'call date', 'call registration date', 'date'),
+      // "Call Registeration Date" is how the F/I Call Register spells it (the
+      // user's 2024 file, 2026-11-28): one letter off, so no pass matched it and
+      // the call date went into `extra` -- and with no Year chosen, the call
+      // went to Undated.
+      TS('call_at', 'call date & time', 'call date and time', 'call date', 'call registration date',
+         'call registeration date', 'date'),
       TEXT('call_type', 'call type'),
       TEXT('party_name', 'party', 'party name', 'customer name'),
       TEXT('state', 'state'),
