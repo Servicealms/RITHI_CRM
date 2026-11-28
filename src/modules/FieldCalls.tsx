@@ -1160,6 +1160,19 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
   const isPm = config.tab === 'PM';
   const missedOf = (row: Rec) => (isPm && isMissedPm(row.regDate, row.addedOn) ? MISSED_PM_LABEL : 'Not a Missed PM');
   const [missedPmFilter, setMissedPmFilter] = useState('');
+  // RESET FILTERS (the user, 2026-11-28: "Add Reset Filter Option"): every
+  // search box and picker, the Open only / Re-opened toggles and the Engineer,
+  // Pending Reason and Missed PM chips, back to how the register opens -- Open
+  // only stays ON for an engineer, as it starts.
+  const openOnlyDefault = user?.rbacRole === 'engineer';
+  const BLANK_SEARCH = { ucn: '', productName: '', serial: '', partyName: '', engineer: '', status: '', q: '' };
+  const filtersSet = Object.values(srch).some((v) => String(v).trim() !== '')
+    || openOnly !== openOnlyDefault || reopenedOnly || !!engineerFilter || !!pendingReasonFilter || !!missedPmFilter;
+  const resetFilters = () => {
+    setSrch(BLANK_SEARCH);
+    setOpenOnly(openOnlyDefault); setReopenedOnly(false);
+    setEngineerFilter(''); setPendingReasonFilter(''); setMissedPmFilter('');
+  };
 
   // The strip's counts come from the rows that pass everything else, so a name
   // shows what clicking it would actually give you.
@@ -1673,6 +1686,10 @@ function CallSheetModule({ config }: { config: CallSheetConfig }) {
               title="Calls that were closed and put back on the list"
             >
               ↻ Re-opened{reopenedCount ? <b>{reopenedCount}</b> : null}
+            </button>
+            <button className="btn btn-sm btn-ghost" onClick={resetFilters} disabled={!filtersSet}
+              title="Clear every search and filter on this register">
+              ✕ Reset filters
             </button>
             {pendingCount > 0 && (
               <button className="btn btn-sm btn-primary" onClick={() => void syncPending()} disabled={busy || !configured}>
