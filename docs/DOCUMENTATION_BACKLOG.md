@@ -23,6 +23,12 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.305 — Call History: three panes like Pending Registrations; status colours (2026-11-28)
+- Asked: "Split it into 3 Column Screen, Screen 1 - Call Details, Complaint, Screen 2 Visit Details, Screen 3 Spare Consumption. Add the Drive Link at the Top of Screen 2"; "Remove both Recorded as and Remarks columns"; "Add the Solved / Unsolved Colour Coding. For Solved - Mark it as Solved In Winmax, for Solved - Waiting for Manual Report - Make these as Light Green"; "Match the UI with how it looks in Pending Registration".
+- The opened call uses Pending Registrations' overlay and panes (reg-overlay / reg-split-3, label-over-value reg-detail-rows, fixed 36% | 32% | rest, stacks under 1100px; Esc / ✕ / outside click close). Pane 1 Call details: Registration, Customer & Product, Warranty & Contract, Complaint (+ Other columns in the file). Pane 2 Visit details: Drive Link button first, Visit & Report, Call Status. Pane 3 Spare consumption: Part, Qty, Date, Engineer.
+- Colours: list's UC Number and Call Status columns and the pane: RITHI's STATE_COLOUR by bucket; plain "Solved" relabelled "Solved In Winmax" (historyStatusLabel -- list, pane, download, status dropdown; stored as the file had it); it and "Solved - Waiting for Manual Report" light green HISTORY_SOLVED_LIGHT (#a5d6a7 / #1b5e20, callstate.tsx, same in both themes).
+- Write up: HOW_TO_USE Call History (the panes, the colours, "Solved In Winmax").
+
 ## v0.10.304 — Call History: spares consumed on each call (2026-11-28)
 - Asked: "I want to link the Consumption for these Historical Calls. I Think the Data is already there." Probe _call_history_consumption_link.sql (live, 2026-11-28): spare_consumption_history 39,724 lines, 38,073 name a Call History UCN, 0 a live call, 1,647 neither; spare_consumption 11,335 lines, 624 name a Call History UCN, 10,681 a live call. Calls with historical consumption: 2022 3,119 / 18,414, 2023 4,663 / 6,483, 2024 5,162 / 6,652, 2025 5,165 / 6,739.
 - No data change: linked at read time by UC No. (exact). callHistorySpares(ucn) reads both tables (up to 500 lines each), under the reader's RLS (sch_read / cons_read). Pop-up section "Spares consumed (n)": Part, Qty, Date, Engineer, Recorded as (Historical / RITHI · source), Remarks.

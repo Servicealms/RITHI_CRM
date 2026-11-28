@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable, type Column } from '../components/table/DataTable';
-import { PageHeader, SectionCard, Toolbar, SearchBox, Modal } from '../components/ui/ui';
+import { PageHeader, SectionCard, Toolbar, SearchBox } from '../components/ui/ui';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useAuth } from '../lib/auth';
 import { csvExport, fmtLongDate } from '../lib/format';
@@ -13,7 +13,8 @@ import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
 import { safeUrl } from '../lib/safeUrl';
-import { CALL_HISTORY_FORMAT, HISTORY_SECTIONS, formatKey, shapeHistoryRow, driveHref, otherExtra } from '../lib/callHistoryFormat';
+import { CALL_HISTORY_FORMAT, HISTORY_SECTIONS, formatKey, shapeHistoryRow, driveHref, otherExtra, historyStatusLabel, isLightSolved } from '../lib/callHistoryFormat';
+import { StateBadge, HISTORY_SOLVED_LIGHT, stateColour } from '../lib/callstate';
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   listCallHistoryUploads, deleteCallHistoryUpload, type CallHistoryUpload,
@@ -123,7 +124,9 @@ const FORMAT_COLUMNS: Column<Row>[] = [
     key: formatKey(i), header: c.header,
     width: c.kind ? 120 : /Party|Complaint|Job|Observation|Report|Reason/.test(c.header) ? 200 : 130,
     wrap: c.header === 'UC Number' ? false : undefined,
-    render: c.kind === 'date' ? (r) => day(r[formatKey(i)])
+    render: c.header === 'UC Number' ? (r) => <HistoryUcn ucn={r[formatKey(i)]} status={r.call_status} />
+      : c.header === 'Call Status' ? (r) => <HistoryStatus status={r.call_status} />
+      : c.kind === 'date' ? (r) => day(r[formatKey(i)])
       : c.kind === 'datetime' ? (r) => (r[formatKey(i)] ? formatDayTime(r[formatKey(i)]) : '')
       : c.kind === 'link' ? (r) => {
         const v = String(r[formatKey(i)] ?? '');
@@ -343,7 +346,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
     : [year && `year ${year}`, source && `source ${source}`, register && `call type ${register}`,
        dupOnly && 'duplicates only', qLive.trim() && `search: ${qLive.trim()}`]).filter(Boolean).join(' · ') || 'every history call';
   const opt = (k: 'product' | 'engineer' | 'status') =>
-    choices[k].map((c) => ({ value: c.value, label: `${c.value} (${c.calls.toLocaleString()})` }));
+    choices[k].map((c) => ({ value: c.value, label: `${k === 'status' ? historyStatusLabel(c.value) : c.value} (${c.calls.toLocaleString()})` }));
 
   const [dl, setDl] = useState(false);
   const download = async (fileKind: 'xlsx' | 'csv') => {
@@ -582,12 +585,32 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
       </>}
 
       {opened && (
-        <Modal open onClose={() => setOpened(null)} title={`Call History — ${String(opened.ucn ?? '')}`} width={760}>
-          <CallDetail row={opened} />
-        </Modal>
+        <CallDetail row={opened} onClose={() => setOpened(null)} />
       )}
     </div>
   );
+}
+
+// THE STATUS COLOUR CODE ON CALL HISTORY (the user, 2026-11-28: "Add the
+// Solved / Unsolved Colour Coding"): RITHI's own -- Unattended red, Unsolved
+// blue, Report pending pink, Solved green, Cancelled grey -- with a call the
+// old system closed without a completed report in LIGHT GREEN.
+function HistoryStatus({ status }: { status: unknown }) {
+  const text = historyStatusLabel(status);
+  if (!text) return <span className="muted">—</span>;
+  if (isLightSolved(text)) {
+    return <span className="state-chip" style={{ background: HISTORY_SOLVED_LIGHT.bg, color: HISTORY_SOLVED_LIGHT.fg }}
+      title={`Closed in the old system without a completed report — ${text}`}>{text}</span>;
+  }
+  return <StateBadge state={text} label={text} />;
+}
+/** The UC No., carrying its call's status colour as it does everywhere. */
+function HistoryUcn({ ucn, status }: { ucn: unknown; status: unknown }) {
+  const text = String(ucn ?? '').trim();
+  if (!text) return <span className="muted">—</span>;
+  const c = isLightSolved(historyStatusLabel(status)) ? HISTORY_SOLVED_LIGHT : stateColour(status);
+  if (!c) return <span className="ucn-plain">{text}</span>;
+  return <span className="ucn-chip" style={{ background: c.bg, color: c.fg }} title={`${text} — ${historyStatusLabel(status)}`}>{text}</span>;
 }
 
 // NOT SHOWN IN THE OPENED CALL (the user, 2026-11-28: "I want to Hide certain
@@ -598,28 +621,15 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
 // (Taken out of the format altogether since -- the user removed them from the source.)
 const HIDDEN_IN_POPUP = new Set<string>();
 
-function DetailRows({ rows }: { rows: [string, React.ReactNode][] }) {
-  return (
-    <table className="assoc-table" style={{ width: '100%' }}>
-      <tbody>
-        {rows.map(([k, v]) => (
-          <tr key={k}>
-            <th style={{ width: '40%', textAlign: 'left', verticalAlign: 'top', fontWeight: 600 }}>{k}</th>
-            <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{v === '' || v == null ? <span className="muted">—</span> : v}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
 /** One history call in full: the register's columns in its order, then what
  *  RITHI recorded about the load, then any other column the file carried. */
-function CallDetail({ row }: { row: Row }) {
+function CallDetail({ row, onClose }: { row: Row; onClose: () => void }) {
   const shown = (i: number): React.ReactNode => {
     const c = CALL_HISTORY_FORMAT[i];
     const v = row[formatKey(i)];
     if (v == null || String(v).trim() === '') return '';
+    if (c.header === 'Call Status') return <HistoryStatus status={row.call_status} />;
+    if (c.header === 'UC Number') return <HistoryUcn ucn={v} status={row.call_status} />;
     if (c.kind === 'date') return day(v);
     if (c.kind === 'datetime') return formatDayTime(v);
     if (c.kind === 'link') {
@@ -640,49 +650,94 @@ function CallDetail({ row }: { row: Row }) {
       .catch((e) => { if (live) setSparesErr(e instanceof Error ? e.message : String(e)); });
     return () => { live = false; };
   }, [row.ucn]);
-  return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      {HISTORY_SECTIONS.map((sec) => (
-        <details key={sec} open>
-          <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>{sec}</summary>
-          <DetailRows rows={CALL_HISTORY_FORMAT.flatMap((c, i) => (c.section === sec && !HIDDEN_IN_POPUP.has(c.header) ? [[c.header, shown(i)] as [string, React.ReactNode]] : []))} />
-        </details>
+  // THREE PANES, LIKE PENDING REGISTRATIONS (the user, 2026-11-28: "Split it
+  // into 3 Column Screen ... Match the UI with how it looks in Pending
+  // Registration"): the same overlay, panes, heads and label-over-value rows
+  // (reg-split-3), stacked on a narrow screen. Call Details and Complaint |
+  // the Drive Link, then the visit and its outcome | the spares consumed.
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [onClose]);
+  const rowsOf = (sec: string, skip?: string) => CALL_HISTORY_FORMAT.flatMap((c, i) =>
+    (c.section === sec && c.header !== skip && !HIDDEN_IN_POPUP.has(c.header) ? [[c.header, shown(i)] as [string, React.ReactNode]] : []));
+  const group = (title: string, items: [string, React.ReactNode][]) => (
+    <div key={title} className="ch-pane-group">
+      <div className="rep-sec-title">{title}</div>
+      {items.map(([k, v]) => (
+        <div className="reg-detail-row" key={k}>
+          <div className="reg-detail-k">{k}</div>
+          <div className="reg-detail-v">{v === '' || v == null ? <span className="muted">—</span> : v}</div>
+        </div>
       ))}
-      <details open>
-        <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>
-          Spares consumed{spares ? ` (${spares.length})` : ''}
-        </summary>
-        {sparesErr && <div className="sheet-banner sheet-banner-error"><span>Could not read the spares: {sparesErr}</span></div>}
-        {!sparesErr && spares === null && <p className="muted" style={{ margin: 0 }}>Loading…</p>}
-        {spares && spares.length === 0 && <p className="muted" style={{ margin: 0 }}>No spare is recorded against this UC No.</p>}
-        {spares && spares.length > 0 && (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="assoc-table" style={{ width: '100%' }}>
-              <thead>
-                <tr><th>Part</th><th style={{ textAlign: 'right' }}>Qty</th><th>Date</th><th>Engineer</th><th>Recorded as</th><th>Remarks</th></tr>
-              </thead>
-              <tbody>
-                {spares.map((x, i) => (
-                  <tr key={i}>
-                    <td>{x.part}</td>
-                    <td style={{ textAlign: 'right' }}>{x.qty ?? ''}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{x.at ? formatDay(x.at) : ''}</td>
-                    <td>{x.engineer}</td>
-                    <td>{x.from === 'Historical' ? `Historical${x.how ? ` · ${x.how}` : ''}` : `RITHI${x.how ? ` · ${x.how}` : ''}`}</td>
-                    <td>{x.remarks}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    </div>
+  );
+  const driveIdx = CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link');
+  const driveVal = driveIdx >= 0 ? String(row[formatKey(driveIdx)] ?? '').trim() : '';
+  const driveUrl = driveHref(driveVal);
+  return (
+    <div className="reg-overlay" onMouseDown={onClose}>
+      <div className="reg-split reg-split-3" onMouseDown={(e) => e.stopPropagation()}
+        style={{ gridTemplateColumns: '36% 6px 32% 6px 1fr' }}>
+        <aside className="reg-split-left">
+          <div className="reg-split-head">
+            <span>📄 Call details · <HistoryUcn ucn={row.ucn} status={row.call_status} /></span>
           </div>
-        )}
-      </details>
-      {others.length > 0 && (
-        <details open>
-          <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 6 }}>Other columns in the file</summary>
-          <DetailRows rows={others} />
-        </details>
-      )}
+          <div className="reg-detail-list">
+            {group('Registration', rowsOf('Registration'))}
+            {group('Customer & Product', rowsOf('Customer & Product'))}
+            {group('Warranty & Contract', rowsOf('Warranty & Contract'))}
+            {group('Complaint', rowsOf('Complaint'))}
+            {others.length > 0 && group('Other columns in the file', others)}
+          </div>
+        </aside>
+        <div className="reg-gutter" />
+        <section className="reg-split-right">
+          <div className="reg-split-head"><span>🛠 Visit details</span></div>
+          <div className="reg-split-body">
+            <div className="ch-drive">
+              {driveUrl
+                ? <a className="btn btn-sm btn-primary" href={safeUrl(driveUrl)} target="_blank" rel="noopener noreferrer">📎 Open in Drive ↗</a>
+                : <span className="muted">{driveVal ? `Drive Link: ${driveVal}` : 'No Drive Link on this call.'}</span>}
+            </div>
+            {group('Visit & Report', rowsOf('Visit & Report', 'Drive Link'))}
+            {group('Call Status', rowsOf('Call Status'))}
+          </div>
+        </section>
+        <div className="reg-gutter" />
+        <section className="reg-split-third">
+          <div className="reg-split-head">
+            <span>🔩 Spare consumption{spares ? ` · ${spares.length}` : ''}</span>
+            <button className="btn btn-ghost btn-sm" onClick={onClose} title="Close (Esc)">✕</button>
+          </div>
+          <div className="reg-split-body">
+            {sparesErr && <div className="sheet-banner sheet-banner-error"><span>Could not read the spares: {sparesErr}</span></div>}
+            {!sparesErr && spares === null && <p className="muted" style={{ margin: 0 }}>Loading…</p>}
+            {spares && spares.length === 0 && <p className="muted" style={{ margin: 0 }}>No spare is recorded against this UC No.</p>}
+            {spares && spares.length > 0 && (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="assoc-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr><th>Part</th><th style={{ textAlign: 'right' }}>Qty</th><th>Date</th><th>Engineer</th></tr>
+                  </thead>
+                  <tbody>
+                    {spares.map((x, i) => (
+                      <tr key={i}>
+                        {/* No "Recorded as" or "Remarks" (the user, 2026-11-28). */}
+                        <td>{x.part}</td>
+                        <td style={{ textAlign: 'right' }}>{x.qty ?? ''}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{x.at ? formatDay(x.at) : ''}</td>
+                        <td>{x.engineer}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

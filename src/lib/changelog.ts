@@ -20,6 +20,17 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.305',
+    date: '2026-11-28',
+    title: 'Call History: the opened call in three panes, and the status colours',
+    changes: [
+      'An opened call now looks like Pending Registrations: three panes side by side — Call details (registration, customer and product, warranty and contract, complaint), Visit details (the Drive Link at the top, then the visit and the call status) and Spare consumption. They stack on a narrow screen; Esc or ✕ closes it.',
+      'Spare consumption shows Part, Qty, Date and Engineer only.',
+      'The call status and the UC No. carry RITHI’s colours: Unattended red, Unsolved blue, Report pending pink, Solved green, Cancelled grey.',
+      'A call the old system closed as plain “Solved” now reads “Solved In Winmax”. It, and “Solved - Waiting for Manual Report”, show in light green.',
+    ],
+  },
+  {
     version: '0.10.304',
     date: '2026-11-28',
     title: 'Call History: the spares consumed on each call',

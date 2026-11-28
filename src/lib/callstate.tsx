@@ -50,6 +50,14 @@ export const STATE_COLOUR: Record<string, StateColour> = {
   Cancelled:        { bg: '#546e7a', fg: '#ffffff', label: 'Cancelled' },
 };
 
+// CALL HISTORY ONLY: a call the OLD system closed without RITHI's report -- a
+// plain "Solved" (shown as "Solved In Winmax") or "Solved - Waiting for Manual
+// Report" -- is LIGHT GREEN, apart from the full green of a completed report
+// (the user, 2026-11-28: "For Solved - Mark it as 'Solved In Winmax', for
+// Solved - Waiting for Manual Report - Make these as Light Green"). Fixed in
+// both themes, like the four above.
+export const HISTORY_SOLVED_LIGHT: StateColour = { bg: '#a5d6a7', fg: '#1b5e20', label: 'Solved (light)' };
+
 // The bucket a status string falls into. The register writes the EXACT status
 // ("Solved - Report Completed"), so the code is read off the beginning of it —
 // and Report Pending is tested BEFORE Solved, or "Solved - Report Pending"
