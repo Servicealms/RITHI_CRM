@@ -20,6 +20,15 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.309',
+    date: '2026-11-28',
+    title: 'Call History: colour coding switched off, with a switch',
+    changes: [
+      'Call History no longer colours the UC No. and Call Status by default.',
+      'A “🎨 Colours” tick box on the year row turns the colour coding back on (and off). Your choice is remembered on this device.',
+    ],
+  },
+  {
     version: '0.10.308',
     date: '2026-11-28',
     title: 'Call History: the opened call in two columns',

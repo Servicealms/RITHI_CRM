@@ -23,6 +23,11 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.309 — Call History colour coding off by default, with a switch (2026-11-28)
+- Asked: "I want to Remove the Colour Coding in Call History, But give me a Toggle button to enable or Disable Colour Coding for now."
+- "🎨 Colours" tick box on the year row (beside Excel / CSV); OFF by default; localStorage rithi.callhistory.colours ('on'/'off'), per device. A React context (ColourOn) feeds HistoryStatus / HistoryUcn in the list and the opened call; off = plain text ("Solved In Winmax" label still applies).
+- Write up: with v0.10.305 (the colours are now optional).
+
 ## v0.10.308 — Call History: the opened call in two columns (2026-11-28)
 - Asked: "Make it 2 Columns, and Split the 2nd Column Vertically into 2 and Fit the Consumption to Lower Part of the Vertically Split 2nd Column. Move Complaint Section Up and Warranty & Contract Section Down"; "I dont want the Breakdown Date and Complaint Date in the Pop Up window".
 - Layout: Call details | (Visit details over Spare consumption). Column divider drags 25-75% of the width, the row divider 20-80% of the right column's height; localStorage rithi.callhistory.split (default 48 / 58). Stacks under 1100px. ✕ moved to the Visit details head.
