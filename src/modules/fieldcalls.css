@@ -811,3 +811,8 @@ th.rbac-col-admin { color: var(--text-muted); }
   background: var(--text); color: var(--surface);
   font-size: 12.5px; letter-spacing: 0.02em; padding: 6px 8px;
 }
+
+/* Call History's opened call: Pending Registrations' three panes (2026-11-28). */
+.ch-pane-group { margin-bottom: 14px; }
+.ch-pane-group .rep-sec-title { margin: 6px 0 2px; }
+.ch-drive { display: flex; align-items: center; min-height: 32px; margin-bottom: 12px; }

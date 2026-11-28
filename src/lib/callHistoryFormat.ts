@@ -101,6 +101,18 @@ export const formatKey = (i: number) => `fmt_${squash(CALL_HISTORY_FORMAT[i].hea
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
+/** How a Call History status reads: a bare "Solved" is "Solved In Winmax". */
+export function historyStatusLabel(v: unknown): string {
+  const s = String(v ?? '').trim();
+  return /^solved$/i.test(s) ? 'Solved In Winmax' : s;
+}
+/** Is this a solved call the old system closed without a completed report --
+ *  shown light green rather than the full green of "Report Completed"? */
+export function isLightSolved(v: unknown): boolean {
+  const s = String(v ?? '').trim();
+  return /^solved$/i.test(s) || /^solved in winmax$/i.test(s) || /waiting\s*for\s*manual\s*report/i.test(s);
+}
+
 /** A date written as text in the file, as a wall-clock ISO value; unreadable stays as written. */
 export function extraDate(v: string): string {
   const p = parseDateParts(v);
@@ -129,6 +141,9 @@ export function fromExtra(extra: unknown, aliases: string[]): string {
 export function shapeHistoryRow<T extends Record<string, unknown>>(r: T): T & Record<string, unknown> {
   const out: Record<string, unknown> = { ...r };
   CALL_HISTORY_FORMAT.forEach((c, i) => {
+    // A PLAIN "Solved" READS "Solved In Winmax" (the user, 2026-11-28) -- on the
+    // list, in the pop-up and in the download. Stored as the file had it.
+    if (c.column === 'call_status') { out[formatKey(i)] = historyStatusLabel(r.call_status); return; }
     const own = c.column ? r[c.column] : null;
     if (c.column && (own != null && String(own).trim() !== '' || !c.extra)) { out[formatKey(i)] = own ?? ''; return; }
     const v = fromExtra(r.extra, c.extra ?? [c.header]);
