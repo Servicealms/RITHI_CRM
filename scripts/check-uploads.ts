@@ -2,7 +2,7 @@
 // uploads. No test runner in this repo, so: `npm run check:uploads`.
 import { shapeUpload, byColumnSet, UPLOADS, masterUpload, toDate, toTs, coerce, uploadGroups,
   planConsumptionVisits } from '../src/lib/uploads';
-import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref } from '../src/lib/callHistoryFormat';
+import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref, otherExtra } from '../src/lib/callHistoryFormat';
 import { parseDateParts, toIsoDate, toIsoTimestamp, parseAnyDate } from '../src/lib/dates';
 import { findHeaderFor, strict, loose, squash } from '../src/lib/headers';
 import { toDate as coverDate, toTimestamp as coverTs } from '../src/lib/coverImport';
@@ -1119,6 +1119,8 @@ console.log('\n-- who a new call is allotted to: the machine wins, the party ans
   eq('...a web address opens, a bare Drive id becomes its file link',
     [driveHref('https://drive.google.com/file/d/abc/view'), driveHref('1AbCdEfGhIjKlMnOpQrStUvWxYz012')],
     ['https://drive.google.com/file/d/abc/view', 'https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012/view']);
+  eq('the drawer lists only the headings no column shows',
+    otherExtra({ 'Contract Number': 'MC1', 'CALL PENDING REASON': 'x', 'Zone Code': 'Z9', Empty: '' }), [['Zone Code', 'Z9']]);
   eq('...anything else opens nothing', [driveHref('javascript:alert(1)'), driveHref('42Reportingv2_Images/x.jpg'), driveHref('/admin')],
     [undefined, undefined, undefined]);
   eq('...a heading kept in extra is read back', at('Contract Number'), 'MC5340');

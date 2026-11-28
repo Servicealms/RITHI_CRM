@@ -20,6 +20,16 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.294',
+    date: '2026-11-28',
+    title: 'Call History: a Calls tab and an Uploads tab; a call opens in a drawer',
+    changes: [
+      'Call History has two tabs. Calls holds the year tabs, the search and the list. Uploads & summary holds the upload and the “What has been loaded” table.',
+      'Clicking a row of the summary opens that year on the Calls tab.',
+      'Clicking a call opens it in a drawer: every column of the F/I Call Register format, the Register, Source, Year and Duplicate recorded at upload, when it was loaded and by whom, and any other column the file carried.',
+    ],
+  },
+  {
     version: '0.10.293',
     date: '2026-11-28',
     title: 'Call History emptied again',

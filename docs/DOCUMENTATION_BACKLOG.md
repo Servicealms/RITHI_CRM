@@ -23,6 +23,12 @@ hide boxes) are already documented.
 - Where it must be written: handbook section, FRS to add/amend, module guide, etc.
 -->
 
+## v0.10.294 — Call History: Calls / Uploads tabs; a call opens in a drawer (2026-11-28)
+- Asked: "Keep the Log and Upload option in a Separate Tab in Call History.. Also the Summary goes there. When i click on the Row, I want the Inform to come up in a Drawer or Pop Up." Asked what "Log" is: THE SUMMARY IS THE LOG -- no separate upload log (none exists: a Call History upload writes no audit line; only each row's loaded_at / loaded_by).
+- Call History only (DCCR History keeps one page): tab Calls (default; year tabs, search, list) and tab Uploads & summary (upload + "What has been loaded"). A summary row opens its year on the Calls tab.
+- Row click -> drawer "Call History -- <UCN>": the 38 format columns in order (dates dd-MMM-yyyy, Drive Link as a link); Recorded by RITHI (Register, Source, Year, Duplicate, Loaded at, Loaded by); Other columns in the file (extra headings no format column shows -- otherExtra). Read only.
+- Write up: HOW_TO_USE Call History (tabs, drawer); FRS-295.
+
 ## v0.10.293 — Call History emptied a second time (2026-11-28)
 - Asked: "clean it again". 0503 (daily_review): 0502's rules exactly, its own once-marker '0503_call_history_emptied_again'. _status.sql row 409; call_history_emptied_test extended.
 - Write up: with v0.10.292. If this keeps being asked for, an "Empty Call History" admin action would replace a migration per clean-up.

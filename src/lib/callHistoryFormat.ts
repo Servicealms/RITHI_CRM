@@ -134,3 +134,13 @@ export function driveHref(v: unknown): string | undefined {
   if (DRIVE_ID.test(s)) return `https://drive.google.com/file/d/${s}/view`;
   return undefined;
 }
+
+/** The headings the file carried that no format column shows -- kept with the
+ *  call, and shown in its drawer so nothing the file said is out of sight. */
+export function otherExtra(extra: unknown): [string, string][] {
+  if (!extra || typeof extra !== 'object') return [];
+  const shown = new Set(CALL_HISTORY_FORMAT.flatMap((c) => [...(c.extra ?? []), ...(c.column ? [] : [c.header])]).map(squash));
+  return Object.entries(extra as Record<string, unknown>)
+    .filter(([k, v]) => !shown.has(squash(k)) && String(v ?? '').trim() !== '')
+    .map(([k, v]) => [k, String(v)]);
+}

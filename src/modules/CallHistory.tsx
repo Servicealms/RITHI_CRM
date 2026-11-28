@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable, type Column } from '../components/table/DataTable';
-import { PageHeader, SectionCard, Toolbar, SearchBox } from '../components/ui/ui';
+import { PageHeader, SectionCard, Toolbar, SearchBox, Drawer } from '../components/ui/ui';
 import { SelectPicker } from '../components/ui/SelectPicker';
 import { useAuth } from '../lib/auth';
 import { csvExport, fmtLongDate } from '../lib/format';
@@ -13,7 +13,7 @@ import { cappedAt } from '../lib/exportscope';
 import { UPLOADS } from '../lib/uploads';
 import { Register } from './BulkUploads';
 import { safeUrl } from '../lib/safeUrl';
-import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref } from '../lib/callHistoryFormat';
+import { CALL_HISTORY_FORMAT, formatKey, shapeHistoryRow, driveHref, otherExtra } from '../lib/callHistoryFormat';
 import {
   supabaseConfigured, countTable, callHistorySummary, listCallHistory, allCallHistory, callHistoryChoices,
   type CallHistoryGroup, type CallHistoryFilter, type HistoryKind,
@@ -191,6 +191,18 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   // table of its own (0501). `tab` is a year, 'undated' or 'all'; '' until the
   // summary has said which years there are, and the list waits for it.
   const [tab, setTab] = useState('');
+  // TWO TABS ON CALL HISTORY (the user, 2026-11-28: "Keep the Log and Upload
+  // option in a Separate Tab in Call History.. Also the Summary goes there";
+  // asked, the summary IS the log -- no separate upload log). Calls: the year
+  // tabs, the search and the list. Uploads: the upload and "What has been
+  // loaded". DCCR History keeps its one page.
+  const [view, setView] = useState<'calls' | 'uploads'>('calls');
+  const showUploads = !cfg.yearTabs || view === 'uploads';
+  const showCalls = !cfg.yearTabs || view === 'calls';
+  // THE CALL, OPENED (the user: "When i click on the Row, I want the Inform to
+  // come up in a Drawer or Pop Up"): every column of the format, what RITHI
+  // recorded about the load, and anything else the file carried.
+  const [opened, setOpened] = useState<Row | null>(null);
   const BLANK = { ucn: '', product: '', serial: '', party: '', engineer: '', status: '', q: '' };
   const [hs, setHs] = useState(BLANK);
   const [hsLive, setHsLive] = useState(BLANK);
@@ -259,7 +271,7 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
   }), { calls: 0, duplicates: 0, without_serial: 0 }), [groups]);
   const picked = (g: CallHistoryGroup) => String(g.record_year ?? '') === year && g.source === source && g.register === register;
   const pick = (g: CallHistoryGroup) => {
-    if (cfg.yearTabs) { setTab(g.record_year == null ? 'undated' : String(g.record_year)); return; }
+    if (cfg.yearTabs) { setTab(g.record_year == null ? 'undated' : String(g.record_year)); setView('calls'); return; }
     if (picked(g)) { setYear(''); setSource(''); setRegister(''); return; }
     setYear(g.record_year == null ? '' : String(g.record_year)); setSource(g.source); setRegister(g.register);
   };
@@ -322,6 +334,16 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
         onLoadMore={() => load(true)} loadingMore={more}
         onRefresh={() => { void loadSummary(); void load(false); }} refreshing={busy || sumBusy} />
 
+      {cfg.yearTabs && (
+        <div className="dccr-tabs" role="tablist" aria-label="Call History" style={{ marginBottom: 12 }}>
+          <button role="tab" aria-selected={view === 'calls'} className={`dccr-tab${view === 'calls' ? ' is-active' : ''}`}
+            onClick={() => setView('calls')}>Calls{total != null ? <span className="dccr-tab-count">{total.toLocaleString()}</span> : null}</button>
+          <button role="tab" aria-selected={view === 'uploads'} className={`dccr-tab${view === 'uploads' ? ' is-active' : ''}`}
+            onClick={() => setView('uploads')}>Uploads &amp; summary</button>
+        </div>
+      )}
+
+      {showUploads && <>
       <SectionCard title="Upload a file">
         {!def && <div className="sheet-banner sheet-banner-error"><span>The {cfg.title} upload is missing from this build.</span></div>}
         {def && mayUpload && (
@@ -375,11 +397,13 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
           </div>
         )}
         <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
-          Counted by the database, so every number is exact. {cfg.summaryNote} Click a row to list those calls below.
+          Counted by the database, so every number is exact. {cfg.summaryNote} Click a row to list those calls{cfg.yearTabs ? ' on the Calls tab' : ' below'}.
         </p>
       </SectionCard>
       <div style={{ height: 12 }} />
+      </>}
 
+      {showCalls && <>
       {err && <div className="sheet-banner sheet-banner-error"><span>{err}</span></div>}
       {cfg.yearTabs && (
         <>
@@ -437,7 +461,74 @@ function HistoryScreen({ kind }: { kind: HistoryKind }) {
           </>
         )}
         emptyText={busy ? 'Loading…' : filtered ? 'No history call matches.' : 'No history calls have been loaded yet.'}
+        onRowClick={cfg.yearTabs ? (r) => setOpened(r) : undefined}
       />
+      </>}
+
+      {opened && (
+        <Drawer open onClose={() => setOpened(null)} title={`Call History — ${String(opened.ucn ?? '')}`} storeKey="call-history-call" width={640}>
+          <CallDetail row={opened} names={names} />
+        </Drawer>
+      )}
+    </div>
+  );
+}
+
+function DetailRows({ rows }: { rows: [string, React.ReactNode][] }) {
+  return (
+    <table className="assoc-table" style={{ width: '100%' }}>
+      <tbody>
+        {rows.map(([k, v]) => (
+          <tr key={k}>
+            <th style={{ width: '40%', textAlign: 'left', verticalAlign: 'top', fontWeight: 600 }}>{k}</th>
+            <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{v === '' || v == null ? <span className="muted">—</span> : v}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/** One history call in full: the register's columns in its order, then what
+ *  RITHI recorded about the load, then any other column the file carried. */
+function CallDetail({ row, names }: { row: Row; names: ReturnType<typeof useUserNames> }) {
+  const shown = (i: number): React.ReactNode => {
+    const c = CALL_HISTORY_FORMAT[i];
+    const v = row[formatKey(i)];
+    if (v == null || String(v).trim() === '') return '';
+    if (c.kind === 'date') return day(v);
+    if (c.kind === 'datetime') return formatDayTime(v);
+    if (c.kind === 'link') {
+      const href = driveHref(v);
+      return href ? <a href={safeUrl(href)} target="_blank" rel="noopener noreferrer">Open in Drive ↗</a> : String(v);
+    }
+    return String(v);
+  };
+  const others = otherExtra(row.extra);
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <section>
+        <h4 style={{ margin: '0 0 6px' }}>The call, as in the file</h4>
+        <DetailRows rows={CALL_HISTORY_FORMAT.map((c, i) => [c.header, shown(i)] as [string, React.ReactNode])} />
+      </section>
+      <section>
+        <h4 style={{ margin: '0 0 6px' }}>Recorded by RITHI</h4>
+        <DetailRows rows={[
+          ['Register (chosen at upload)', String(row.register ?? '')],
+          ['Source', String(row.source ?? '')],
+          ['Year', row.record_year == null ? 'Undated' : String(row.record_year)],
+          ['Duplicate', row.duplicate ? 'Duplicate — the same UC No. + Call No. also came from another source this year' : ''],
+          ['Loaded at', row.loaded_at ? formatDayTime(row.loaded_at) : ''],
+          ['Loaded by', row.loaded_by ? nameForUserId(String(row.loaded_by), names) : ''],
+        ]} />
+      </section>
+      {others.length > 0 && (
+        <section>
+          <h4 style={{ margin: '0 0 6px' }}>Other columns in the file</h4>
+          <DetailRows rows={others} />
+        </section>
+      )}
+      <p className="muted" style={{ fontSize: 12, margin: 0 }}>History only: nothing in RITHI was created from this call. Its status and dates are the file’s own.</p>
     </div>
   );
 }
