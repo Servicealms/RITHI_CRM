@@ -1110,7 +1110,9 @@ console.log('\n-- who a new call is allotted to: the machine wins, the party ans
   eq('...so the call takes its year from it', row.record_year, 2024);
   const shaped = shapeHistoryRow(row);
   const at = (h: string) => shaped[formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === h))];
-  eq('the format has the register\'s columns less the three emails, and Drive Link', CALL_HISTORY_FORMAT.length, 35);
+  eq('the format has the register\'s columns less the three emails and Call Acceptance, and Drive Link', CALL_HISTORY_FORMAT.length, 34);
+  eq('...Call Acceptance is not in it, nor among the other columns', [CALL_HISTORY_FORMAT.some((c) => c.header === 'Call Acceptance'),
+    otherExtra({ 'Call Acceptance': 'Accepted' }).length], [false, 0]);
   eq('...no email column is in it', CALL_HISTORY_FORMAT.some((c) => /email|manager/i.test(c.header)), false);
   eq('...keys are named from the heading, so adding a column moves no other',
     [formatKey(0), formatKey(CALL_HISTORY_FORMAT.findIndex((c) => c.header === 'Drive Link'))], ['fmt_ucnumber', 'fmt_drivelink']);
