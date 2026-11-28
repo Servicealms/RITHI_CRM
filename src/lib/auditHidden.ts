@@ -29,6 +29,7 @@ export const AUDIT_HIDDEN_PATHS: readonly string[] = [
   '/install-calls-unmapped',   // NAR-024 Machines Without an Installation Call
   '/version-history',          // NAR-027 Version History
   '/product-failure',          // NAR-029 Product Failure Analysis
+  '/product-status-check',     // NAR-031 Product Status Check
 ];
 
 /** THE VERSION SHOWN WHILE AUDIT MODE IS ON (NAR-027, the user, 2026-11-26:

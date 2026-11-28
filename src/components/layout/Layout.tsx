@@ -300,6 +300,8 @@ export const NAV: NavGroup[] = [
     title: 'Administration',
     items: [
       { to: '/missing-visit-reports', label: 'Solved Without a Report', icon: '📭', adminOnly: true },
+      // PRODUCT STATUS CHECK (0506; NAR-031, hidden in Audit Mode).
+      { to: '/product-status-check', label: 'Product Status Check', icon: '🩺' },
       { to: '/tracker', label: 'Tracker', icon: '🧭' },
       { to: '/roles', label: 'Roles & Permissions', icon: '🔐', adminOnly: true },
       { to: '/audit', label: 'Audit Log', icon: '🧾', adminOnly: true },

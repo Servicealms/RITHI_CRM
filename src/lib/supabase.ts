@@ -6077,6 +6077,25 @@ export async function mapReportDriveLinks(rows: { uid: string; link: string }[],
   return sum;
 }
 
+/** One call whose stored Item Status differs from its cover at registration (0506). */
+export interface ProductStatusRow {
+  ucn: string; register: string; reg_date: string | null; reg_at: string | null; party_name: string; product_name: string;
+  serial: string; stored_status: string; correct_status: string; spare_requests: number; spare_request_refs: string;
+  cover_ref: string; late_ref: string; late_note: string; late_entered_at: string | null;
+}
+/** The whole Product Status Check report, in one response (0506). */
+export async function productStatusReport(): Promise<ProductStatusRow[]> {
+  const { data, error } = await must().rpc('product_status_report');
+  if (error) throw new Error(errMsg(error));
+  return (data ?? []) as ProductStatusRow[];
+}
+/** Write each call's status at registration; its spare requests follow (0506). */
+export async function fixProductStatus(ucns: string[]): Promise<{ calls: number; spare_requests: number; spare_requests_not_followed: number }> {
+  const { data, error } = await must().rpc('fix_product_status', { p_ucns: ucns });
+  if (error) throw new Error(errMsg(error));
+  return data as { calls: number; spare_requests: number; spare_requests_not_followed: number };
+}
+
 export async function countTable(table: string): Promise<number | null> {
   const c = getSupabase(); if (!c) return null;
   const { count, error } = await c.from(table).select('*', { count: 'exact', head: true });

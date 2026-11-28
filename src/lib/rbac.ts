@@ -214,6 +214,9 @@ export const MODULES: ModuleDef[] = [
   // DCCR HISTORY (0496) -- the old DCCR register's calls, apart from Call
   // History (the user, 2026-11-27: "2 Separate ... Containers"). Same pattern.
   { path: '/dccr-history', label: 'DCCR History', admin: true },
+  // PRODUCT STATUS CHECK (0506; NAR-031): every call's status against its cover
+  // at registration. Same pattern: 0506 grants it to admin and technical_support.
+  { path: '/product-status-check', label: 'Product Status Check', admin: true },
   // PART SEARCH -- every role (the user, 2026-10-01); 0308 merges the key into
   // every configured role, since on a project in use a code default reaches
   // nobody.
@@ -876,6 +879,8 @@ export const PERM_TREE: PermHeader[] = [
   ] },
   { title: 'Administration', pages: [
     { path: '/missing-visit-reports', label: 'Solved Without a Report', actions: [] },
+    // The update asks what "Update Product Details" asks; the report, export.data.
+    { path: '/product-status-check', label: 'Product Status Check', actions: ['calls.edit', 'calls.edit.customer', 'export.data'] },
     { path: '/tracker', label: 'Tracker', actions: ['tracker.delete'] },
     { path: '/roles', label: 'Roles & Permissions', actions: ['rbac.manage'] },
     { path: '/audit', label: 'Audit Log', actions: ['audit.view'] },
